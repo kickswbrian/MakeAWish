@@ -4,25 +4,41 @@
   "schemaVersion": 1,
   "properties": {
     "query": {
-      "title": "Search query",
+      "title": "Product description",
       "type": "string",
-      "description": "Plain-language product description, e.g. \"emerald satin midi dress that converts to a skirt with phone pockets\".",
+      "description": "Plain-language description of the wished-for product, e.g. \"emerald satin midi dress that converts to a skirt, with phone pockets\". Every listing is scored against this. Also used as the store search if no search query is given.",
       "editor": "textfield",
       "prefill": "backpack with a built-in laptop stand"
+    },
+    "searchQuery": {
+      "title": "Store search query",
+      "type": "string",
+      "description": "Optional short query typed into each store's search box, e.g. \"emerald convertible midi dress\". Stores return little or nothing for long feature sentences, so keep this to the product noun plus a color or key feature. Defaults to the description.",
+      "editor": "textfield",
+      "prefill": "laptop stand backpack"
     },
     "spec": {
       "title": "Product spec",
       "type": "object",
       "description": "Optional structured spec (category, color, features, target_price_usd, ...). Scoring uses it to name what each listing is missing.",
       "editor": "json",
-      "prefill": { "category": "backpack", "features": ["laptop_stand"] }
+      "prefill": {
+        "category": "backpack",
+        "features": [
+          "laptop_stand"
+        ]
+      }
     },
     "sources": {
       "title": "Stores",
       "type": "array",
       "description": "Which stores to search, in parallel.",
       "editor": "stringList",
-      "default": ["amazon", "etsy", "google_shopping"]
+      "default": [
+        "amazon",
+        "etsy",
+        "google_shopping"
+      ]
     },
     "maxPerSource": {
       "title": "Results per store",
@@ -35,8 +51,8 @@
     "timeoutSecs": {
       "title": "Timeout per store (seconds)",
       "type": "integer",
-      "description": "A store that doesn't answer in time is skipped, not fatal.",
-      "default": 25,
+      "description": "A store that doesn't answer in time is skipped, not fatal. Includes the store actor's start-up time.",
+      "default": 40,
       "minimum": 5,
       "maximum": 120
     },
@@ -51,9 +67,11 @@
     "sourceActors": {
       "title": "Store actor overrides (advanced)",
       "type": "object",
-      "description": "Swap the Store actor used for a source: { \"etsy\": { \"actorId\": \"user/actor\", \"input\": { \"search\": \"{{query}}\", \"maxItems\": \"{{max}}\" } } }. {{query}}, {{max}} and {{queryEncoded}} are substituted.",
+      "description": "Swap the Store actor used for a source: { \"google_shopping\": { \"actorId\": \"epctex/google-shopping-scraper\", \"input\": { \"queries\": [\"{{query}}\"], \"maxItems\": \"{{max}}\" } } }. {{query}} (the store search query), {{queryEncoded}} and {{max}} are substituted; a bare \"{{max}}\" becomes a number.",
       "editor": "json"
     }
   },
-  "required": ["query"]
+  "required": [
+    "query"
+  ]
 }
