@@ -2,78 +2,134 @@ import { useMemo, useState } from "react";
 import { CLOSE_SCORE, describeProduct, EXISTS_SCORE, type Match, type MatchesResponse, type Product } from "@wishit/shared";
 import { ArrowOut, BackIcon, CategoryIcon, HeartIcon, LockIcon, MicIcon, MinusIcon, PlusIcon, SpinIcon, Sparkle } from "./Icons.tsx";
 
-const STORE: Record<string, string> = { amazon: "Amazon", etsy: "Etsy", google_shopping: "Google", sample: "Sample" };
-const CARD_BG = ["var(--card-sage)", "var(--card-pink)", "var(--card-gold)", "var(--card-sky)"];
+const STORE: Record<string, string> = { amazon: "Amazon", etsy: "Etsy", google_shopping: "Google Shopping", sample: "Sample" };
+const STORE_SHORT: Record<string, string> = { amazon: "Amazon", etsy: "Etsy", google_shopping: "Google", sample: "Sample" };
+const STORE_DOT: Record<string, string> = { amazon: "#F2A541", etsy: "#E86A33", google_shopping: "#5B8DEF", sample: "#9AA8A3" };
 
-export function MatchCard({ m, top, category, color, i }: { m: Match; top: boolean; category: string; color?: string; i: number }) {
-  const store = STORE[m.source] ?? m.source;
-  const exists = top && m.score >= EXISTS_SCORE;
+const money = (p: number | null) => (p == null ? null : `$${p % 1 ? p.toFixed(2) : p.toLocaleString("en-US")}`);
+const tier = (score: number) => (score >= EXISTS_SCORE ? "hi" : score >= CLOSE_SCORE ? "mid" : "lo");
+
+/** "No cedar wood" reads better than a bare noun phrase. */
+const lacks = (m: string) => (/^(no|not|doesn|lacks|missing)\b/i.test(m) ? m : `No ${m}`);
+
+/** The product photo, or the wish's category icon when the store sent none (or it fails to load). */
+function Photo({ m, category, color, size }: { m: Match; category: string; color?: string; size: number }) {
+  const [broken, setBroken] = useState(false);
   return (
-    <div className="pcard" style={{ animationDelay: `${0.05 + i * 0.1}s` }}>
-      <div className="pbody" style={{ background: CARD_BG[i % 4] }}>
-        <span className="pprice">{m.price != null ? `$${m.price % 1 ? m.price.toFixed(2) : m.price}` : "—"}</span>
-        <span className="pstore">{store}</span>
-        <span className="ptitle">{m.title}</span>
-        {m.missing[0] && <span className="miss" style={{ marginTop: 4 }} title={m.missing.join(", ")}>{m.missing[0]}</span>}
-      </div>
-      <span className={`pbadge ${exists ? "exists" : ""}`}>{exists ? "It exists" : `${m.score}%`}</span>
-      <div className="pimg" style={{ animationDelay: `${-i * 1.2}s` }}>
-        {m.image ? <img src={m.image} alt="" loading="lazy" /> : <CategoryIcon category={category} color={color} size={96} />}
-      </div>
-      <a className="pbtn" href={m.url} target="_blank" rel="noreferrer" aria-label={`Open ${m.title} on ${store}`}>
-        <ArrowOut />
-      </a>
+    <div className="mphoto">
+      {m.image && !broken ? <img src={m.image} alt="" loading="lazy" onError={() => setBroken(true)} /> : <CategoryIcon category={category} color={color} size={size} />}
     </div>
   );
 }
 
-/** Store filter chips over a 2-column grid. Ghost cards shimmer while the stores are searched. */
+/** One listing: the whole card opens it in the store. */
+export function MatchCard({ m, category, color, i, shared }: { m: Match; category: string; color?: string; i: number; shared?: Set<string> }) {
+  const store = STORE[m.source] ?? m.source;
+  const price = money(m.price);
+  const gap = m.missing.find((x) => !shared?.has(x.toLowerCase()));
+  return (
+    <a className="mcard" href={m.url} target="_blank" rel="noreferrer" style={{ animationDelay: `${0.06 + i * 0.07}s` }} aria-label={`${m.title} on ${store}${price ? `, ${price}` : ""}, ${m.score}% match`}>
+      <Photo m={m} category={category} color={color} size={72} />
+      <span className={`mscore ${tier(m.score)}`}>{m.score}%<small> match</small></span>
+      <div className="minfo">
+        <div className="mrow">
+          <span className="mstore"><i style={{ background: STORE_DOT[m.source] ?? "#9AA8A3" }} />{STORE_SHORT[m.source] ?? m.source}</span>
+          {price && <span className="mprice">{price}</span>}
+        </div>
+        <span className="mtitle" title={m.title}>{m.title}</span>
+        {gap && <span className="mlack" title={m.missing.map(lacks).join(", ")}>{lacks(gap)}</span>}
+      </div>
+    </a>
+  );
+}
+
+/** The best listing, big: photo beside the verdict, with a clear way to the store. */
+function TopMatch({ m, category, color }: { m: Match; category: string; color?: string }) {
+  const store = STORE[m.source] ?? m.source;
+  const exists = m.score >= EXISTS_SCORE;
+  const price = money(m.price);
+  return (
+    <a className={`mtop ${exists ? "exists" : ""}`} href={m.url} target="_blank" rel="noreferrer" aria-label={`Best match: ${m.title} on ${store}${price ? `, ${price}` : ""}, ${m.score}% match`}>
+      <Photo m={m} category={category} color={color} size={96} />
+      <div className="minfo">
+        <span className="mkicker">{exists ? <><Sparkle size={13} color="#8A6A12" /> It exists</> : "Closest match"}<span className={`mscore inline ${tier(m.score)}`}>{m.score}%</span></span>
+        <span className="mtitle big" title={m.title}>{m.title}</span>
+        <div className="mrow">
+          <span className="mstore"><i style={{ background: STORE_DOT[m.source] ?? "#9AA8A3" }} />{STORE_SHORT[m.source] ?? store}</span>
+          {price && <span className="mprice big">{price}</span>}
+        </div>
+        {m.missing.length > 0 && (
+          <div className="mlacks">{m.missing.slice(0, 3).map((x) => <span key={x} className="mlack">{lacks(x)}</span>)}</div>
+        )}
+        <span className="mgo">View on {STORE_SHORT[m.source] ?? store} <ArrowOut size={16} /></span>
+      </div>
+    </a>
+  );
+}
+
+/** Stores often list the same product twice (sponsored + organic, two sellers): keep the best one. */
+function dedupe(matches: Match[]): Match[] {
+  const seen = new Set<string>();
+  const key = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").slice(0, 6).join(" ");
+  return matches.filter((m) => {
+    const keys = [`t:${key(m.title)}`, ...(m.image && !m.image.startsWith("data:") ? [`i:${m.image}`] : [])];
+    if (keys.some((k) => seen.has(k))) return false;
+    keys.forEach((k) => seen.add(k));
+    return true;
+  });
+}
+
+/** Store filter chips, the best match as a hero, the rest in a 2-column grid. Skeletons while searching. */
 export function MatchGrid({ res, category, color }: { res: MatchesResponse | null; category: string; color?: string }) {
   const [filter, setFilter] = useState("all");
   const list = useMemo(() => {
     if (!res) return [];
-    const close = res.matches.filter((m) => m.score >= CLOSE_SCORE);
-    return (close.length ? close : res.matches).slice(0, 8);
+    const all = dedupe([...res.matches].sort((a, b) => b.score - a.score));
+    const close = all.filter((m) => m.score >= CLOSE_SCORE);
+    return (close.length ? close : all).slice(0, 8);
   }, [res]);
   const stores = useMemo(() => [...new Set(list.map((m) => m.source))], [list]);
   const shown = filter === "all" ? list : list.filter((m) => m.source === filter);
 
   if (!res || (res.pending && !res.matches.length)) {
     return (
-      <>
-        <div className="chips" role="tablist" aria-label="Filter by store">
-          <button className="chip on" role="tab" aria-selected="true">All</button>
+      <div className="scroll">
+        <div className="msearch" role="status"><span className="mpulse" aria-hidden="true" />Searching Amazon and Google Shopping…</div>
+        <div className="mtop ghost" aria-hidden="true"><div className="mphoto" /><div className="minfo"><b /><b /><b className="short" /></div></div>
+        <div className="mgrid" aria-hidden="true">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="mcard ghost" style={{ animationDelay: `${i * 0.08}s` }}><div className="mphoto" /><div className="minfo"><b /><b className="short" /></div></div>
+          ))}
         </div>
-        <div className="scroll">
-          <div className="pgrid">
-            {["Amazon", "Etsy", "Google", "more stores"].map((s, i) => (
-              <div key={s} className="pcard ghost" style={{ animationDelay: `${i * 0.08}s` }}>
-                <div className="pbody"><span className="ghost-label">Searching {s}</span></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </>
+      </div>
     );
   }
+  const [top, ...rest] = shown;
+  // A gap every lacking listing shares ("cedar wood") is said once, not on every card.
+  const lacking = shown.filter((m) => m.missing.length);
+  const shared = new Set(
+    lacking.length > 1 ? lacking[0].missing.map((x) => x.toLowerCase()).filter((x) => lacking.every((m) => m.missing.some((y) => y.toLowerCase() === x))) : [],
+  );
   return (
     <>
       {stores.length > 1 && (
         <div className="chips" role="tablist" aria-label="Filter by store">
           {["all", ...stores].map((s) => (
             <button key={s} className="chip" role="tab" aria-selected={filter === s} onClick={() => setFilter(s)}>
-              {s === "all" ? "All" : STORE[s] ?? s}
+              {s === "all" ? `All ${list.length}` : `${STORE_SHORT[s] ?? s} ${list.filter((m) => m.source === s).length}`}
             </button>
           ))}
         </div>
       )}
       <div className="scroll">
-        <div className="pgrid">
-          {shown.length === 0 && <div className="empty-magic">Nothing like it anywhere. A truly original wish.</div>}
-          {shown.map((m, i) => (
-            <MatchCard key={m.url + i} m={m} top={list[0] === m} category={category} color={color} i={i} />
-          ))}
-        </div>
+        {!top && <div className="empty-magic">Nothing like it anywhere. A truly original wish.</div>}
+        {top && <TopMatch key={top.url} m={{ ...top, missing: top.missing.filter((x) => !shared.has(x.toLowerCase())) }} category={category} color={color} />}
+        {shared.size > 0 && <p className="mshared">{lacking.length === shown.length ? "None of these have" : "Most of these lack"} <b>{[...shared].slice(0, 2).join(" or ")}</b>. Yours would.</p>}
+        {rest.length > 0 && (
+          <div className="mgrid">
+            {rest.map((m, i) => <MatchCard key={m.url + i} m={m} category={category} color={color} i={i} shared={shared} />)}
+          </div>
+        )}
       </div>
     </>
   );

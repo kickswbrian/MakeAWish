@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import {
-  addOrder, applyPatches, childrenOf, emptyProduct, fixChildFrame, isEmpty, toProductSpace, matchTemplate, parseIntent, ProductMetaSchema, setMeta, templateById, templateProduct,
+  addOrder, applyPatches, childrenOf, emptyProduct, fixChildFrame, floatingParts, groundPart, isEmpty, localBox, partsInOrder, subtreeIds, toProductSpace, matchTemplate, parseIntent, ProductMetaSchema, setMeta, templateById, templateProduct,
   type OutlineEntry, type Part, type Patch, type Product, type ProductMeta, type TurnEvent, type TurnSelection, type TurnTiming, type Vec3,
 } from "@wishit/shared";
 import { env } from "./env.ts";
@@ -83,7 +83,7 @@ const TOOLS = [
         root: { ...partSchema, description: "Only without a template: the main body part (parent null), with real dimensions. Write it FIRST." },
         groups: {
           type: "array",
-          description: "Only without a template: 5-8 groups of 3-5 parts each, biggest/most important first. Each group is built in parallel by a separate builder that sees only the root part and your brief.",
+          description: "Only without a template: 5-8 groups of 3-5 parts each, biggest/most important first. Each group is built in parallel by a separate builder that sees only the root part and your brief, so keep parts that rest on each other in ONE group (a roof and the solar panels on it, a neck and its tuning pegs), and give every group its exact mount coordinates on the root.",
           items: {
             type: "object",
             properties: {
@@ -167,6 +167,14 @@ function outlineLine(p: Part, o?: OutlineEntry): string {
   return `${p.id} "${p.name}" ${what} parent=${p.parent ?? "-"} ${p.material.preset} ${p.material.color}${box}`;
 }
 
+/** Where a part's faces are in its own frame, so builders can put things on them without guessing. */
+function faceGuide(p: Part): string {
+  const b = localBox(p);
+  if (!b) return "";
+  const f = (v: number) => r3(v);
+  return `Root's faces in its own frame (your positions are in this frame): top y=${f(b.max[1])}, bottom y=${f(b.min[1])}, front z=${f(b.max[2])}, back z=${f(b.min[2])}, right x=${f(b.max[0])}, left x=${f(b.min[0])}. Center [${[0, 1, 2].map((i) => f((b.min[i] + b.max[i]) / 2)).join(",")}].${p.geometry && ["lathe", "cylinder", "sphere", "capsule"].includes(p.geometry.type) ? " It is round: its side surface is at radius " + f(b.max[0]) + " from the Y axis (less where it tapers)." : ""}`;
+}
+
 /** One line per part, so a template can be customized by id without the full JSON. */
 function templateOutline(id: string): string {
   const tpl = templateById(id);
@@ -245,14 +253,19 @@ interface CallHandlers {
   onFirstToken?: () => void;
 }
 
-interface CallStats { input: number; cached: number; output: number }
+interface CallStats { input: number; cached: number; output: number; toolCalled?: boolean }
 
 /** Stream one tool call; if the model fails before writing anything, retry once on the fallback model. */
 async function streamTool(model: string, tool: string, user: string, h: CallHandlers, signal: AbortSignal, maxTokens: number): Promise<CallStats> {
   let wrote = false;
   const wrapped: CallHandlers = { ...h, onFirstToken: () => { wrote = true; h.onFirstToken?.(); } };
   try {
-    return await streamToolOnce(model, tool, user, wrapped, signal, maxTokens);
+    const stats = await streamToolOnce(model, tool, user, wrapped, signal, maxTokens);
+    // Opus can't be forced to use a tool and now and then answers in prose instead: the turn would
+    // silently do nothing. Redo it on the edit model, which can be forced.
+    if (stats.toolCalled || signal.aborted || model === env.editModel || !env.editModel.includes("sonnet")) return stats;
+    const retry = await streamToolOnce(env.editModel, tool, user, h, signal, maxTokens);
+    return { input: stats.input + retry.input, cached: stats.cached + retry.cached, output: stats.output + retry.output, toolCalled: retry.toolCalled };
   } catch (err) {
     if (signal.aborted || wrote || model === env.fallbackModel) throw err;
     console.warn(`[brain] ${model} failed before streaming (${(err as Error).message.slice(0, 120)}), falling back to ${env.fallbackModel}`);
@@ -317,7 +330,8 @@ async function streamToolOnce(model: string, tool: string, user: string, h: Call
     }
   }
   if (text.trim()) h.onText?.(text.trim(), toolSeen);
-  else if (!toolSeen) console.warn(`[brain] ${model} skipped the ${tool} tool`);
+  if (!toolSeen) console.warn(`[brain] ${model} skipped the ${tool} tool${text.trim() ? `: "${text.trim().slice(0, 160)}"` : ""}`);
+  stats.toolCalled = toolSeen;
   return stats;
 }
 
@@ -342,10 +356,16 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
     product = emptyProduct(product.id);
     emit({ t: "reset" });
   };
+  // Parts added or moved this turn: checked for floating once the turn's patches are all in.
+  const touched = new Set<string>();
   const applyAndEmit = (patches: unknown[]) => {
     const r = applyPatches(product, patches);
     product = r.product;
     rejected += r.rejected.length;
+    for (const p of r.applied) {
+      if (p.op === "add") touched.add(p.part.id);
+      else if (p.op === "update" && (p.changes.transform || p.changes.geometry || p.changes.parent !== undefined || p.changes.kitParams)) touched.add(p.id);
+    }
     if (r.rejected.length) console.log(`[brain] rejected: ${r.rejected.map((x) => x.reason).join(" | ").slice(0, 300)}`);
     if (r.applied.length) {
       timing.firstPatch ??= at();
@@ -374,6 +394,34 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
     timing.done = at();
     return { product, say: intent.say, lock: false, brain: "rules", timing, rejected };
   }
+
+  /**
+   * Models misjudge frames and sizes: a part placed in the air (a speaker beside the hood, a brim
+   * above the head) reads as broken. Settle every part this turn added or moved onto the product,
+   * parents first so children ride along, as one last batch of updates.
+   */
+  const settle = (result: TurnResult): TurnResult => {
+    if (!touched.size) return result;
+    const fixes: Patch[] = [];
+    let work = product;
+    // A reshaped part can strand its children (speakers on a hood that got deeper): check them too.
+    const check = new Set([...touched].filter((id) => work.parts[id]).flatMap((id) => subtreeIds(work, id)));
+    for (const part of partsInOrder(work)) {
+      if (!check.has(part.id) || !floatingParts(work, [part.id]).length) continue;
+      const position = groundPart(work, part.id);
+      if (!position) continue;
+      const fix: Patch = { op: "update", id: part.id, changes: { transform: { position } } };
+      const r = applyPatches(work, [fix]);
+      if (!r.applied.length) continue;
+      work = r.product;
+      fixes.push(fix);
+    }
+    if (!fixes.length) return result;
+    console.log(`[brain] settled ${fixes.length} floating part(s): ${fixes.map((f) => (f as { id: string }).id).join(", ")}`);
+    applyAndEmit(fixes);
+    timing.done = at();
+    return { ...result, product, timing };
+  };
 
   if (!client || forceRules) return ruleTurn(input, applyAndEmit, applyMeta, emit, timing, at, () => product, reset);
 
@@ -414,14 +462,14 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
       }, signal, 4000));
       if (!wantsNew) {
         timing.done = at();
-        return { product, say, lock, brain: "llm", timing, rejected };
+        return settle({ product, say, lock, brain: "llm", timing, rejected });
       }
       // A different product entirely: start over.
       reset();
       mode = "create";
       say = "";
     }
-    return await createDesign(input, { reset, emit, applyAndEmit, applyMeta, track, timing, at, signal, get: () => product, set: (p) => (product = p), setSay: (s) => (say = s), setLock: (l) => (lock = l), getSay: () => say, getLock: () => lock, rejected: () => rejected });
+    return settle(await createDesign(input, { reset, emit, applyAndEmit, applyMeta, track, timing, at, signal, get: () => product, set: (p) => (product = p), setSay: (s) => (say = s), setLock: (l) => (lock = l), getSay: () => say, getLock: () => lock, rejected: () => rejected }));
   } catch (err) {
     if (signal.aborted) throw err;
     console.warn("[brain] LLM failed, using rules:", (err as Error).message);
@@ -483,9 +531,10 @@ async function createDesignInner(input: TurnInput, c: CreateCtx): Promise<TurnRe
       `Product: ${meta.title ?? "(untitled)"} — ${meta.description ?? input.text}`,
       `Shopper's wish: "${input.text}"`,
       `Root part (already built):\n${JSON.stringify(compactPart(rootNow))}`,
+      faceGuide(rootNow),
       `Other builders are doing these groups (do NOT build them): ${groups.filter((x) => x.id !== g.id).map((x) => `${x.id}: ${x.brief}`).join(" | ") || "(more coming)"}`,
       `\nYOUR GROUP "${g.id}": ${g.brief}`,
-      `Use part ids starting with "${g.id}_". Parent your parts to "${rootNow.id}" or to your own parts. Add 3-5 detailed parts (bigger pieces first, then hardware and trims). Use at most 3 decimals. Call add_parts now, with no other text.`,
+      `Use part ids starting with "${g.id}_". Parent your parts to "${rootNow.id}" or to your own parts: a part that sits on another of your parts (a panel on a sloped roof, a lens on a camera) is that part's child, positioned in its frame, so it inherits the tilt. Every part must touch the part it is attached to: compute positions from the face coordinates above, never guess. Add 3-5 detailed parts (bigger pieces first, then hardware and trims). Use at most 3 decimals. Call add_parts now, with no other text.`,
     ].join("\n");
     const t0 = c.at();
     let ttft = 0;

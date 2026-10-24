@@ -7,7 +7,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { emptyProduct, isEmpty, parseProduct, templateById, templateProduct, toProductSpace, type Product, type TurnEvent, type TurnSelection } from "@wishit/shared";
+import { emptyProduct, floatingParts, isEmpty, parseProduct, templateById, templateProduct, toProductSpace, type Product, type TurnEvent, type TurnSelection } from "@wishit/shared";
 import { brainKind, runTurn } from "../src/brain.ts";
 import { env, ROOT } from "../src/env.ts";
 
@@ -68,6 +68,8 @@ for (const step of steps) {
   const sentences = (r.say.match(/[.!?](\s|$)/g) ?? []).length;
   const problems: string[] = [];
   if (isEmpty(r.product)) problems.push("no parts");
+  const floating = floatingParts(r.product);
+  if (floating.length) problems.push(`floating: ${floating.join(" ")}`);
   if (sentences > 2) problems.push(`${sentences} sentences`);
   if ((r.say.match(/\?/g) ?? []).length > 1) problems.push("more than one question");
   if (step.selection) {

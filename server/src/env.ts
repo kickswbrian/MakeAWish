@@ -75,7 +75,7 @@ export function logConfig() {
       `[wish-it] ${env.publicUrl}  demoMode=${env.demoMode}  ${isProd ? "PRODUCTION" : "development"}`,
       `  brain    ${on(env.anthropicKey)} ${env.anthropicKey ? `design=${env.designModel} edit=${env.editModel}` : "(rule-based fallback)"}`,
       `  cartesia ${on(env.cartesiaKey)} ${env.cartesiaKey ? "" : "(browser speech fallback)"}`,
-      `  apify    ${on(env.apifyToken && env.apifyActor)} ${env.apifyToken && env.apifyActor ? env.apifyActor : "(sample matches)"}`,
+      `  apify    ${on(env.apifyToken)} ${env.apifyToken ? env.apifyActor ?? "(stores direct)" : "(sample matches)"}`,
       `  stripe   ${paymentMode === "stripe" ? "on  test mode" : "off (simulated payments)"}${paymentMode === "stripe" && !env.stripeWebhookSecret ? "  WARNING: no STRIPE_WEBHOOK_SECRET, relying on polling" : ""}`,
     ].join("\n"),
   );

@@ -208,6 +208,8 @@ p { margin: 0; }
 .wavebox svg { display: block; width: 100%; height: 64px; overflow: visible; }
 .rib { mix-blend-mode: multiply; }
 .speech { flex: 1; min-height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 4px 0; }
+/* Landing: keep the suggestion chips well clear of the Talk dock, even on short screens. */
+.app:not(.has-product) .speech { padding-bottom: 28px; }
 .speech-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .line { font-size: 23px; line-height: 31px; font-weight: 600; letter-spacing: -0.015em; max-width: 420px; }
 .line.long { font-size: 19px; line-height: 26px; }
@@ -246,30 +248,65 @@ p { margin: 0; }
 .res-sub { flex: none; margin: 6px 0 14px; font-size: 15px; line-height: 20px; color: var(--ink-70); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .scroll { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; margin: 0 -20px; padding: 6px 20px 130px; }
 .scroll::-webkit-scrollbar { display: none; }
-.pgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-.pcard { position: relative; height: 300px; animation: cardIn .7s cubic-bezier(.34,1.4,.64,1) both; }
-.pbody {
-  position: absolute; left: 0; right: 0; top: 34px; height: 236px; border-radius: 28px;
-  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; padding: 0 12px 38px; text-align: center;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.8), 0 14px 30px rgba(197,216,207,.14);
+/* Match cards: a white photo well (store shots are on white), then store + price, title, what it lacks. */
+.mgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.mcard, .mtop {
+  position: relative; display: flex; flex-direction: column; border-radius: 26px; padding: 8px; color: var(--ink); text-decoration: none;
+  background: linear-gradient(160deg, rgba(255,255,255,.92), rgba(238,244,241,.7));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.9), 0 1px 2px rgba(24,40,37,.04), 0 14px 32px rgba(120,150,140,.14);
+  animation: cardIn .7s cubic-bezier(.34,1.4,.64,1) both; transition: transform .35s var(--spring), box-shadow .35s ease;
 }
-.pprice { font-size: 26px; line-height: 32px; font-weight: 700; letter-spacing: -0.03em; }
-.pstore { font-size: 16px; line-height: 20px; font-weight: 500; }
-.ptitle { font-size: 12.5px; line-height: 16px; color: var(--ink-70); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.miss { display: block; max-width: 100%; height: 26px; line-height: 26px; padding: 0 10px; border-radius: 100px; background: rgba(255,255,255,.75); font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pimg { position: absolute; left: 10px; right: 10px; top: 0; height: 128px; display: flex; justify-content: center; align-items: flex-end; animation: hover 5s ease-in-out infinite; filter: drop-shadow(0 12px 14px rgba(24,40,37,.14)); pointer-events: none; }
-.pimg img { max-width: 100%; max-height: 128px; object-fit: contain; border-radius: 16px; mix-blend-mode: multiply; }
-.pbadge { position: absolute; right: -2px; top: 28px; height: 30px; padding: 0 11px; border-radius: 100px; background: var(--ink); color: var(--cream); font-size: 14px; line-height: 30px; font-weight: 600; z-index: 2; }
-.pbadge.exists { background: var(--gold); color: var(--ink); }
-.pbtn {
-  position: absolute; left: 50%; top: 242px; width: 54px; height: 54px; margin-left: -27px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center; color: var(--ink);
-  background: linear-gradient(135deg, rgba(255,255,255,.8), rgba(255,255,255,.45)); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
-  box-shadow: var(--glass-shadow); transition: transform .35s var(--spring);
+.mcard:hover, .mtop:hover { transform: translateY(-3px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.95), 0 2px 4px rgba(24,40,37,.05), 0 22px 44px rgba(120,150,140,.22); }
+.mcard:active, .mtop:active { transform: scale(.98); }
+.mcard:focus-visible, .mtop:focus-visible { outline: 3px solid var(--gold-deep); outline-offset: 3px; }
+.mphoto { position: relative; aspect-ratio: 1; border-radius: 20px; background: #FFFFFF; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 0 1px rgba(24,40,37,.05); }
+.mphoto img { width: 100%; height: 100%; object-fit: contain; padding: 10px; mix-blend-mode: multiply; transition: transform .5s var(--spring); }
+.mcard:hover .mphoto img, .mtop:hover .mphoto img { transform: scale(1.04); }
+.mscore {
+  position: absolute; top: 14px; left: 14px; height: 26px; padding: 0 10px; border-radius: 100px; display: inline-flex; align-items: center; gap: 3px;
+  font-size: 13px; font-weight: 700; letter-spacing: -0.01em; -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
 }
-.pbtn:active { transform: scale(.9); }
-.pcard.ghost .pbody { background: linear-gradient(110deg, #F2F6F4 30%, #FFFFFF 50%, #F2F6F4 70%); background-size: 250% 100%; animation: shimmer 1.6s linear infinite; justify-content: center; padding-bottom: 0; }
-.ghost-label { font-size: 15px; font-weight: 500; color: var(--ink-70); }
+.mscore small { font-size: 11px; font-weight: 600; opacity: .75; }
+.mscore.hi { background: rgba(242,216,138,.92); color: #5C4708; }
+.mscore.mid { background: rgba(197,216,207,.9); color: var(--ink); }
+.mscore.lo { background: rgba(255,255,255,.85); color: var(--ink-70); box-shadow: inset 0 0 0 1px var(--ink-08); }
+.mscore.inline { position: static; height: 22px; padding: 0 8px; font-size: 12px; margin-left: 8px; }
+.minfo { display: flex; flex-direction: column; gap: 6px; padding: 10px 6px 6px; min-width: 0; }
+.mrow { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 2px 8px; }
+.mstore { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--ink-70); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mstore i { flex: none; width: 7px; height: 7px; border-radius: 50%; }
+.mprice { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; }
+.mprice.big { font-size: 24px; }
+.mtitle { font-size: 13.5px; line-height: 18px; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mtitle.big { font-size: 16px; line-height: 21px; font-weight: 600; -webkit-line-clamp: 3; }
+.mlack { align-self: flex-start; max-width: 100%; height: 24px; line-height: 24px; padding: 0 9px; border-radius: 100px; font-size: 12px; font-weight: 500; color: #8A3B4F; background: rgba(247,211,227,.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mshared { margin: -2px 4px 12px; font-size: 14px; line-height: 20px; color: var(--ink-70); }
+.mshared b { color: #8A3B4F; font-weight: 600; }
+.mlacks { display: flex; flex-wrap: wrap; gap: 6px; }
+.mlacks .mlack { align-self: auto; }
+
+/* The best match: photo beside the details. */
+.mtop { flex-direction: row; gap: 14px; margin-bottom: 12px; padding: 10px; }
+.mtop .mphoto { flex: none; width: 44%; max-width: 230px; align-self: flex-start; }
+.mtop .minfo { flex: 1; padding: 6px 4px 4px 0; gap: 8px; }
+.mtop.exists { background: linear-gradient(160deg, rgba(255,255,255,.95), rgba(251,243,223,.85)); box-shadow: inset 0 0 0 1px rgba(242,216,138,.7), 0 18px 40px rgba(233,196,106,.22); }
+.mkicker { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-70); }
+.mtop.exists .mkicker { color: #8A6A12; }
+.mgo { margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; border-radius: 100px; font-size: 14px; font-weight: 600; background: var(--glass-on); box-shadow: var(--glass-on-shadow); }
+@media (max-width: 380px) {
+  .mtop { flex-direction: column; }
+  .mtop .mphoto { width: 100%; max-width: none; }
+}
+
+/* Searching: skeletons in the same shapes as the cards. */
+.msearch { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font-size: 14px; font-weight: 500; color: var(--ink-70); }
+.mpulse { width: 9px; height: 9px; border-radius: 50%; background: var(--gold-deep); animation: mpulse 1.2s ease-in-out infinite; }
+@keyframes mpulse { 0%, 100% { transform: scale(.7); opacity: .5; } 50% { transform: scale(1.15); opacity: 1; } }
+.mcard.ghost, .mtop.ghost { pointer-events: none; }
+.ghost .mphoto, .ghost .minfo b { background: linear-gradient(110deg, #EEF3F0 30%, #FFFFFF 50%, #EEF3F0 70%); background-size: 250% 100%; animation: shimmer 1.6s linear infinite; }
+.ghost .minfo b { display: block; height: 12px; border-radius: 6px; }
+.ghost .minfo b.short { width: 55%; }
+.mtop.ghost .minfo b { height: 16px; }
 .empty-magic { grid-column: 1 / -1; padding: 28px 20px; border-radius: 28px; background: var(--card-sage); text-align: center; font-size: 17px; line-height: 24px; font-weight: 500; }
 .bottom-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 150px; background: linear-gradient(0deg, var(--cream) 40%, rgba(255,252,247,0)); pointer-events: none; z-index: 3; }
 .bottom-cta { position: absolute; left: 20px; right: 20px; bottom: max(28px, env(safe-area-inset-bottom)); z-index: 4; display: flex; flex-direction: column; gap: 10px; }
