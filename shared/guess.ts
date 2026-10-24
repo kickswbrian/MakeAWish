@@ -38,7 +38,7 @@ function detectCategory(t: string, current: ProductSpec | undefined): { category
   const fresh = !current || (current.category === "generic" && !current.body);
   // Up to three describing words between the framing and the noun, but never a preposition:
   // "a unicorn horn on top" does not frame "top".
-  const filler = "(?:(?!on |in |at |to |of |with |for |from |onto |into |by )[a-z-]+\\s+){0,3}";
+  const filler = "(?:(?!on |in |at |to |of |with |for |from |onto |into |by |the |its |my |this |that |his |her |their )[a-z-]+\\s+){0,3}";
   const framed = (words: string, strong = false) =>
     new RegExp(`\\b(?:${strong ? "" : "an?|"}make it(?: into)?(?: an?)?|turn it into(?: an?)?|change it (?:to|into)(?: an?)?|switch (?:it )?to(?: an?)?|(?:i )?want(?: an?)?|how about(?: an?)?|what about(?: an?)?|instead of(?: an?)?|(?:it )?should be(?: an?)?|let'?s do(?: an?)?|actually(?: an?)?)\\s+${filler}(${words})s?\\b(?!\\s+(?:of|half|part|side))`).exec(t);
   const loose = (words: string) => {
@@ -86,7 +86,10 @@ export function interpret(text: string, current?: ProductSpec): Interpretation {
     if (g && (switching || !spec.body || reframe)) {
       patch.body = g.body;
       patch.name = g.name;
-      if (g.addons) patch.addons = [...g.addons, ...(patch.addons ?? spec.addons ?? []).filter((a) => !g.addons!.some((b) => b.name === a.name))];
+      // A different product starts from its own template: a lamp doesn't keep the mug's handle.
+      const carried = reframe ? edits.patch.addons ?? [] : patch.addons ?? spec.addons ?? [];
+      if (g.addons) patch.addons = [...g.addons, ...carried.filter((a) => !g.addons!.some((b) => b.name === a.name))];
+      else if (reframe) patch.addons = carried;
     }
     const hint = /\b(shaped like|in the shape of|make it|round|cube|boxy|cylinder|cone|pyramid|donut)\b/.test(full) ? shapeHint(full) : null;
     if (hint) patch.body = { ...(patch.body ?? spec.body ?? { width: 0.5, height: 0.6 }), shape: hint };

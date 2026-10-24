@@ -284,14 +284,14 @@ const ALL_OVER = /\b(all over|everywhere|covered (?:in|with)|all around|on every
 
 function amount(t: string): number {
   if (/\b(twice|double)\b/.test(t)) return 2;
-  if (/\b(half)\b/.test(t)) return 2;
+  if (/\b(in half|half the size|halve)\b/.test(t)) return 2;
   if (/\b(a lot|way|much|really|super|very|huge|giant|massive|enormous|tons|extra)\b/.test(t)) return 1.6;
   if (/\b(a little|a bit|slightly|a tad|tiny bit|somewhat|little bit)\b/.test(t)) return 1.15;
   return 1.3;
 }
 
 const UP = /\b(bigger|larger|huge|giant|enormous|massive|wider|thicker|chunkier|taller|longer|lengthen|enlarge|grow|scale (?:it |them )?up|double|twice|biggest|beefier|beef (?:it |them )?up|bulk (?:it |them )?up|bulkier|heftier|puffier|fuller|deeper|roomier|more room|more space|spacious|extend|supersize|blow (?:it |them )?up)\b/;
-const DOWN = /\b(smaller|tiny|tinier|thinner|narrower|shorter|shorten|shrink|scale (?:it |them )?(?:down|back)|slimmer|slim (?:it |them )?down|half|less bulky|more compact|skinnier|smallest|lower profile|cut (?:it |them )?(?:way )?down|trim (?:it |them )?down|tone (?:it |them )?down|dial (?:it |them )?back|less big|not so big|take (?:it|them) up)\b/;
+const DOWN = /\b(smaller|tiny|tinier|thinner|narrower|shorter|shorten|shrink|scale (?:it |them )?(?:down|back)|slimmer|slim (?:it |them )?down|in half|half the size|halve|less bulky|more compact|skinnier|smallest|lower profile|cut (?:it |them )?(?:way )?down|trim (?:it |them )?down|tone (?:it |them )?down|dial (?:it |them )?back|less big|not so big|take (?:it|them) up)\b/;
 const REMOVE = /\b(remove|delete|take (?:it |them )?(?:off|away|out)|get rid of|lose|ditch|drop|no more|don'?t (?:want|need)|do not (?:want|need)|never use|won'?t (?:use|need)|no need for|leave (?:off|out)|nix|erase|without|cut (?:off|out)|scrap|kill|skip the)\b/;
 const MOVE = /\b(move|shift|relocate|put (?:it|them) on|switch (?:it|them) to|instead|rather have|should be on|would look better on|to the other side)\b/;
 // "print" only as a verb: "leopard print" is a pattern.
@@ -812,8 +812,13 @@ export function interpretEdits(text: string, spec: ProductSpec, category: Catego
     const sizeAsk = sizeDir(t) !== 0 && !(isComplaint(t) && explicitSize);
     // "Add a big star" is an add with a size; "I want a huge front pocket" resizes a part the model has.
     const newThing = decalContent(raw, t) || findWord(t, ADDON_KEYS.filter((k) => !PART_WORDS[ctx.category][k]));
-    if (!done && sizeAsk && !(ADD.test(t) && newThing && !findPart(t, ctx.category) && findDecal(t, ctx.decals) < 0 && findAddon(t, ctx.addons) < 0)) done = resizeClause(t, ctx);
-    if (mention) lastRef = mention;
+    if (!done && sizeAsk && !(ADD.test(t) && newThing && !findPart(t, ctx.category) && findDecal(t, ctx.decals) < 0 && findAddon(t, ctx.addons) < 0)) {
+      done = resizeClause(t, ctx);
+      // "Make the pockets bigger and red", "make it red and taller": the color applies to the same target.
+      if (done && color && !recolorClause(t, ctx, color)) ctx.patch.color = color;
+    }
+    // "Never mind the pockets, make it red": a dismissed thing isn't what "it" means next.
+    if (mention) lastRef = /\b(never ?mind|forget(?: about)?|whatever|don'?t care about)\b/.test(t) ? null : mention;
     if (!done && isComplaint(t) && explicitSize) done = !!mention;
     // "paint the visor gold" recolors; "paint a star on the visor" draws.
     const paintsPart = /\b(paint|color|colour|dye|spray|coat)\b/.test(t) && !decalContent(raw, t);
@@ -845,9 +850,17 @@ export function shapeHint(t: string): Body["shape"] | null {
   return null;
 }
 
-/** "undo", "go back", "change it back", "never mind". */
+/**
+ * A request to undo the last change. Explicit commands count anywhere; "never mind" / "scratch that"
+ * only when that is the whole request ("never mind, it's perfect, lock it" is not an undo).
+ */
 export function isUndo(text: string): boolean {
-  return /\b(undo|go back|revert|change it back|put it back|take that back|never ?mind|scratch that|back to (?:how|what) it was|previous version|the way it was|cancel that)\b/i.test(text);
+  const t = text.toLowerCase().replace(/[^a-z' ]/g, " ").replace(/\s+/g, " ").trim();
+  if (/\b(undo|revert|change it back|take that back|back to (?:how|what) it was|previous version|the way it was before|cancel that|go back to (?:the )?(?:last|previous|old|before))\b/.test(t)) return true;
+  if (/\b(scrap|scratch|undo|cancel|forget|drop) (that|the) last (thing|change|edit|one)\b/.test(t)) return true;
+  // "I liked the old shape better, go back."
+  if (/\b(go back|put it back)\b/.test(t) && /\b(old|before|previous|better|original|earlier)\b/.test(t)) return true;
+  return /^(?:(?:oh|um|uh|wait|actually|no|nah|hmm|ok|okay|ugh) )*(?:never ?mind|scratch that|go back|put it back|undo that|i liked it better before)(?: (?:please|then|that|that one|that change|actually))*$/.test(t);
 }
 
 /** Generic product nouns as a regex alternation, longest first. */

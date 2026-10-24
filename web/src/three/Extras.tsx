@@ -189,14 +189,15 @@ function DecalMesh({ spec, d, ink }: { spec: ProductSpec; d: Decal; ink: string 
     () => new THREE.MeshStandardMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, roughness: 0.6, alphaTest: 0.02 }),
     [tex],
   );
+  useEffect(() => () => mat.dispose(), [mat]);
   const ref = useRef<THREE.Mesh>(null);
-  useEffect(() => {
-    const m = ref.current;
-    if (!m || !built.flat) return;
-    const n = new THREE.Vector3(...a.normal);
-    if (Math.abs(n.y) > 0.9) m.rotation.set(-Math.PI / 2 * Math.sign(n.y), 0, 0);
-    else m.lookAt(new THREE.Vector3(...built.pos).add(n));
-  });
+  // Flat cards face their normal in the parent's own frame. (lookAt would aim at a world point,
+  // which is wrong once the model has turned.)
+  const nKey = a.normal.join(",");
+  const rotation = useMemo<[number, number, number]>(() => {
+    const [nx, ny, nz] = a.normal;
+    return Math.abs(ny) > 0.9 ? [(-Math.PI / 2) * Math.sign(ny), 0, 0] : [0, Math.atan2(nx, nz), 0];
+  }, [nKey]); // eslint-disable-line react-hooks/exhaustive-deps
   // Pop in: grow from nothing when first drawn.
   const grow = useRef(0);
   useFrame((_s, dt) => {
@@ -204,7 +205,7 @@ function DecalMesh({ spec, d, ink }: { spec: ProductSpec; d: Decal; ink: string 
     if (ref.current && built.flat) ref.current.scale.setScalar(Math.max(0.001, grow.current));
     mat.opacity = grow.current;
   });
-  return <mesh ref={ref} geometry={built.geo} material={mat} position={built.pos} scale={built.flat ? undefined : built.scale} renderOrder={2} />;
+  return <mesh ref={ref} geometry={built.geo} material={mat} position={built.pos} rotation={built.flat ? rotation : undefined} scale={built.flat ? undefined : built.scale} renderOrder={2} />;
 }
 
 export function Decals({ spec }: { spec: ProductSpec }) {
@@ -222,6 +223,23 @@ const UNIT = { dress: 0.075, top: 0.075, skirt: 0.075, backpack: 0.1, helmet: 0.
 const VERTICAL = /\b(holder|bottle|straw|antenna|antennas|leg|legs|pole|stand|pen|umbrella|can|cap|lid|flask|candle|stem|post|tissue)\b/;
 const FLATISH = /\b(panel|panels|screen|display|strip|stripe|reflector|reflectors|patch|plate|pad|sleeve|lock|port|charger|switch|clip|mount)\b/;
 
+/** Wing/fin outline, cached per size so re-renders don't rebuild the extrusion. */
+const fins = new Map<number, THREE.ExtrudeGeometry>();
+function finGeometry(u: number): THREE.ExtrudeGeometry {
+  const key = Math.round(u * 1e4);
+  let g = fins.get(key);
+  if (!g) {
+    const shape = new THREE.Shape();
+    shape.moveTo(0, 0);
+    shape.quadraticCurveTo(u * 0.9, u * 0.6, u * 2.2, u * 1.6);
+    shape.quadraticCurveTo(u * 1.2, u * 0.3, u * 0.9, -u * 0.5);
+    shape.lineTo(0, -u * 0.3);
+    g = new THREE.ExtrudeGeometry(shape, { depth: u * 0.08, bevelEnabled: true, bevelSize: u * 0.03, bevelThickness: u * 0.03, bevelSegments: 2 });
+    fins.set(key, g);
+  }
+  return g;
+}
+
 /** One add-on primitive, built in a local frame where +y is the outward normal and +x the tangent. */
 function AddonShape({ a, u, mat, name, spread }: { a: Addon; u: number; mat: THREE.Material; name: string; spread: number }) {
   const vertical = VERTICAL.test(name);
@@ -236,21 +254,13 @@ function AddonShape({ a, u, mat, name, spread }: { a: Addon; u: number; mat: THR
       return <mesh material={mat} position={[0, u * (flat ? 0.06 : 0.4), 0]}><boxGeometry args={flat ? [u * 2.0, u * 0.12, u * 1.3] : [u * 0.9, u * 0.8, u * 0.9]} /></mesh>;
     }
     case "torus": return <mesh material={mat} position={[0, u * 0.55, 0]} rotation={[0, Math.PI / 2, 0]}><torusGeometry args={[u * 0.55, u * 0.14, 12, 32]} /></mesh>;
-    case "fin": {
-      const shape = new THREE.Shape();
-      shape.moveTo(0, 0);
-      shape.quadraticCurveTo(u * 0.9, u * 0.6, u * 2.2, u * 1.6);
-      shape.quadraticCurveTo(u * 1.2, u * 0.3, u * 0.9, -u * 0.5);
-      shape.lineTo(0, -u * 0.3);
+    case "fin":
       // A single fin stands out along the normal (a mohawk); a pair tilts out to either side (wings).
       return (
         <group rotation={[0, 0, -spread * 0.9]}>
-          <mesh material={mat} rotation={[0, Math.PI / 2, Math.PI / 2]}>
-            <extrudeGeometry args={[shape, { depth: u * 0.08, bevelEnabled: true, bevelSize: u * 0.03, bevelThickness: u * 0.03, bevelSegments: 2 }]} />
-          </mesh>
+          <mesh material={mat} rotation={[0, Math.PI / 2, Math.PI / 2]} geometry={finGeometry(u)} />
         </group>
       );
-    }
     case "bow":
       return (
         <group scale={[1, 0.5, 1]}>
@@ -287,6 +297,9 @@ function AddonMesh({ spec, a, trim, accent }: { spec: ProductSpec; a: Addon; tri
     if (a.color) return new THREE.MeshPhysicalMaterial({ color: a.color, roughness: 0.45, clearcoat: 0.3 });
     return a.shape === "bow" || a.shape === "spike" ? new THREE.MeshStandardMaterial({ color: accent, metalness: 0.8, roughness: 0.3 }) : trim;
   }, [a.glow, a.color, a.shape, trim, accent]);
+  useEffect(() => () => {
+    if (mat !== trim) mat.dispose();
+  }, [mat, trim]);
   const base = anchorFor(spec, a.placement);
   const grow = useRef<THREE.Group>(null);
   const g = useRef(0);

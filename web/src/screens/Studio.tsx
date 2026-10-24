@@ -148,6 +148,9 @@ export default function Studio() {
   const handleInterim = useCallback((partial: string) => {
     // Instant guess: start forming the product from live captions; the server's spec always wins.
     const guess = guessPatch(partial, spec);
+    // Mid-sentence "put a red ..." or "make the straps bl..." is about a design or a part, not the
+    // whole product: don't flash the product a new color while the sentence is still coming.
+    if (/\b(draw|paint|write|print|put|add|attach|stick|give|with|strap|straps|pocket|pockets|sleeve|sleeves|visor|handle|zipper|logo|star|heart|letters|text)\b/i.test(partial)) delete guess.color;
     if (!guess.category && !guess.color && !guess.length) return;
     if (guess.category === "generic") delete guess.category;
     const next = applyPatch(spec, guess).spec;

@@ -72,7 +72,7 @@ export function Garment({ spec, flash }: { spec: ProductSpec; flash: MutableRefO
       const d = partTarget(name) - P[name];
       if (Math.abs(d) > 1e-4) {
         P[name] += d * k;
-        if (name === "skirt") moving = true;
+        if (name === "skirt" || name === "bodice") moving = true;
       } else P[name] = partTarget(name);
     }
     mat.color.lerp(color, k);
@@ -109,7 +109,8 @@ export function Garment({ spec, flash }: { spec: ProductSpec; flash: MutableRefO
           const s = i / BD_ROWS;
           const y = cur.bodiceBottom + (topY(th, cur) - cur.bodiceBottom) * s;
           const flare = spec.category === "top" ? 0.03 * (1 - s) ** 2 : 0;
-          out[0] = torsoR(y) + 0.011 + flare + 0.008 * smooth(1.56, 1.62, y);
+          // A bigger bodice stands further off the form; the neckline edge stays close to the neck.
+          out[0] = (torsoR(y) + 0.011 + flare + 0.008 * smooth(1.56, 1.62, y)) * (1 + (Math.max(0.3, P.bodice) - 1) * 0.35 * (1 - smooth(1.5, 1.6, y)));
           out[1] = y;
           out[2] = torsoXS(y);
           out[3] = TORSO_ZS + 0.02;
@@ -135,7 +136,7 @@ export function Garment({ spec, flash }: { spec: ProductSpec; flash: MutableRefO
     pockets.forEach((ref, n) => {
       const g = ref.current;
       if (!g) return;
-      g.visible = showSkirt && cur.pockets > 0.01 && P.pockets > 0.02;
+      g.visible = showSkirt && cur.pockets > 0.01 && P.pockets > 0.02 && P.skirt > 0.02;
       const th = n === 0 ? -0.95 : 0.95;
       skirtPoint(py, th, cur, sway, tmp);
       const r = (tmp[0] + 0.004) * fuller(py);
@@ -149,7 +150,7 @@ export function Garment({ spec, flash }: { spec: ProductSpec; flash: MutableRefO
     const apart = Math.pow(Math.sin(phase * Math.PI), 6) * cur.seam;
     if (bodiceGroup.current) bodiceGroup.current.position.y = apart * 0.06;
     if (seam.current) {
-      seam.current.visible = cur.seam > 0.01 && P.seam > 0.02;
+      seam.current.visible = cur.seam > 0.01 && P.seam > 0.02 && P.skirt > 0.02 && P.bodice > 0.02;
       seam.current.scale.set(1, 1, Math.max(0.2, P.seam)).multiplyScalar(0.98 + cur.seam * 0.02);
       seam.current.position.y = WAIST_Y + apart * 0.03;
       seamMat.opacity = cur.seam * (0.65 + apart * 0.35);

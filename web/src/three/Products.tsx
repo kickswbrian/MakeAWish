@@ -1,4 +1,4 @@
-import { useMemo, useRef, type MutableRefObject, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, type MutableRefObject, type ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
@@ -35,6 +35,7 @@ export function Backpack({ spec, flash }: { spec: ProductSpec; flash: MutableRef
   // "Thicker straps" thickens the tube; scaling the whole loop would just push the straps outward.
   const strapR = 0.03 * Math.min(2.2, spec.parts?.straps?.scale ?? 1);
   const straps = useMemo(() => [-0.17, 0.17].map((x) => new THREE.TubeGeometry(strapCurve(x), 32, strapR, 10, false)), [strapR]);
+  useEffect(() => () => straps.forEach((g) => g.dispose()), [straps]);
   const gold = useMemo(() => new THREE.MeshStandardMaterial({ color: "#e6c46a", metalness: 0.9, roughness: 0.25 }), []);
 
   useFrame((state, dt) => {

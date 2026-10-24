@@ -16,7 +16,15 @@ export function cliBrain(
   const args = ["-p", "--output-format", "json", "--json-schema", schema, "--system-prompt", SYSTEM,
     "--model", opts.model ?? "claude-opus-5-5", "--effort", opts.effort ?? "low", "--tools", ""];
   return new Promise((resolve, reject) => {
+    // No shell: the prompt and schema are long arguments a shell would mangle. A missing binary
+    // rejects via "error" and the turn falls back to the rule brain.
     const p = spawn("claude", args, { shell: false });
+    // A hung CLI must not block the wish's turn queue forever.
+    const timer = setTimeout(() => {
+      p.kill();
+      reject(new Error("claude CLI timed out after 30 s"));
+    }, 30_000);
+    p.on("close", () => clearTimeout(timer));
     let out = "";
     let err = "";
     p.stdout.on("data", (d) => (out += d));
