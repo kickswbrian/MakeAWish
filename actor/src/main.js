@@ -15,15 +15,16 @@ import { z } from "zod";
 const DEFAULT_SOURCES = {
   amazon: {
     actorId: "junglee/amazon-crawler",
-    input: { categoryOrProductUrls: [{ url: "https://www.amazon.com/s?k={{queryEncoded}}" }], maxItemsPerStartUrl: "{{max}}", proxyCountry: "US" },
+    input: { categoryOrProductUrls: [{ url: "https://www.amazon.com/s?k={{queryEncoded}}" }], maxItemsPerStartUrl: "{{max}}", maxSearchPagesPerStartUrl: 1, scrapeProductDetails: false, proxyCountry: "US" },
   },
   etsy: {
     actorId: "epctex/etsy-scraper",
-    input: { search: "{{query}}", maxItems: "{{max}}", proxy: { useApifyProxy: true } },
+    input: { search: "{{query}}", maxItems: "{{max}}", endPage: 1, proxy: { useApifyProxy: true, apifyProxyGroups: ["RESIDENTIAL"] } },
   },
   google_shopping: {
     actorId: "emastra/google-shopping-scraper",
-    input: { queries: ["{{query}}"], maxPagesPerQuery: 1, resultsPerPage: "{{max}}", countryCode: "us" },
+    // maxItems caps the run; without it the scraper keeps paging (and charging) until the timeout.
+    input: { queries: ["{{query}}"], maxItems: "{{max}}", maxItemsPerQuery: "{{max}}", countryCode: "us" },
   },
 };
 
@@ -50,17 +51,18 @@ function toPrice(v) {
 
 /** Store actors all name things differently; take whatever looks like a title, link, price and image. */
 function normalize(source, item) {
-  const title = first(item.title, item.name, item.productTitle, item.product_title);
-  let url = first(item.url, item.link, item.productUrl, item.product_url, item.productLink);
+  const title = first(item.title, item.name, item.productTitle, item.product_title, item.productName);
+  let url = first(item.url, item.link, item.productUrl, item.product_url, item.productLink, item.asin ? `https://www.amazon.com/dp/${item.asin}` : undefined);
   if (url && url.startsWith("/")) url = `https://www.${source === "etsy" ? "etsy" : "amazon"}.com${url}`;
-  const image = first(item.thumbnailImage, item.image, item.imageUrl, item.thumbnail, item.mainImage, Array.isArray(item.images) ? item.images[0] : undefined, Array.isArray(item.imageUrls) ? item.imageUrls[0] : undefined);
+  const image = first(item.thumbnailImage, item.image, item.imageUrl, item.productImage, item.thumbnail, item.mainImage, Array.isArray(item.images) ? item.images[0] : undefined, Array.isArray(item.imageUrls) ? item.imageUrls[0] : undefined);
   if (!title || !url) return null;
   return {
     source,
     title: String(title).slice(0, 200),
     url: String(url),
     price: toPrice(first(item.price, item.priceValue, item.currentPrice, item.extracted_price)),
-    image: typeof image === "string" ? image : image?.url ?? null,
+    // Inline base64 thumbnails (Google Shopping) are kept only when small.
+    image: (typeof image === "string" ? image : image?.url ?? null)?.replace(/^data:.{20000,}$/s, "") || null,
   };
 }
 
