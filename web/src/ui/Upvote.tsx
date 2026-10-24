@@ -21,7 +21,6 @@ const myVotes = () => new Set(pref<string[]>("votes", []));
 export function Upvote({ c, onChange, big }: { c: Campaign; onChange?: (c: Campaign) => void; big?: boolean }) {
   const [on, setOn] = useState(() => myVotes().has(c.id));
   const [delta, setDelta] = useState(0);
-  const [pop, setPop] = useState(0);
   const count = Math.max(0, c.votes + delta);
 
   const toggle = async (e: React.MouseEvent) => {
@@ -30,7 +29,6 @@ export function Upvote({ c, onChange, big }: { c: Campaign; onChange?: (c: Campa
     const up = !on;
     setOn(up);
     setDelta((d) => d + (up ? 1 : -1));
-    if (up) setPop((p) => p + 1);
     const votes = myVotes();
     if (up) votes.add(c.id);
     else votes.delete(c.id);
@@ -54,7 +52,7 @@ export function Upvote({ c, onChange, big }: { c: Campaign; onChange?: (c: Campa
       aria-label={`${on ? "Remove your upvote" : "Upvote this wish"}, ${count} ${count === 1 ? "upvote" : "upvotes"}`}
       onClick={toggle}
     >
-      <svg key={pop} className={pop ? "uv-pop" : ""} width={big ? 18 : 15} height={big ? 18 : 15} viewBox="0 0 24 24" fill={on ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" aria-hidden="true">
+      <svg width={big ? 18 : 15} height={big ? 18 : 15} viewBox="0 0 24 24" fill={on ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" aria-hidden="true">
         <path d="M12 3.5 20 13h-4.6v7.5H8.6V13H4z" />
       </svg>
       <span>{count}</span>
