@@ -8,16 +8,22 @@ import { getWish } from "./wishes.ts";
 const CACHE_MS = 24 * 3600_000;
 export const SOURCES = ["amazon", "etsy", "google_shopping"];
 
-// Actor run limits. The actor gives each store ~40 s (+10 s guard) and Claude up to 2 x 20 s, so a
-// worst-case run is ~95 s; a run that hits its own timeout makes the sync endpoint return an error.
-const RUN_TIMEOUT_SECS = 120;
+// Actor run limits. The actor budgets itself from its run timeout: stores get up to 35 s, Claude what's
+// left (at most 35 s), and it pushes results ~8 s before the deadline. A run that still hits its timeout
+// makes the sync endpoint return an error, so the fetch waits a little longer than the run.
+const RUN_TIMEOUT_SECS = 90;
 const FETCH_TIMEOUT_MS = (RUN_TIMEOUT_SECS + 15) * 1000;
 // The actor only waits on HTTP calls, so it doesn't need the platform default memory (billed per GB-hour).
 const RUN_MEMORY_MB = 512;
 
 /** Full description the listings are scored against: stable across field order and wording noise. */
 export function matchQuery(spec: ProductSpec): string {
-  const d = spec.category === "generic" && spec.name ? describeSpec(spec).replace(/\bwish\b/, spec.name) : describeSpec(spec);
+  let d = describeSpec(spec);
+  if (spec.category === "generic") {
+    // describeSpec says "wish" for the generic category; use the name, or the features, instead.
+    const what = spec.name?.trim() || (spec.features ?? []).map((f) => f.replace(/_/g, " ")).join(", ");
+    if (what) d = d.replace(/\bwish\b/, what);
+  }
   return d.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
@@ -33,16 +39,24 @@ const FEATURE_WORDS: Record<string, { pre?: string; post?: string }> = {
  * What gets typed into each store's search box. Marketplace search returns little or nothing for a
  * whole feature sentence ("... that converts to a skirt, with phone pockets"), so keep the product
  * noun, the color and the single most distinctive feature; Claude still scores against matchQuery.
+ * Only fields that are in the cache key go in here (no length or fabric), so two wishes that share a
+ * cache row also share the search that filled it.
  */
 export function searchQuery(spec: ProductSpec): string {
-  const generic = spec.category === "generic";
-  const noun = generic ? (spec.name ?? "").trim() : spec.category;
-  const color = spec.color ? colorName(spec.color) : "";
-  const length = spec.length && (spec.category === "dress" || spec.category === "skirt") && spec.length !== "knee" ? spec.length : "";
   const feats = spec.features ?? [];
-  const known = feats.find((f) => FEATURE_WORDS[f]);
-  const words = known ? FEATURE_WORDS[known] : !generic && feats[0] ? { post: `with ${feats[0].replace(/_/g, " ")}` } : {};
-  const q = [color, words.pre, length, noun || matchQuery(spec), words.post].filter(Boolean).join(" ");
+  const plain = (f: string) => f.replace(/_/g, " ");
+  const color = spec.color ? colorName(spec.color) : "";
+  let noun = spec.category === "generic" ? (spec.name ?? "").trim() : spec.category;
+  let words: { pre?: string; post?: string } = {};
+  if (!noun) {
+    // Unnamed generic wish: the features are all we know about what it is.
+    noun = feats.slice(0, 2).map(plain).join(" ");
+  } else {
+    const known = feats.find((f) => FEATURE_WORDS[f]);
+    words = known ? FEATURE_WORDS[known] : feats[0] ? { pre: plain(feats[0]) } : {};
+  }
+  if (!noun) return matchQuery(spec); // nothing to search on but the description itself
+  const q = [color, words.pre, noun, words.post].filter(Boolean).join(" ");
   return q.toLowerCase().replace(/\s+/g, " ").trim().split(" ").slice(0, 7).join(" ");
 }
 
@@ -94,8 +108,32 @@ export function writeCache(spec: ProductSpec, matches: Match[], searched: number
     .run(keyFor(spec), matchQuery(spec), JSON.stringify(matches), searched, total, Date.now());
 }
 
-/** Kick off a match search for a locked wish. Never throws. */
+/** Kick off a match search for a locked wish. Never throws (callers fire and forget it). */
 export async function findMatches(wishId: string): Promise<void> {
+  try {
+    await searchAndSave(wishId);
+  } catch (err) {
+    console.error(`[apify] match search for ${wishId} crashed:`, err);
+    try {
+      const wish = getWish(wishId);
+      if (wish) save(wishId, sampleMatches(wish.spec), 0, SOURCES.length, true);
+    } catch (e) {
+      console.error("[apify] could not save fallback matches:", e);
+    }
+  }
+}
+
+/**
+ * A server restart mid-search leaves match_runs.pending = 1 with nothing running, and the UI would
+ * wait forever. Re-run those searches on boot (a cache hit when the earlier run got that far).
+ */
+export function resumePendingMatches(): void {
+  const rows = db.prepare("SELECT wish_id FROM match_runs WHERE pending = 1").all() as { wish_id: string }[];
+  if (rows.length) console.log(`[apify] resuming ${rows.length} match search(es) interrupted by a restart`);
+  for (const r of rows) void findMatches(r.wish_id);
+}
+
+async function searchAndSave(wishId: string): Promise<void> {
   const wish = getWish(wishId);
   if (!wish) return;
   const spec = wish.spec;
@@ -114,18 +152,28 @@ export async function findMatches(wishId: string): Promise<void> {
 
   const started = Date.now();
   try {
-    const { matches, searched, total, costUsd } = await runActor(spec);
-    console.log(`[apify] ${matches.length} matches in ${Date.now() - started}ms, searched ${searched}/${total}, cost ~$${costUsd ?? "?"}`);
+    const { matches, searched, total, costUsd, listings, scoredBy } = await runActor(spec);
+    console.log(`[apify] ${matches.length} matches from ${listings ?? "?"} listings (scored by ${scoredBy ?? "?"}) in ${Date.now() - started}ms, searched ${searched}/${total}, cost ~$${costUsd ?? "?"}`);
     // No store answered: that's an outage, not "nothing like it exists", so don't present it as a result.
     if (searched === 0) throw new Error(`no store answered (0 of ${total})`);
-    // Cache empty results too when stores did answer: "nothing close" is a real answer, and re-running
-    // a paid search on every lock (or falling back to samples in DEMO_MODE) would be wrong.
-    writeCache(spec, matches, searched, total);
+    if (shouldCache(matches.length, listings, scoredBy)) writeCache(spec, matches, searched, total);
     save(wishId, matches, searched, total, false);
   } catch (err) {
     console.warn("[apify] failed, serving sample matches:", (err as Error).message);
     save(wishId, sampleMatches(spec), 0, SOURCES.length, true);
   }
+}
+
+/**
+ * Cached rows live 24 h (forever in DEMO_MODE), so only cache answers worth repeating. Keyword-overlap
+ * scores (Claude unavailable) are a degraded result. An empty result is only a real "nothing like it
+ * exists" when stores returned listings and Claude rejected them; zero listings usually means the
+ * stores came back empty-handed, which a later search may not.
+ */
+export function shouldCache(matchCount: number, listings: number | null, scoredBy: string | null): boolean {
+  if (scoredBy === "keywords") return false;
+  if (matchCount > 0) return true;
+  return (listings ?? 0) > 0 && scoredBy === "llm";
 }
 
 const num = (v: unknown): number | null => (v == null || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
@@ -172,7 +220,7 @@ export async function runActor(spec: ProductSpec) {
     .slice(0, 6);
   const searched = num(meta?.searched) ?? new Set(matches.map((m) => m.source)).size;
   const total = num(meta?.total) ?? SOURCES.length;
-  return { matches, searched, total, costUsd: num(meta?.costUsd) };
+  return { matches, searched, total, costUsd: num(meta?.costUsd), listings: num(meta?.listings), scoredBy: typeof meta?.scoredBy === "string" ? meta.scoredBy : null };
 }
 
 /**

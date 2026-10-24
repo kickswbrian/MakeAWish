@@ -173,6 +173,16 @@ export default function Studio() {
     }, 2500);
   }, [wishId]);
 
+  // While the search runs, poll too: a socket reconnect mid-search can drop the matches:ready event.
+  const matchesPending = mode === "results" && !!matches?.pending;
+  useEffect(() => {
+    if (!matchesPending || !wishId) return;
+    const t = setInterval(() => {
+      void api.matches(wishId).then((m) => setMatches((cur) => (cur && !cur.pending ? cur : m))).catch(() => {});
+    }, 5000);
+    return () => clearInterval(t);
+  }, [matchesPending, wishId]);
+
   useEffect(() => {
     if (mode !== "results" || !matches || matches.pending || announced.current) return;
     announced.current = true;

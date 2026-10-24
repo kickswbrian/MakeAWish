@@ -15,7 +15,7 @@ import {
   PledgeError, reconcilePledge, startCampaignTimers,
 } from "./campaigns.ts";
 import { env, logConfig, MODELS_DIR, paymentMode, WEB_DIST } from "./env.ts";
-import { findMatches, getMatches } from "./apify.ts";
+import { findMatches, getMatches, resumePendingMatches } from "./apify.ts";
 import { resetDemo } from "./demo.ts";
 import { startMeshy } from "./meshy.ts";
 import { handleStripeEvent, mockConfirm, stripe } from "./payments.ts";
@@ -219,4 +219,5 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 startCampaignTimers();
+resumePendingMatches();
 server.listen(env.port, () => logConfig());
