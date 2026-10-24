@@ -61,11 +61,14 @@ export function fill(template, vars) {
 export const first = (...vals) => vals.find((v) => v !== undefined && v !== null && v !== "");
 
 // Prices are shown as USD, so a listing priced in another currency gets no price rather than a wrong one.
-const FOREIGN_CURRENCY = /[€£¥₹₩₽₺₫₪]|\b(?:EUR|GBP|JPY|INR|CAD|AUD|NZD|CHF|SEK|NOK|DKK|PLN|MXN|BRL|KRW|CNY|RMB|HKD|SGD|ZAR|TRY|RUB)\b|\b(?:CA|AU|A|C|NZ|HK|S|R|MX)\$/i;
+const FOREIGN_CURRENCY = /[€£¥₹₨₩₽₺₫₪]|\bRs\b|\b(?:EUR|GBP|JPY|INR|CAD|AUD|NZD|CHF|SEK|NOK|DKK|PLN|MXN|BRL|KRW|CNY|RMB|HKD|SGD|ZAR|TRY|RUB)\b|\b(?:CA|AU|A|C|NZ|HK|S|R|MX)\$/i;
+// US number formats only: "1,299.99", "1299", ".99". "1.299,00" and "45,00" are another locale's.
+const US_NUMBER = /^(?:\d{1,3}(?:,\d{3})+|\d+)?(?:\.\d+)?$/;
 
 /**
  * USD amount from numbers, { value, currency }, or strings like "$1,299.99", "$49.00+", "From $24.99",
- * "$.99", "$20 - $30" (takes the first). Non-USD prices ("€45,00", "£12", "CA$30") return null.
+ * "$.99", "$20 - $30" (takes the first), "2 for $10" (the number after "$"). Non-USD currencies
+ * ("€45,00", "£12", "CA$30", "Rs. 500") and non-US number formats ("$1.299,00", "45,00") return null.
  */
 export function toPrice(v) {
   if (v == null) return null;
@@ -77,11 +80,11 @@ export function toPrice(v) {
   }
   const s = String(v);
   if (FOREIGN_CURRENCY.test(s)) return null;
-  const m = s.match(/(?:\d[\d,]*)?\.\d+|\d[\d,]*/);
-  if (!m) return null;
-  // "45,00" is a decimal comma; "1,299" and "1,299.99" are thousands separators.
-  const raw = /^\d+,\d{1,2}$/.test(m[0]) ? m[0].replace(",", ".") : m[0].replace(/,/g, "");
-  const n = Number(raw);
+  // Prefer the amount right after "$"; with no "$" (e.g. "USD 15", "24.99") take the first number.
+  const m = s.includes("$") ? s.match(/\$\s*(\.?\d[\d.,]*)/) : s.match(/(\.?\d[\d.,]*)/);
+  const token = m?.[1].replace(/[.,]+$/, "");
+  if (!token || !US_NUMBER.test(token)) return null;
+  const n = Number(token.replace(/,/g, ""));
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 

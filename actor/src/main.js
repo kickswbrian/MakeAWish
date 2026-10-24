@@ -12,8 +12,13 @@ import { DEFAULT_SOURCES, fill, normalize, runCostUsd, Scores } from "./sources.
  */
 
 const RUN_STARTED = Date.now();
+// Short-fused client for start/abort/read: the default one retries 8 times with backoff and allows
+// 360 s per request, which can outlast the run's budget. waitForFinish keeps the default client
+// because it long-polls.
 let quick;
-const quickClient = () => (quick ??= Actor.newClient({ maxRetries: 2, timeoutSecs: 15 }));
+const quickClient = () => (quick ??= Actor.newClient({ maxRetries: 1, timeoutSecs: 10 }));
+// Seconds a store gets past its wait limit to abort, settle and hand back its dataset.
+const STORE_SLACK_SECS = 8;
 
 /**
  * Seconds left before this run must have pushed its results. On the platform that's the run's own
@@ -25,7 +30,27 @@ function secondsLeft() {
   return Math.max(0, (end - Date.now()) / 1000);
 }
 
-async function searchSource(source, cfg, vars, timeoutSecs) {
+/**
+ * Hard bound per store: whatever the Apify API does (retries, slow responses), a store that hasn't
+ * handed back its listings by timeoutSecs + STORE_SLACK_SECS is skipped, and its run aborted.
+ */
+async function searchSourceBounded(source, cfg, vars, timeoutSecs) {
+  const state = { runId: null };
+  let timer;
+  const deadline = new Promise((_, rej) => {
+    timer = setTimeout(() => rej(new Error(`no answer within ${timeoutSecs + STORE_SLACK_SECS}s`)), (timeoutSecs + STORE_SLACK_SECS) * 1000);
+  });
+  try {
+    return await Promise.race([searchSource(source, cfg, vars, timeoutSecs, state), deadline]);
+  } catch (err) {
+    if (state.runId) void quickClient().run(state.runId).abort().catch(() => {});
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function searchSource(source, cfg, vars, timeoutSecs, state) {
   const started = Date.now();
   const input = fill(cfg.input, vars);
   // Hard spend cap per store: every default actor is pay-per-event, and without a cap an actor that
@@ -33,15 +58,17 @@ async function searchSource(source, cfg, vars, timeoutSecs) {
   const maxTotalChargeUsd = cfg.maxChargeUsd ?? Number((0.01 + vars.max * 0.01).toFixed(2));
   // Start, then wait ourselves, so we keep the run id: if the store is still going at our limit we
   // abort it and still read whatever it already pushed. The run's own timeout is only a backstop.
-  const startedRun = await Actor.start(cfg.actorId, input, { timeout: timeoutSecs + 15, memory: cfg.memory ?? 1024, maxItems: vars.max, maxTotalChargeUsd });
-  const runClient = Actor.apifyClient.run(startedRun.id);
+  const startedRun = await quickClient().actor(cfg.actorId).start(input, { timeout: timeoutSecs + 15, memory: cfg.memory ?? 1024, maxItems: vars.max, maxTotalChargeUsd });
+  state.runId = startedRun.id;
   const waitSecs = Math.max(1, Math.round(timeoutSecs - (Date.now() - started) / 1000));
-  let run = await runClient.waitForFinish({ waitSecs });
+  let run = await Actor.apifyClient.run(startedRun.id).waitForFinish({ waitSecs });
   if (!run || run.status === "READY" || run.status === "RUNNING") {
     log.warning(`[${source}] still running after ${timeoutSecs}s, aborting and keeping what it found`);
-    run = (await runClient.abort().catch(() => runClient.get())) ?? startedRun;
+    const runClient = quickClient().run(startedRun.id);
+    run = (await runClient.abort().catch(() => null)) ?? run ?? startedRun;
+    // Give the abort a moment to settle so the charged-event counts used for the cost are final.
+    run = (await Actor.apifyClient.run(startedRun.id).waitForFinish({ waitSecs: 2 }).catch(() => null)) ?? run;
   }
-  // Short-fused client for the read: the default one retries 8 times with backoff, which can outlast the run's budget.
   const { items } = await quickClient().dataset(run.defaultDatasetId).listItems({ limit: vars.max * 3, clean: true });
   const listings = items.map((i) => normalize(source, i, cfg.base)).filter(Boolean).slice(0, vars.max);
   const costUsd = runCostUsd(run);
@@ -60,9 +87,10 @@ async function score(query, spec, listings, budgetSecs) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (key && budgetSecs >= 5) {
     try {
-      // The signal bounds everything, including the SDK's retry sleep (it honours any retry-after).
-      // A retry only when there's room for a second 15 s attempt.
-      const client = new Anthropic({ apiKey: key, maxRetries: budgetSecs >= 35 ? 1 : 0, timeout: Math.min(15, budgetSecs) * 1000 });
+      // One attempt may use the whole budget (a healthy Opus call can take a while); the retry is for fast
+      // failures like 429/529. The signal caps the total, including the SDK's retry sleep (it honours
+      // any retry-after).
+      const client = new Anthropic({ apiKey: key, maxRetries: 1, timeout: budgetSecs * 1000 });
       const lines = listings.map((l, i) => `${i}. [${l.source}] ${l.title}${l.price != null ? ` ($${l.price})` : ""}`).join("\n");
       const response = await client.messages.parse({
         model: process.env.SCORING_MODEL || "claude-opus-5-5",
@@ -110,8 +138,8 @@ await Actor.main(async () => {
   // `searchQuery` ("emerald convertible midi dress") while scoring judges against the full `query`.
   const searchQuery = String(input.searchQuery ?? "").trim() || query;
   const max = Math.max(1, Math.min(20, input.maxPerSource ?? 5));
-  // Stores get what's left after reserving ~25 s for scoring, so the run finishes inside its own timeout.
-  const timeoutSecs = Math.max(10, Math.min(input.timeoutSecs ?? 35, secondsLeft() - 25));
+  // Stores (wait + slack) get what's left after reserving ~25 s for scoring, so the run finishes inside its own timeout.
+  const timeoutSecs = Math.max(10, Math.min(input.timeoutSecs ?? 35, secondsLeft() - 25 - STORE_SLACK_SECS));
   const minScore = input.minScore ?? 50;
   const sources = (input.sources?.length ? input.sources : Object.keys(DEFAULT_SOURCES)).filter((s) => DEFAULT_SOURCES[s] || input.sourceActors?.[s]);
   const vars = { query: searchQuery, queryEncoded: encodeURIComponent(searchQuery).replace(/%20/g, "+"), max };
@@ -119,7 +147,7 @@ await Actor.main(async () => {
   const started = Date.now();
 
   const settled = await Promise.allSettled(
-    sources.map((s) => searchSource(s, { ...DEFAULT_SOURCES[s], ...(input.sourceActors?.[s] ?? {}) }, vars, timeoutSecs)),
+    sources.map((s) => searchSourceBounded(s, { ...DEFAULT_SOURCES[s], ...(input.sourceActors?.[s] ?? {}) }, vars, timeoutSecs)),
   );
   const listings = [];
   let searched = 0;

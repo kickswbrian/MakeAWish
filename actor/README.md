@@ -46,6 +46,8 @@ curl -X POST "https://api.apify.com/v2/acts/<username>~wish-matcher/run-sync-get
 2. Listings are normalized to `{ source, title, url, price, image }`, whatever field names the store actor uses.
 3. **One** Claude call (structured output) scores all listings at once. It gets whatever time the run has left (at most 35 s, retry included). With no `ANTHROPIC_API_KEY`, no time left or a failed call, it falls back to keyword overlap.
 
+The whole run is budgeted from its own timeout: stores and scoring shrink to fit, and results are pushed about 8 s before the deadline. Wish it starts it with `timeout=90` and waits 15 s past that before giving up, so a slow run is cut short by the actor, not by the server.
+
 ## Configuration
 
 | Env var (Actor secret) | Purpose |

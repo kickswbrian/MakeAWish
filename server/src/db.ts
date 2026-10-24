@@ -73,3 +73,7 @@ CREATE TABLE IF NOT EXISTS meshy_cache (
   created_at INTEGER NOT NULL
 );
 `);
+
+// Additive migration: when a match search started, so a restart can tell a live search from a stale one.
+const matchRunCols = db.prepare("SELECT name FROM pragma_table_info('match_runs')").all() as { name: string }[];
+if (!matchRunCols.some((c) => c.name === "started_at")) db.exec("ALTER TABLE match_runs ADD COLUMN started_at INTEGER");
