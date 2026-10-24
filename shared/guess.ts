@@ -71,8 +71,9 @@ export function interpret(text: string, current?: ProductSpec): Interpretation {
   // "Make it a lamp" on a mug is a new product; "make it a blue mug" on a mug is not.
   const newName = (genericBody(full)?.name ?? "").toLowerCase(), oldName = (spec.name ?? "").toLowerCase();
   // Same product noun ("desk lamp" -> "touch lamp", "mug" -> "blue mug") keeps what's on it.
+  const oldKind = (genericBody(` ${oldName} `)?.name ?? oldName).toLowerCase();
   const head = (n: string) => n.split(/\s+/).pop() ?? n;
-  const reframe = !!framed && !!newName && head(newName) !== head(oldName);
+  const reframe = !!framed && !!newName && head(newName) !== head(oldKind);
   // A new product starts clean: its parts, decals and add-ons don't carry over (a lamp has no mug handle).
   const base: ProductSpec = switching ? { ...spec, category, parts: {}, decals: [], addons: [] } : reframe ? { ...spec, addons: [] } : spec;
   const edits = interpretEdits(text, base, category);

@@ -67,7 +67,9 @@ function garmentAnchor(spec: ProductSpec, p: Placement): Anchor {
   const hem = HEM_Y[spec.length ?? "midi"];
   // Same factor as Garment.tsx, so decals stay on a bigger or smaller bodice.
   const bs = spec.parts?.bodice?.hidden ? 1 : spec.parts?.bodice?.scale ?? 1;
-  const bodR = (y: number) => bodiceR(y, torsoR(y) + 0.011, bs) + 0.009;
+  // Tops flare a little toward the hem, as in Garment.tsx.
+  const flare = (y: number) => (cat === "top" ? 0.03 * (1 - Math.min(1, Math.max(0, (y - a.bodiceBottom) / (1.555 - a.bodiceBottom)))) ** 2 : 0);
+  const bodR = (y: number) => bodiceR(y, torsoR(y) + 0.011 + flare(y), bs) + 0.009;
   const bodice = (y: number, theta: number, base: number) => {
     const h = base * 0.6;
     return wrapAnchor(y, bodR(y), torsoXS(y), TORSO_ZS + 0.02, theta, base, bodR(y + h), bodR(y - h));
@@ -103,11 +105,11 @@ function garmentAnchor(spec: ProductSpec, p: Placement): Anchor {
   // Rings for belts, ruffles and collars.
   if (p === "waist") {
     const y = cat === "top" ? 0.95 : WAIST_Y - 0.01;
-    const r = cat === "top" ? torsoR(y) + 0.03 : skirtR(y).r + 0.012;
+    const r = cat === "top" ? bodR(y) + 0.01 : skirtR(y).r + 0.012;
     anchor.ring = { y, r, xs: cat === "top" ? torsoXS(y) : 1, zs: cat === "top" ? TORSO_ZS + 0.02 : skirtR(y).zs };
   } else if (p === "bottom") {
     const y = hasSkirt ? hem + 0.01 : a.bodiceBottom + 0.01;
-    const s = hasSkirt ? skirtR(y) : { r: torsoR(y) + 0.02, zs: TORSO_ZS + 0.02 };
+    const s = hasSkirt ? skirtR(y) : { r: bodR(y), zs: TORSO_ZS + 0.02 };
     anchor.ring = { y, r: s.r + 0.01, xs: 1, zs: s.zs };
   } else if (p === "top" && hasBodice) {
     anchor.ring = { y: 1.56, r: torsoR(1.56) + 0.03, xs: 1, zs: 1 };

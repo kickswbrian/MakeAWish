@@ -284,14 +284,15 @@ const ALL_OVER = /\b(all over|everywhere|covered (?:in|with)|all around|on every
 
 function amount(t: string): number {
   if (/\b(twice|double)\b/.test(t)) return 2;
-  if (/\b(in half|half the size|halve|half as|half (?:the|its) (?:size|length|width|height)|by half|half size)\b/.test(t)) return 2;
+  if (/\bby half\b/.test(t)) return UP.test(t) ? 1.5 : 2;
+  if (/\b(in half|half the size|halve|half as (?:big|large|long|tall|wide|thick|full|high|bulky|heavy looking)|half (?:the|its) (?:size|length|width|height)|half size)\b/.test(t)) return 2;
   if (/\b(a lot|way|much|really|super|very|huge|giant|massive|enormous|tons|extra)\b/.test(t)) return 1.6;
   if (/\b(a little|a bit|slightly|a tad|tiny bit|somewhat|little bit)\b/.test(t)) return 1.15;
   return 1.3;
 }
 
 const UP = /\b(bigger|larger|huge|giant|enormous|massive|wider|thicker|chunkier|taller|longer|lengthen|enlarge|grow|scale (?:it |them )?up|double|twice|biggest|beefier|beef (?:it |them )?up|bulk (?:it |them )?up|bulkier|heftier|puffier|fuller|deeper|roomier|more room|more space|spacious|extend|supersize|blow (?:it |them )?up)\b/;
-const DOWN = /\b(smaller|tiny|tinier|thinner|narrower|shorter|shorten|shrink|scale (?:it |them )?(?:down|back)|slimmer|slim (?:it |them )?down|in half|half the size|halve|half as|half (?:the|its) (?:size|length|width|height)|by half|half size|less bulky|more compact|skinnier|smallest|lower profile|cut (?:it |them )?(?:way )?down|trim (?:it |them )?down|tone (?:it |them )?down|dial (?:it |them )?back|less big|not so big|take (?:it|them) up)\b/;
+const DOWN = /\b(smaller|tiny|tinier|thinner|narrower|shorter|shorten|shrink|scale (?:it |them )?(?:down|back)|slimmer|slim (?:it |them )?down|in half|half the size|halve|half as (?:big|large|long|tall|wide|thick|full|high|bulky|heavy looking)|half (?:the|its) (?:size|length|width|height)|half size|less bulky|more compact|skinnier|smallest|lower profile|cut (?:it |them )?(?:way )?down|trim (?:it |them )?down|tone (?:it |them )?down|dial (?:it |them )?back|less big|not so big|take (?:it|them) up)\b/;
 const REMOVE = /\b(remove|delete|take (?:it |them )?(?:off|away|out)|get rid of|lose|ditch|drop|no more|don'?t (?:want|need)|do not (?:want|need)|never use|won'?t (?:use|need)|no need for|leave (?:off|out)|nix|erase|without|cut (?:off|out)|scrap|kill|skip the)\b/;
 const MOVE = /\b(move|shift|relocate|put (?:it|them) on|switch (?:it|them) to|instead|rather have|should be on|would look better on|to the other side)\b/;
 // "print" only as a verb: "leopard print" is a pattern.
@@ -681,7 +682,8 @@ function decalClause(raw: string, t: string, ctx: Ctx, color: string | null): bo
   if (!c) {
     // Drawing something we have no picture for: write its name.
     const m = raw.match(/\b(?:draw|paint|print|sketch|doodle|airbrush|stamp|embroider|engrave)\s+(?:on\s+)?(?:a|an|the|some)?\s*(.+?)(?=\s+(?:on|across|along|onto|in|at|over)\b|$)/i);
-    const words = m?.[1].split(/\s+/).filter((w) => !COLOR_NAMES[w.toLowerCase()] && !/^(big|small|little|tiny|huge|cool|nice|cute)$/i.test(w));
+    // "Paint it red" / "paint the whole thing gold" recolor the product; there's nothing to draw.
+    const words = m?.[1].split(/\s+/).filter((w) => !COLOR_NAMES[w.toLowerCase()] && !/^(big|small|little|tiny|huge|cool|nice|cute|it|them|this|that|the|whole|entire|thing|everything|all|over|product)$/i.test(w));
     if (!words?.length) return false;
     c = { kind: "text", content: words.join(" ").slice(0, 24) };
   }
@@ -806,11 +808,15 @@ export function interpretEdits(text: string, spec: ProductSpec, category: Catego
     const color = findColor(t, mention ?? undefined);
     const draws = DRAW.test(t);
     let done = false;
-    if (REMOVE.test(t) || /\bno (?:more )?\w+|\w+less\b/.test(t)) {
+    // Words inside quotes are text to print, not commands: write "kill bill" on it.
+    const unquoted = lower(raw.replace(/["“”][^"“”]*["“”]/g, " "));
+    if (REMOVE.test(unquoted) || /\bno (?:more )?\w+|\w+less\b/.test(unquoted)) {
       done = removeClause(t, ctx);
       // "No pull chain" with nothing to remove must not fall through to adding a chain.
-      if (!done && REMOVE.test(t) && (findWord(t, ADDON_KEYS) || decalContent(raw, t))) done = true;
-      if (!done && /\bno (?:more )?\w+/.test(t) && findWord(t, ADDON_KEYS) && !ADD.test(t.replace(/\bno (?:more )?/, ""))) done = true;
+      // Only when the remove word leads: "add a hook so I don't lose my keys" still adds the hook.
+      const rm = REMOVE.exec(t) ?? /\bno (?:more )?/.exec(t);
+      const leads = !!rm && !ADD.test(t.slice(0, rm.index)) && !DRAW.test(t.slice(0, rm.index)) && !/["“”']/.test(raw);
+      if (!done && leads && (findWord(t, ADDON_KEYS) || decalContent(raw, t))) done = true;
     }
     if (!done && (MOVE.test(t) || /\b(it|them)\b.*\bto the (front|back|left|right|top|bottom|side|other side)\b/.test(t)) && !draws) done = moveClause(t, ctx);
     if (!done) done = retextClause(raw, t, ctx);
@@ -821,7 +827,12 @@ export function interpretEdits(text: string, spec: ProductSpec, category: Catego
       done = resizeClause(t, ctx);
       // "Make the pockets bigger and red", "make it red and taller": the color applies to the same target.
       if (done && color) {
-        const seg = t.split(/\band\b/).map((s) => s.trim()).find((s) => findColor(s) && new RegExp(`\\b(${COLOR_KEYS.map(esc).join("|")})$`).test(s));
+        const tidy = (s: string) => s.trim().replace(/(?:\s+(?:too|as well|now|color|colour|please|instead|then))+$/, "");
+        const colorAtEnd = new RegExp(`\\b(${COLOR_KEYS.map(esc).join("|")})$`);
+        const seg = t.split(/\band\b/).map(tidy).find((s) => findColor(s) && colorAtEnd.test(s));
+        // No "and" part ends in the color: apply it as before, unless it describes something else ("white trim").
+        const described = new RegExp(`\\b(${COLOR_KEYS.map(esc).join("|")})\\s+(?!(?:too|as|now|color|colour|please|instead|then)\\b)[a-z]+`).test(t);
+        if (!seg && !described && !recolorClause(t, ctx, color)) ctx.patch.color = color;
         // "...and the bag red" names its own target; a bare "...and red" means the one being resized.
         const own = seg ? targetWord(` ${seg} `, ctx) : null;
         // "...and the bag red" / "make it red and..." mean the whole product.
@@ -830,7 +841,7 @@ export function interpretEdits(text: string, spec: ProductSpec, category: Catego
       }
     }
     // "Never mind the pockets, make it red": a dismissed thing isn't what "it" means next.
-    if (mention) lastRef = /\bnever ?mind\b|(?<!don'?t |do not |never )\bforget(?: about)?\b|\bdon'?t care about\b/.test(t) ? null : mention;
+    if (mention) lastRef = /\bnever ?mind\b|(?<!don'?t |do not |never )\bforget(?: about)?\b|\bwhatever\b|\bdon'?t care about\b/.test(t) ? null : mention;
     if (!done && isComplaint(t) && explicitSize) done = !!mention;
     // "paint the visor gold" recolors; "paint a star on the visor" draws.
     const paintsPart = /\b(paint|color|colour|dye|spray|coat)\b/.test(t) && !decalContent(raw, t);
@@ -868,12 +879,14 @@ export function shapeHint(t: string): Body["shape"] | null {
  */
 export function isUndo(text: string): boolean {
   const t = text.toLowerCase().replace(/[^a-z' ]/g, " ").replace(/\s+/g, " ").trim();
-  if (/\b(undo|revert|change it back|take that back|back to (?:how|what) it was|previous version|the way it was before|cancel that|go back to (?:the )?(?:last|previous|old|before))\b/.test(t)) return true;
+  if (/\b(undo|revert|take that back|previous version|cancel that|go back to (?:the )?(?:last|previous|old) (?:one|version|design))\b/.test(t)) return true;
+  // "Change it back" is an undo, "change it back to black" is an edit.
+  if (/\bchange it back\b(?! to (?!how|what|the way))/.test(t)) return true;
   if (/\b(scrap|scratch|undo|cancel|forget|drop) (that|the) last (thing|change|edit|one)\b/.test(t)) return true;
-  // "Can you go back", "never mind, put it back", "I liked the old shape better, go back" - but not
-  // "go back to black" or "put it back on the front", which name a value or a place.
-  if (/\b(?:go back|put it back|change it back|set it back)\b(?! (?:to|on|onto|in|into|where|inside|over|under)\b)/.test(t)) return true;
-  if (/\b(?:the way|how) it was\b/.test(t)) return true;
+  // "Can you go back", "never mind, put it back the way it was", "I liked the old shape better, go back":
+  // only when the phrase ends the request. "The hem should go back further" and "put it back up top" are edits.
+  if (/(?:^|\b(?:you|we|let'?s|just|mind|that|so|ok|okay|no|nope|actually|wait|better|it|back|please)\s+)(?:go back|put it back|change it back|set it back)(?: (?:please|then|now|again|one|a step|one step|actually|the way it was(?: before)?|how it was(?: before)?|to (?:how|the way) it was(?: before)?))*$/.test(t)) return true;
+  if (/(?:^|\b(?:back|make it|leave it|keep it|want it|have it|like)\s+)(?:to )?(?:the way|how) it was(?: before)?$/.test(t)) return true;
   // "Never mind" / "scratch that" only when that is the whole request.
   return /^(?:(?:oh|um|uh|wait|actually|no|nah|nope|hmm|ok|okay|ugh|oops|eh) )*(?:never ?mind|scratch that|undo that|i liked it better before)(?: (?:please|then|that|that one|that change|actually|go back|put it back|undo(?: that)?))*$/.test(t);
 }

@@ -189,8 +189,9 @@ async function llmBrain(spec: ProductSpec, transcript: TranscriptTurn[], text: s
 }
 
 /** Trust the model's undo flag; also catch a plain "undo" it answered with an empty patch. */
-export const undoOf = (d: { undo: boolean; lock?: boolean; patch: Record<string, unknown> }, text: string) =>
-  d.undo || (!d.lock && isUndo(text) && Object.keys(d.patch).length === 0);
+// Claude says when it means undo. Guessing from the text turned edits it couldn't express (an empty
+// patch for "make the hood go back") into undos, so the flag alone decides.
+export const undoOf = (d: { undo: boolean }, _text: string) => d.undo;
 
 export function clampSay(s: string) {
   const sentences = s.replace(/\s+/g, " ").trim().match(/[^.!?]+[.!?]*/g) ?? [s];

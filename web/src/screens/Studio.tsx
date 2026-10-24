@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import type * as THREE from "three";
 import {
-  applyPatch, EVENTS, guessPatch,
+  applyPatch, COLOR_NAMES, EVENTS, guessPatch,
   type Campaign, type CampaignUpdatedPayload, type MatchesReadyPayload, type MatchesResponse, type MeshyReadyPayload,
   type ProductSpec, type SpecUpdatedPayload, type WishDTO,
 } from "@wishit/shared";
@@ -18,6 +18,9 @@ import { Waveform } from "../ui/Waveform.tsx";
 import { BackIcon, CategoryIcon, ChevronDown, HeartIcon, KeyboardIcon, MicIcon, MuteIcon, Sparkle } from "../ui/Icons.tsx";
 import { LaunchSheet, MatchGrid, summarize } from "../ui/Results.tsx";
 import { CampaignPanel, Celebration } from "../ui/Campaign.tsx";
+
+/** "paint a red", "a backpack with red": a noun is still coming, so the color isn't the product's yet. */
+const COLOR_AFTER_ARTICLE = new RegExp(`\\b(?:a|an|some|the|with)\\s+(?:\\w+\\s+)?(?:${Object.keys(COLOR_NAMES).join("|")})\\s*$`, "i");
 
 type Mode = "voice" | "results" | "campaign";
 
@@ -150,7 +153,7 @@ export default function Studio() {
     const guess = guessPatch(partial, spec);
     // Mid-sentence "put a red ..." is about a design or an add-on, not the whole product: don't flash
     // the product a new color while that clause is still coming. (Part colors go to spec.parts.)
-    if (/\b(draw|write|print|put|add|attach|stick|stamp|embroider)\b[^,.]*$/i.test(partial)) delete guess.color;
+    if (/\b(draw|write|print|put|add|attach|stick|stamp|embroider)\b[^,.]*$/i.test(partial) || COLOR_AFTER_ARTICLE.test(partial)) delete guess.color;
     if (!guess.category && !guess.color && !guess.length) return;
     if (guess.category === "generic") delete guess.category;
     const next = applyPatch(spec, guess).spec;
