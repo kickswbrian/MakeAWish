@@ -117,6 +117,8 @@ export async function findMatches(wishId: string): Promise<void> {
 }
 
 const inflight = new Set<string>();
+/** Set when the deployed Actor proves outdated (it searched but kept no listings). */
+let actorStale = false;
 
 async function search(wishId: string, spec: Product) {
   db.prepare("INSERT OR REPLACE INTO match_runs (wish_id, searched, total, pending, sample) VALUES (?, 0, ?, 1, 0)").run(wishId, SOURCES.length);
@@ -135,8 +137,8 @@ async function search(wishId: string, spec: Product) {
   const started = Date.now();
   const query = matchQuery(spec);
   console.log(`[apify] searching ${SOURCES.join(" + ")} for "${query}" ${env.apifyActor ? `via ${env.apifyActor}` : "directly"}`);
-  // No deployed Actor: the server calls the store scrapers itself (same scrapers, one hop less).
-  if (!env.apifyActor) {
+  // No deployed Actor (or an outdated one): the server calls the store scrapers itself (same scrapers, one hop less).
+  const direct = async () => {
     try {
       const r = await searchStores(query, actorSpec(spec), MAX_PER_SOURCE, STORE_TIMEOUT_SECS + 20);
       const matches = r.matches.sort((a, b) => b.score - a.score).slice(0, 6);
@@ -148,7 +150,8 @@ async function search(wishId: string, spec: Product) {
       console.warn("[apify] failed, serving sample matches:", (err as Error).message);
       return save(wishId, sampleMatches(spec), 0, SOURCES.length, true);
     }
-  }
+  };
+  if (!env.apifyActor || actorStale) return direct();
   try {
     // The Actor runs the stores in parallel, each up to STORE_TIMEOUT_SECS, then scores: give it room.
     const url = `https://api.apify.com/v2/acts/${encodeURIComponent(env.apifyActor)}/run-sync-get-dataset-items?timeout=${STORE_TIMEOUT_SECS + 45}`;
@@ -170,6 +173,12 @@ async function search(wishId: string, spec: Product) {
       .map((i) => ({ source: String(i.source ?? "web"), title: String(i.title), url: String(i.url), price: i.price == null ? null : Number(i.price), image: i.image ?? null, score: Number(i.score ?? 0), missing: Array.isArray(i.missing) ? i.missing.map(String) : [] }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 6);
+    if (!matches.length && meta?._meta?.searched > 0 && !meta._meta.listings) {
+      // An outdated Actor build runs the stores but drops every listing: skip it until a restart.
+      console.warn(`[apify] ${env.apifyActor} returned no listings (outdated build? \`apify push\` from actor/), searching the stores directly`);
+      actorStale = true;
+      return direct();
+    }
     const searched = meta?._meta?.searched ?? new Set(matches.map((m) => m.source)).size;
     const total = meta?._meta?.total ?? SOURCES.length;
     console.log(`[apify] ${matches.length} matches in ${Date.now() - started}ms, searched ${searched}/${total}, cost ~$${meta?._meta?.costUsd ?? "?"}`);

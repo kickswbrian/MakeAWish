@@ -153,3 +153,32 @@ test("addOrder keeps the root first and cutters after their targets", async () =
   const order2 = addOrder([{ id: "cut", parent: "root", csg: { withPartId: "pocket" } }, { id: "root" }, { id: "pocket", parent: "root" }], "root").map((p) => p.id);
   assert.deepEqual(order2, ["root", "pocket", "cut"]);
 });
+
+test("no template has floating parts", async () => {
+  const { TEMPLATES, templateProduct, floatingParts } = await import("./index.ts");
+  for (const t of TEMPLATES) assert.deepEqual(floatingParts(templateProduct(t, "f")), [], t.id);
+});
+
+test("groundPart settles a part placed in the air onto the product", async () => {
+  const { floatingParts, groundPart } = await import("./index.ts");
+  const knob = (position: [number, number, number]): unknown => ({
+    id: "knob", name: "Knob", kind: "primitive", parent: "body", geometry: { type: "sphere", params: { radius: 0.02 } },
+    transform: { position }, material: { preset: "plastic_matte", color: "#222222" },
+  });
+  // A knob 15 cm above the bag's top: slid straight down onto it.
+  let p = applyPatches(bag(), [{ op: "add", part: knob([0.05, 0.375, 0]) }]).product;
+  assert.deepEqual(floatingParts(p), ["knob"]);
+  const pos = groundPart(p, "knob")!;
+  assert.equal(pos[0], 0.05);
+  assert.ok(pos[1] > 0.2 && pos[1] < 0.245, `y ${pos[1]}`);
+  p = applyPatches(p, [{ op: "update", id: "knob", changes: { transform: { position: pos } } }]).product;
+  assert.deepEqual(floatingParts(p), []);
+
+  // Written in product space under a moved parent: read it that way instead of sliding.
+  const slip = applyPatches(bag(), [
+    { op: "add", part: { id: "pocket", name: "Pocket", kind: "primitive", parent: "body", geometry: { type: "roundedBox", params: { width: 0.2, height: 0.15, depth: 0.04 } }, transform: { position: [0, -0.12, 0.09] }, material: { preset: "nylon", color: "#333333" } } },
+    { op: "add", part: { ...(knob([0, -0.12, 0.12]) as object), id: "zip", parent: "pocket" } },
+  ]).product;
+  assert.deepEqual(floatingParts(slip), ["zip"]);
+  assert.deepEqual(groundPart(slip, "zip"), [0, 0, 0.03]);
+});

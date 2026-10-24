@@ -604,16 +604,21 @@ export default function Studio() {
     select(null);
     modeRef.current = "results";
     setMode("results");
-    setMatches({ matches: [], searched: 0, total: 3, pending: true, sample: false });
+    setMatches({ matches: [], searched: 0, total: 2, pending: true, sample: false });
     await assemble();
     const shot = snapshotThumb(gl.current);
     if (shot) setThumb(shot);
     await api.saveProduct(wishId, useProduct.getState().product, shot ?? undefined).catch(() => {});
     await api.lock(wishId).catch(() => {});
-    // Fallback in case the socket event raced the room join.
-    setTimeout(() => {
-      void api.matches(wishId).then((m) => setMatches((cur) => (cur && !cur.pending ? cur : m))).catch(() => {});
-    }, 2500);
+    // Poll too, in case the socket event raced the room join or the socket dropped: store searches
+    // take ~20 s, and a missed event would leave the grid searching forever.
+    const poll = async (tries: number) => {
+      if (modeRef.current !== "results" || tries <= 0) return;
+      const m = await api.matches(wishId).catch(() => null);
+      if (m && !m.pending) setMatches((cur) => (cur && !cur.pending ? cur : m));
+      else setTimeout(() => void poll(tries - 1), 3000);
+    };
+    setTimeout(() => void poll(40), 2500);
   }, [wishId, select]);
 
   const launch = async (b: { priceCents: number; targetBackers: number; deadlineAt: number }) => {
