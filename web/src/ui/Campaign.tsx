@@ -6,6 +6,7 @@ import { chime } from "../lib/sound.ts";
 import { AgentCheckout } from "./AgentCheckout.tsx";
 import { Bubble } from "./Bubble.tsx";
 import { Sparkle } from "./Icons.tsx";
+import { Upvote } from "./Upvote.tsx";
 
 /** "X of N" with a star that flies into the bar on each new held pledge. */
 export function DemandBar({ c, small }: { c: Campaign; small?: boolean }) {
@@ -102,6 +103,7 @@ export function CampaignPanel({ c, snapshot }: { c: Campaign; snapshot?: string 
         <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
           <span className={`status-pill ${c.status}`}>{c.status}</span>
           <span className="note">{c.paymentMode === "stripe" ? "Stripe test mode" : "Simulated payments"}</span>
+          <Upvote c={c} />
         </div>
         <h2>{c.name}</h2>
         <div className="price-line">

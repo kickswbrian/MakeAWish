@@ -45,6 +45,7 @@ export function getCampaign(id: string): Campaign | null {
     createdAt: r.created_at,
     status: r.status,
     maker: r.maker_json ? JSON.parse(r.maker_json) : null,
+    votes: (db.prepare("SELECT COUNT(*) AS n FROM votes WHERE campaign_id = ?").get(id) as { n: number }).n,
     pledges: pledges.map((p) => ({ id: p.id, email: maskEmail(p.email), status: p.status, failReason: p.fail_reason, createdAt: p.created_at, agent: p.agent_keyid ? { keyid: p.agent_keyid } : null })),
     paymentMode,
   };
@@ -54,6 +55,15 @@ export function getCampaign(id: string): Campaign | null {
 export function listCampaigns(): Campaign[] {
   const ids = db.prepare("SELECT id FROM campaigns ORDER BY created_at DESC LIMIT 100").all() as { id: string }[];
   return ids.map((r) => getCampaign(r.id)!).filter(Boolean);
+}
+
+/** Add or take back one voter's upvote; everyone watching the board sees the new count. */
+export function vote(id: string, voter: string, up: boolean): Campaign | null {
+  if (!getRow(id)) return null;
+  if (up) db.prepare("INSERT OR IGNORE INTO votes (campaign_id, voter, created_at) VALUES (?, ?, ?)").run(id, voter, Date.now());
+  else db.prepare("DELETE FROM votes WHERE campaign_id = ? AND voter = ?").run(id, voter);
+  broadcast(id);
+  return getCampaign(id);
 }
 
 function broadcast(id: string) {

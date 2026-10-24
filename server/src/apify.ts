@@ -6,6 +6,7 @@ import { hash, withTimeout } from "./util.ts";
 import { getWish } from "./wishes.ts";
 import { spend } from "./security.ts";
 import { searchStores, STORE_NAMES } from "./stores.ts";
+import { scoreVisual } from "./visual.ts";
 
 const CACHE_MS = 24 * 3600_000;
 // Etsy's scraper (Playwright) can't finish inside a per-store timeout, so it's left out.
@@ -69,7 +70,7 @@ export function getMatches(wishId: string): MatchesResponse {
     | { searched: number; total: number; pending: number; sample: number } | undefined;
   const rows = db.prepare("SELECT * FROM matches WHERE wish_id = ? ORDER BY score DESC").all(wishId) as any[];
   return {
-    matches: rows.map((r) => ({ source: r.source, title: r.title, url: r.url, price: r.price, image: r.image, score: r.score, missing: JSON.parse(r.missing_json) })),
+    matches: rows.map((r) => ({ source: r.source, title: r.title, url: r.url, price: r.price, image: r.image, score: r.score, visual: r.visual ?? null, missing: JSON.parse(r.missing_json) })),
     searched: run?.searched ?? 0,
     total: run?.total ?? SOURCES.length,
     pending: run ? !!run.pending : false,
@@ -111,6 +112,8 @@ export async function findMatches(wishId: string): Promise<void> {
   inflight.add(flight);
   try {
     await search(wishId, spec);
+    // Then the photos: ranks re-settle by look once Claude has compared them with the render.
+    await scoreVisual(wishId, getWish(wishId)?.thumb ?? null);
   } finally {
     inflight.delete(flight);
   }

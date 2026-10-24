@@ -4,15 +4,15 @@ import http from "node:http";
 import path from "node:path";
 import { Server } from "socket.io";
 import {
-  CreateCampaignBody, EVENTS, isEmpty, parseProduct, PledgeBody, templateById,
-  type ConfigResponse, type MatchesResponse, type OutlineEntry, type PledgeResponse, type TurnEvent, type TurnSelection,
+  CreateCampaignBody, EVENTS, isEmpty, parseProduct, PledgeBody, templateById, VoteBody,
+  type Campaign, type ConfigResponse, type MatchesResponse, type OutlineEntry, type PledgeResponse, type TurnEvent, type TurnSelection,
 } from "@wishit/shared";
 import { setIo, emit } from "./bus.ts";
 import { brainKind, keepWarm, prewarm, runTurn } from "./brain.ts";
 import { listVoices, mintToken } from "./cartesia.ts";
 import {
   createCampaign, createPledge, expireCampaign, getCampaign, getPledge, listCampaigns,
-  PledgeError, reconcilePledge, startCampaignTimers,
+  PledgeError, reconcilePledge, startCampaignTimers, vote,
 } from "./campaigns.ts";
 import { assertSafeConfig, env, isProd, logConfig, paymentMode, WEB_DIST } from "./env.ts";
 import { findMatches, getMatches } from "./apify.ts";
@@ -220,7 +220,10 @@ app.get("/api/wish/:id/matches", limits.read, (req, res) => {
 
 app.get("/api/campaigns", limits.read, (req, res) => {
   const list = listCampaigns();
-  if (req.query.sort === "held") list.sort((a, b) => b.held + b.captured - (a.held + a.captured));
+  const commitment = (c: Campaign) => c.held + c.captured;
+  if (req.query.sort === "held") list.sort((a, b) => commitment(b) - commitment(a));
+  // The community board: most upvoted first, then most committed, then newest.
+  if (req.query.sort === "votes") list.sort((a, b) => b.votes - a.votes || commitment(b) - commitment(a) || b.createdAt - a.createdAt);
   res.json(list);
 });
 
@@ -230,6 +233,12 @@ app.post("/api/campaigns", limits.createCampaign, (req, res) => {
   const w = assertFound(getWish(parsed.data.wishId), "Wish");
   const { priceCents, targetBackers, deadlineAt } = parsed.data;
   res.json(createCampaign(w.id, priceCents, targetBackers, deadlineAt));
+});
+
+app.post("/api/campaigns/:id/vote", limits.vote, (req, res) => {
+  const parsed = VoteBody.safeParse(req.body);
+  if (!parsed.success) throw badRequest("Invalid vote");
+  res.json(assertFound(vote(req.params.id, parsed.data.voter, parsed.data.up), "Campaign"));
 });
 
 app.get("/api/campaigns/:id", limits.read, (req, res) => res.json(assertFound(getCampaign(req.params.id), "Campaign")));

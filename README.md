@@ -54,7 +54,7 @@ Add `?debug` to the studio URL to show per-turn latency (speech end → request 
 | `/` | The studio. Talk to the orb, watch the product form, lock it in, see matches, launch a campaign with a QR code. One canvas, no page changes. `?debug` shows per-turn latency. |
 | `/c/:id` | Mobile pledge page: email, card, hold. Shows released or captured afterwards, plus the purchase order. |
 | `/campaign/:id` | Laptop campaign view (QR, live demand bar). `?admin` adds a "Force deadline" button. |
-| `/wishlist` | My wishes and the live "Most wished" leaderboard. |
+| `/wishlist` | My wishes and the live "Most wished" board, ranked by community upvotes (one per browser, toggleable; also on the campaign and pledge pages). |
 | `/debug` | 3D bench: templates (`?t=backpack`), bench results (`?src=/bench/lamp.json`), live product JSON; `&bare` for full screen. |
 | `/lab/materials`, `/lab/kit` | Material presets and the 31 kit parts under studio light. |
 
@@ -88,6 +88,7 @@ browser (pledge page, phone) ──card──> Stripe Payment Element
 
 New designs use Opus 5.5 in fast mode: it streams ~290 tokens/s vs ~140 for Haiku 4.5 and ~120 for Sonnet 5 (measured), so it is both faster and better for long outputs. Edits use Sonnet 5 with thinking off: edit outputs are short, so its fast first token wins (first patch ~1.9 s vs ~2.4-3.9 s on Opus, whose thinking can't be disabled). Haiku 4.5 is the automatic fallback if a call fails before streaming. Models are set with `DESIGN_MODEL`, `EDIT_MODEL`, `FAST_MODE`, `FALLBACK_MODEL`.
 - `actor/`: the `wish-matcher` Apify Actor. It calls three Store actors in parallel with per-store timeouts, normalizes listings, scores them all in one Claude call, and returns the top matches plus a `_meta` row. The server searches with the genie's short `searchQuery` ("electric kettle tea infuser"), not the product's invented name. After changing `actor/src`, redeploy it (`cd actor && apify push`): the server only sends inputs. See [actor/README.md](actor/README.md).
+- Visual match (`server/src/visual.ts`): once the text-scored matches are on screen, one Claude call compares the wish's render with each listing's photo (downloaded server-side; photos that won't load stay unscored) and the grid re-ranks. The match % blends look (60%) and description (40%); "Best match + price" weighs that 70/30 against price. Capped by `DAILY_VISUAL_SCORES` (default 120).
 
 ### Payments: card holds as a commitment primitive
 
