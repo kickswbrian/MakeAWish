@@ -157,7 +157,6 @@ const GENERIC_BODIES: Record<string, { name: string; body: Body; addons?: Addon[
   "water bottle": { name: "Water Bottle", body: { shape: "cylinder", width: 0.28, height: 0.8 }, addons: [{ name: "cap", shape: "cylinder", placement: "top", size: 0.8 }] },
   thermos: { name: "Thermos", body: { shape: "cylinder", width: 0.28, height: 0.85 } },
   flask: { name: "Flask", body: { shape: "cylinder", width: 0.28, height: 0.7 } },
-  can: { name: "Can", body: { shape: "cylinder", width: 0.28, height: 0.5 } },
   lamp: { name: "Lamp", body: { shape: "cone", width: 0.55, height: 0.4 }, addons: [{ name: "stand", shape: "cylinder", placement: "bottom" }] },
   "desk lamp": { name: "Desk Lamp", body: { shape: "cone", width: 0.5, height: 0.36 }, addons: [{ name: "stand", shape: "cylinder", placement: "bottom" }] },
   vase: { name: "Vase", body: { shape: "cylinder", width: 0.32, height: 0.7 } },

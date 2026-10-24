@@ -100,7 +100,7 @@ export default function Studio() {
     setPreview(null);
     if (p.changed.length) {
       sparkle();
-      if (p.spec.category !== "generic" && !p.changed.includes("category")) setReshapeKey((k) => k + 1);
+      if ((p.spec.category !== "generic" || p.spec.body) && !p.changed.includes("category")) setReshapeKey((k) => k + 1);
     }
     if (voice.timing.current && !voice.timing.current.patch) voice.timing.current.patch = performance.now();
   });
@@ -241,7 +241,8 @@ export default function Studio() {
     gl.current = r;
   }, []);
   const hasProduct = spec.category !== "generic" || !!spec.name;
-  const showsModel = shownSpec.category !== "generic" || !!heroUrl;
+  // A generic wish with a body (a teapot, a lamp) is a real model too, not just the orb.
+  const showsModel = shownSpec.category !== "generic" || !!shownSpec.body || !!heroUrl;
 
   // The sparkle spiral plays the moment a product first takes shape in the bubble.
   const hadModel = useRef(showsModel);

@@ -55,7 +55,7 @@ export default function CampaignRoute() {
         <div className="orb-slot">
           <BubbleSparks />
           <Bubble>
-            <Stage spec={c.spec} heroUrl={c.modelUrl} framing="bubble" transparent orb={false} pedestal={c.spec.category !== "generic" || !!c.modelUrl} celebrateKey={celebrate} onGl={onGl} />
+            <Stage spec={c.spec} heroUrl={c.modelUrl} framing="bubble" transparent orb={false} pedestal={c.spec.category !== "generic" || !!c.spec.body || !!c.modelUrl} celebrateKey={celebrate} onGl={onGl} />
           </Bubble>
         </div>
       )}

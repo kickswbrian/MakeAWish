@@ -2,7 +2,7 @@
 
 **Shop for products that don't exist yet, and only pay if they get made.**
 
-Describe a product out loud ("a midi dress that turns into a skirt, with pockets that actually fit my phone"). A genie asks a couple of follow-ups while a 3D model reshapes as you talk. Wish it then checks whether the product already exists, using Apify to search Amazon, Etsy and Google Shopping. If it doesn't, the wish becomes a campaign: backers scan a QR code and place a **card hold**. When enough people commit, every hold is captured and a purchase order goes to a maker. If the deadline passes first, every hold is released and nobody pays.
+Describe a product out loud ("a midi dress that turns into a skirt, with pockets that actually fit my phone"). A genie asks a couple of follow-ups while a 3D model reshapes as you talk. Wish it then checks whether the product already exists, using Apify to search Amazon and Google Shopping. If it doesn't, the wish becomes a campaign: backers scan a QR code and place a **card hold**. When enough people commit, every hold is captured and a purchase order goes to a maker. If the deadline passes first, every hold is released and nobody pays.
 
 Built at Cal Hacks 13.0 for the Visa (Reimagining Shopping), Apify and Cartesia tracks.
 
@@ -56,7 +56,7 @@ browser (studio, laptop) ──audio──> Cartesia (Ink 2 STT / Sonic TTS, sho
         │  REST + Socket.IO
         ▼
 Node server (Express + Socket.IO + SQLite) ──> Claude (update_spec tool)
-        │                                  ──> Apify wish-matcher Actor ──> Amazon / Etsy / Google Shopping actors
+        │                                  ──> Apify wish-matcher Actor ──> Amazon / Google Shopping actors
         │                                  ──> Meshy text-to-3D (GLB served from /models)
         │                                  <─> Stripe test mode (manual capture, webhooks)
         ▼
