@@ -15,7 +15,7 @@ interface CampaignRow {
 }
 interface PledgeRow {
   id: string; campaign_id: string; email: string; payment_intent_id: string | null;
-  status: PledgeStatus; fail_reason: string | null; created_at: number;
+  status: PledgeStatus; fail_reason: string | null; created_at: number; agent_keyid: string | null;
 }
 
 const getRow = (id: string) => db.prepare("SELECT * FROM campaigns WHERE id = ?").get(id) as CampaignRow | undefined;
@@ -45,7 +45,7 @@ export function getCampaign(id: string): Campaign | null {
     createdAt: r.created_at,
     status: r.status,
     maker: r.maker_json ? JSON.parse(r.maker_json) : null,
-    pledges: pledges.map((p) => ({ id: p.id, email: maskEmail(p.email), status: p.status, failReason: p.fail_reason, createdAt: p.created_at })),
+    pledges: pledges.map((p) => ({ id: p.id, email: maskEmail(p.email), status: p.status, failReason: p.fail_reason, createdAt: p.created_at, agent: p.agent_keyid ? { keyid: p.agent_keyid } : null })),
     paymentMode,
   };
 }

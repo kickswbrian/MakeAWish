@@ -14,7 +14,8 @@
     "typecheck": "tsc -p shared && tsc -p server && tsc -p web",
     "test": "npm test -w shared && npm test -w server",
     "brain:test": "npm run brain:test -w server",
-    "demo:reset": "npm run demo:reset -w server --"
+    "demo:reset": "npm run demo:reset -w server --",
+    "tap:demo": "npm run tap:demo -w server --"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
