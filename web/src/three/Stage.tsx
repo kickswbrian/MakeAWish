@@ -475,6 +475,9 @@ function StageCanvas({
   return (
     <Canvas
       frameloop={paused ? "never" : "always"}
+      // Size the buffer from the layout box, not the on-screen rect: mid-transition the bubble is scaled
+      // (the FLIP between wish and matches) and a buffer measured then would stay blurry.
+      resize={{ offsetSize: true }}
       shadows="soft"
       camera={{ position: [-1.5, 1.75, FRAMES[framing].d * 0.9], fov: 34, near: 0.05, far: 200 }}
       dpr={dpr}
