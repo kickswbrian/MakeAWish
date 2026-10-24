@@ -45,6 +45,10 @@ export interface SttHandlers {
   onTurnStart(): void;
   onUpdate(text: string): void;
   onTurnEnd(text: string): void;
+  /** Ink's early guess that the turn is over (a speculative turn can start here). */
+  onEagerEnd?(text: string): void;
+  /** The speaker kept going after an eager end: cancel anything speculative. */
+  onResume?(): void;
   onStatus(s: "open" | "reconnecting" | "failed" | "closed"): void;
 }
 
@@ -102,8 +106,15 @@ export class CartesiaStt {
       } catch {
         return;
       }
-      if (m.type === "turn.start" || m.type === "turn.resume") this.h.onTurnStart();
-      else if (m.type === "turn.update" || m.type === "turn.eager_end") this.h.onUpdate(m.transcript ?? "");
+      if (m.type === "turn.start") this.h.onTurnStart();
+      else if (m.type === "turn.resume") {
+        this.h.onTurnStart();
+        this.h.onResume?.();
+      } else if (m.type === "turn.update") this.h.onUpdate(m.transcript ?? "");
+      else if (m.type === "turn.eager_end") {
+        this.h.onUpdate(m.transcript ?? "");
+        this.h.onEagerEnd?.((m.transcript ?? "").trim());
+      }
       else if (m.type === "turn.end") this.h.onTurnEnd((m.transcript ?? "").trim());
       else if (m.type === "error") console.warn("[stt] error", m);
     };
@@ -232,6 +243,8 @@ export class CartesiaTts {
     const ws = await this.open();
     const id = `ctx_${Math.random().toString(36).slice(2)}`;
     return new Promise<void>((resolve, reject) => {
+      // Another speak() may have started while the socket opened: its caller must not wait forever.
+      this.current?.resolve();
       this.current = { id, done: false, resolve, reject, first: true };
       this.next = 0;
       ws.send(

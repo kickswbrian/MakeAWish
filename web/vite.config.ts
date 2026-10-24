@@ -6,13 +6,13 @@ const api = process.env.API_URL ?? "http://localhost:3000";
 
 export default defineConfig({
   plugins: [react()],
+  resolve: { dedupe: ["react", "react-dom", "three", "@react-three/fiber"] },
   server: {
     host: true,
     port: 5173,
     fs: { allow: [path.resolve(__dirname, "..")] },
     proxy: {
       "/api": api,
-      "/models": api,
       "/socket.io": { target: api, ws: true },
     },
   },

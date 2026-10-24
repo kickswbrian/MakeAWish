@@ -5,3 +5,9 @@ data/*
 !data/.gitkeep
 actor/storage/
 .DS_Store
+
+# genie bench output
+web/public/bench/
+
+# browser tool scratch logs
+.playwright-mcp/

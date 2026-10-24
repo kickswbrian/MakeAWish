@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { colorName, describeSpec, type Campaign } from "@wishit/shared";
+import { childrenOf, colorName, describeProduct, MATERIAL_LABELS, type Campaign } from "@wishit/shared";
 import { api, getConfig, money } from "../lib/api.ts";
 import { chime } from "../lib/sound.ts";
 import { Bubble } from "./Bubble.tsx";
@@ -155,16 +155,17 @@ export function CampaignPanel({ c, snapshot }: { c: Campaign; snapshot?: string 
 }
 
 export function PurchaseOrder({ c, snapshot }: { c: Campaign; snapshot?: string | null }) {
-  const s = c.spec;
+  const p = c.product;
+  const root = p.parts[p.rootId];
+  const materials = [...new Set(Object.values(p.parts).filter((x) => !x.csg).map((x) => MATERIAL_LABELS[x.material.preset]))];
+  const components = childrenOf(p, p.rootId).map((x) => x.name);
   const rows: [string, React.ReactNode][] = [
     ["Product", c.name],
-    ["Description", describeSpec(s)],
-    ...(s.color ? [["Color", <><span className="swatch" style={{ background: s.color }} />{colorName(s.color)} {s.color}</>] as [string, React.ReactNode]] : []),
-    ...(["length", "silhouette", "sleeves", "neckline", "fabric", "pattern", "size"] as const)
-      .filter((k) => s[k])
-      .map((k) => [k[0].toUpperCase() + k.slice(1), String(s[k]).replace("_", "-")] as [string, React.ReactNode]),
-    ...(s.features?.length ? [["Features", s.features.map((f) => f.replace(/_/g, " ")).join(", ")] as [string, React.ReactNode]] : []),
-    ...(s.notes ? [["Notes", s.notes] as [string, React.ReactNode]] : []),
+    ["Description", describeProduct(p)],
+    ...(root ? [["Main color", <><span className="swatch" style={{ background: root.material.color }} />{colorName(root.material.color)} {root.material.color}</>] as [string, React.ReactNode]] : []),
+    ["Materials", materials.join(", ")],
+    ...(components.length ? [["Components", components.slice(0, 10).join(", ") + (components.length > 10 ? "…" : "")] as [string, React.ReactNode]] : []),
+    ["Bill of parts", `${Object.values(p.parts).filter((x) => !x.csg).length} parts`],
   ];
   const captured = c.pledges.filter((p) => p.status === "captured");
   return (

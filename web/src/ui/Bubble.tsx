@@ -200,12 +200,32 @@ export interface BubbleProps {
   /** Bump to play the reshape effect. */
   reshapeKey?: number;
   children?: ReactNode;
+  /** Floats over the bubble without being clipped by it (the genie edit card). */
+  overlay?: ReactNode;
 }
 
 /** The pearly soap bubble the genie lives in. The 3D product renders inside it. */
-export function Bubble({ state = "idle", robot, materializeKey = 0, reshapeKey = 0, children }: BubbleProps) {
+/** Drives --amp on the bubble from the live voice level (mic while listening, genie while speaking). */
+function useVoiceAmp(ref: React.RefObject<HTMLDivElement>, active: boolean) {
+  useEffect(() => {
+    let raf = 0;
+    let amp = 0;
+    const loop = () => {
+      const target = active ? Math.min(1, orbSignal.level * 2) : 0;
+      amp += (target - amp) * (target > amp ? 0.4 : 0.1);
+      ref.current?.style.setProperty("--amp", amp.toFixed(3));
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [ref, active]);
+}
+
+export function Bubble({ state = "idle", robot, materializeKey = 0, reshapeKey = 0, children, overlay }: BubbleProps) {
+  const wrap = useRef<HTMLDivElement>(null);
+  useVoiceAmp(wrap, state === "listening" || state === "speaking");
   return (
-    <div className={`bwrap is-${state}`}>
+    <div ref={wrap} className={`bwrap is-${state}`}>
       <div className="bfloat">
         {state === "listening" && (
           <>
@@ -218,7 +238,8 @@ export function Bubble({ state = "idle", robot, materializeKey = 0, reshapeKey =
           <div className="b-swirl" />
           <div className="b-tint" />
           <div className="b-content">{children}</div>
-          {state === "speaking" && <VoiceCore />}
+          {state === "speaking" && robot && <VoiceCore />}
+          <div className="b-amp" />
           {robot && state === "thinking" && <Robot />}
           {materializeKey > 0 && <Materialize key={`m${materializeKey}`} />}
           {reshapeKey > 0 && <Reshape key={`r${reshapeKey}`} />}
@@ -228,6 +249,7 @@ export function Bubble({ state = "idle", robot, materializeKey = 0, reshapeKey =
           <div className="b-hl3" />
           <div className="b-rim" />
         </div>
+        {overlay && <div className="b-overlay">{overlay}</div>}
       </div>
       <div className="bshadow" />
     </div>

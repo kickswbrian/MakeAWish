@@ -86,8 +86,8 @@ export const limits = {
     limiter("turn", MIN, 20, "The genie needs a breath. Try again in a minute."),
     limiter("turn-day", 24 * 60 * MIN, 300, "You've used today's wishes. Come back tomorrow."),
   ],
-  editSpec: limiter("edit-spec", MIN, 60, "Too many edits. Slow down a little."),
-  /** Apify store search + Meshy model. */
+  editProduct: limiter("edit-product", MIN, 60, "Too many edits. Slow down a little."),
+  /** Apify store search. */
   search: limiter("search", 10 * MIN, 6, "Too many store searches. Try again in a few minutes."),
   createCampaign: limiter("create-campaign", 10 * MIN, 5, "Too many wishes launched. Try again in a few minutes."),
   pledge: limiter("pledge", 10 * MIN, 5, "Too many pledge attempts. Try again in a few minutes."),

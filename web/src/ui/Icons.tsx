@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { Category } from "@wishit/shared";
+type Category = string;
 
 const INK = "#182825";
 const SPARKLE = "M12 0C12.7 7.2 16.8 11.3 24 12C16.8 12.7 12.7 16.8 12 24C11.3 16.8 7.2 12.7 0 12C7.2 11.3 11.3 7.2 12 0Z";

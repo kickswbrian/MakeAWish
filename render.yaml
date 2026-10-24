@@ -23,8 +23,6 @@ services:
         value: "1500"
       - key: DAILY_APIFY_SEARCHES
         value: "60"
-      - key: DAILY_MESHY_MODELS
-        value: "30"
       - key: DAILY_CARTESIA_TOKENS
         value: "600"
       - key: DATA_DIR
@@ -42,8 +40,6 @@ services:
       - key: APIFY_TOKEN
         sync: false
       - key: APIFY_ACTOR
-        sync: false
-      - key: MESHY_API_KEY
         sync: false
       - key: STRIPE_SECRET_KEY
         sync: false

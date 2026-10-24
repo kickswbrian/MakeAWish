@@ -1,34 +1,32 @@
-import type { ProductSpec } from "@wishit/shared";
+import { applyPatches, setMeta, templateById, templateProduct, type Product } from "@wishit/shared";
 import { db } from "./db.ts";
 import { env, paymentMode } from "./env.ts";
 import { findMatches, readCache } from "./apify.ts";
-import { startMeshy } from "./meshy.ts";
 import { mockConfirm, provider, stripe } from "./payments.ts";
 import { _internal, createCampaign, createPledge } from "./campaigns.ts";
 import { newId, sleep } from "./util.ts";
 import { createWish, setWishStatus } from "./wishes.ts";
 
-export const DEMO_WISH: ProductSpec = {
-  category: "dress",
-  name: "Convertible Pocket Midi",
-  length: "midi",
-  silhouette: "a_line",
-  sleeves: "cap",
-  neckline: "v",
-  color: "#1F8A5B",
-  fabric: "satin",
-  features: ["converts_to_skirt", "phone_pockets"],
-  target_price_usd: 89,
-};
+/** The rehearsed wish: the convertible dress template, already customized to the demo colors. */
+export function demoWish(): Product {
+  const tpl = templateById("convertible_dress") ?? templateById("backpack");
+  if (!tpl) return { id: "demo", title: "Convertible Pocket Midi", parts: {}, rootId: "" };
+  return setMeta(templateProduct(tpl), { title: "Convertible Pocket Midi", targetPriceUsd: 89 });
+}
 
-const PLANTER: ProductSpec = {
-  category: "generic",
-  name: "Self-watering desk planter",
-  color: "#9CAF88",
-  features: ["self_watering"],
-  target_price_usd: 35,
-  notes: "ceramic planter with a hidden water reservoir and a fill gauge",
-};
+/** The planter: a campaign that misses its goal on stage, so every hold is released. */
+function planter(): Product {
+  const tpl = templateById("planter");
+  const base = tpl ? templateProduct(tpl) : { id: "planter", title: "Self-watering desk planter", parts: {}, rootId: "" };
+  const root = base.parts[base.rootId];
+  const tinted = root ? applyPatches(base, [{ op: "update", id: root.id, changes: { material: { color: "#9CAF88" } } }]).product : base;
+  return setMeta(tinted, {
+    title: "Self-watering desk planter",
+    description: "ceramic desk planter with a hidden water reservoir and a fill gauge",
+    category: "planter",
+    targetPriceUsd: 35,
+  });
+}
 
 /** Place a real (test-mode) held pledge without a browser: server-side confirm with a test card. */
 async function heldPledge(campaignId: string, priceCents: number, email: string) {
@@ -69,19 +67,18 @@ export async function resetDemo(planterDeadlineSecs = 120) {
     db.prepare("DELETE FROM wishes").run();
   })();
 
-  // Demo wish: pre-warm its Apify results and its Meshy model (both cached by spec).
-  const demo = createWish(DEMO_WISH);
+  // Demo wish: pre-warm its Apify results (cached by query).
+  const demoProduct = demoWish();
+  const demo = createWish(demoProduct);
   setWishStatus(demo.id, "locked");
-  const hadCache = !!readCache(DEMO_WISH);
+  const hadCache = !!readCache(demoProduct);
   await findMatches(demo.id);
-  void startMeshy(demo.id);
 
   // The planter: 2 of 4 real held pledges, deadline N seconds out, for the "nobody paid" beat.
-  const planter = createWish(PLANTER);
-  setWishStatus(planter.id, "locked");
-  void startMeshy(planter.id);
+  const planterWish = createWish(planter());
+  setWishStatus(planterWish.id, "locked");
   const priceCents = 3500;
-  const campaign = createCampaign(planter.id, priceCents, 4, Date.now() + planterDeadlineSecs * 1000);
+  const campaign = createCampaign(planterWish.id, priceCents, 4, Date.now() + planterDeadlineSecs * 1000);
   await heldPledge(campaign.id, priceCents, "maya@example.com");
   await heldPledge(campaign.id, priceCents, "jordan@example.com");
 

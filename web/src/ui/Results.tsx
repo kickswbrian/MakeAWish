@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CLOSE_SCORE, describeSpec, EXISTS_SCORE, type Match, type MatchesResponse, type ProductSpec } from "@wishit/shared";
+import { CLOSE_SCORE, describeProduct, EXISTS_SCORE, type Match, type MatchesResponse, type Product } from "@wishit/shared";
 import { ArrowOut, BackIcon, CategoryIcon, HeartIcon, LockIcon, MicIcon, MinusIcon, PlusIcon, SpinIcon, Sparkle } from "./Icons.tsx";
 
 const STORE: Record<string, string> = { amazon: "Amazon", etsy: "Etsy", google_shopping: "Google", sample: "Sample" };
@@ -98,15 +98,15 @@ const DURATIONS = [
  * The launch sheet: slides up over the matches while the bubble (owned by the studio) floats above it.
  * Price, backers and deadline, then one pledge-style button.
  */
-export function LaunchSheet({ spec, saved, onSave, onClose, onTalk, onLaunch }: {
-  spec: ProductSpec;
+export function LaunchSheet({ product, saved, onSave, onClose, onTalk, onLaunch }: {
+  product: Product;
   saved: boolean;
   onSave: () => void;
   onClose: () => void;
   onTalk: () => void;
   onLaunch: (b: { priceCents: number; targetBackers: number; deadlineAt: number }) => Promise<void>;
 }) {
-  const [price, setPrice] = useState(String(spec.target_price_usd ?? 89));
+  const [price, setPrice] = useState(String(Math.round(product.targetPriceUsd ?? 89)));
   const [target, setTarget] = useState(3);
   const [dur, setDur] = useState(DURATIONS[1].ms);
   const [busy, setBusy] = useState(false);
@@ -140,8 +140,8 @@ export function LaunchSheet({ spec, saved, onSave, onClose, onTalk, onLaunch }: 
       <div className="dcard">
         <button className="cbtn dark" aria-label="Keep talking to the genie" onClick={onTalk}><MicIcon size={17} /></button>
         <div>
-          <h2 className="title-m">{spec.name ?? "Your wish"}</h2>
-          <p className="muted" style={{ marginTop: 6, fontSize: 17, lineHeight: "24px" }}>{describeSpec(spec)}</p>
+          <h2 className="title-m">{product.title || "Your wish"}</h2>
+          <p className="muted" style={{ marginTop: 6, fontSize: 17, lineHeight: "24px" }}>{describeProduct(product)}</p>
         </div>
         <div className="drow">
           <label className="price-in">

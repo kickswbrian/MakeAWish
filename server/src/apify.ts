@@ -1,4 +1,4 @@
-import { colorName, describeSpec, EVENTS, type Match, type MatchesResponse, type ProductSpec } from "@wishit/shared";
+import { childrenOf, colorName, describeProduct, EVENTS, type Match, type MatchesResponse, type Product } from "@wishit/shared";
 import { db } from "./db.ts";
 import { emit } from "./bus.ts";
 import { env } from "./env.ts";
@@ -10,6 +10,8 @@ const CACHE_MS = 24 * 3600_000;
 // Etsy's scraper (Playwright) can't finish inside the Actor's per-store timeout, so it's left out.
 export const SOURCES = ["amazon", "google_shopping"];
 const MAX_PER_SOURCE = 5;
+/** Per-store run limit inside the Actor. Google Shopping takes ~30 s; the Actor default (25 s) cut it off every time. */
+const STORE_TIMEOUT_SECS = 40;
 /**
  * Store inputs sent through the Actor's `sourceActors` override, so they can be tuned without
  * redeploying it. Google Shopping ignores page limits and keeps paging (and charging per result)
@@ -27,15 +29,39 @@ const sourceActors = (query: string) => ({
 });
 
 /** Normalized query: stable across field order and wording noise. */
-export function matchQuery(spec: ProductSpec): string {
-  return describeSpec(spec).toLowerCase().replace(/\s+/g, " ").trim();
-}
 /**
- * Cache key: what identifies the product (category, features, color family), not wording or small
- * tweaks like "a little shorter", so the pre-warmed demo wish still hits the cache on stage.
+ * The store search: short, generic, like a shopper types it. Stores return nothing for a whole
+ * sentence with an invented product name in it. The genie writes `searchQuery`; otherwise the
+ * category plus the features named after "with" in the description.
  */
-const keyFor = (spec: ProductSpec) =>
-  hash(JSON.stringify({ c: spec.category, f: [...(spec.features ?? [])].sort(), color: spec.color ? colorName(spec.color) : null, n: spec.category === "generic" ? (spec.name ?? "").toLowerCase() : null }));
+export function matchQuery(product: Product): string {
+  const clean = (t: string) => t.toLowerCase().replace(/[^a-z0-9 -]+/g, " ").replace(/\s+/g, " ").trim();
+  const asked = clean(product.searchQuery ?? "").slice(0, 80);
+  if (asked) return asked;
+  const noun = clean(product.category ?? "");
+  const features = clean(product.description?.split(/\bwith\b/i)[1]?.split(/[,.;]| and /)[0] ?? "")
+    .split(" ")
+    .filter((w) => w.length > 2 && !STOP.has(w))
+    .slice(0, 3);
+  const q = [noun, ...features].join(" ").trim();
+  return q || clean(product.description ? `${product.title} ${product.description}` : describeProduct(product)).slice(0, 80);
+}
+const STOP = new Set(["the", "and", "built", "little", "tiny", "small", "big", "cozy", "soft", "your", "its", "that", "for", "which", "from", "into", "onto", "real"]);
+/**
+ * Cache key: the query plus the product's top-level parts and main color, so a customized template
+ * (red, with wheels) doesn't reuse the stock template's matches; a re-run of the same wish still hits.
+ */
+const keyFor = (product: Product) => {
+  const root = product.parts[product.rootId];
+  const parts = childrenOf(product, product.rootId).map((c) => c.name.toLowerCase()).sort();
+  return hash(JSON.stringify({ q: matchQuery(product), parts, color: root ? colorName(root.material.color) : null }));
+};
+
+/** The structured summary the matcher Actor scores listings against. */
+function actorSpec(product: Product) {
+  // Features are the wish's selling points (from the description), not structural part names.
+  return { name: product.title, category: product.category ?? "generic", features: [], target_price_usd: product.targetPriceUsd, notes: product.description };
+}
 
 export function getMatches(wishId: string): MatchesResponse {
   const run = db.prepare("SELECT * FROM match_runs WHERE wish_id = ?").get(wishId) as
@@ -60,7 +86,7 @@ function save(wishId: string, matches: Match[], searched: number, total: number,
   emit(`wish:${wishId}`, EVENTS.matchesReady, { wishId, ...getMatches(wishId) });
 }
 
-export function readCache(spec: ProductSpec) {
+export function readCache(spec: Product) {
   const row = db.prepare("SELECT * FROM apify_cache WHERE query_hash = ?").get(keyFor(spec)) as
     | { results_json: string; searched: number; total: number; fetched_at: number } | undefined;
   if (!row) return null;
@@ -68,7 +94,7 @@ export function readCache(spec: ProductSpec) {
   return { matches: JSON.parse(row.results_json) as Match[], searched: row.searched, total: row.total };
 }
 
-export function writeCache(spec: ProductSpec, matches: Match[], searched: number, total: number) {
+export function writeCache(spec: Product, matches: Match[], searched: number, total: number) {
   db.prepare("INSERT OR REPLACE INTO apify_cache (query_hash, query, results_json, searched, total, fetched_at) VALUES (?, ?, ?, ?, ?, ?)")
     .run(keyFor(spec), matchQuery(spec), JSON.stringify(matches), searched, total, Date.now());
 }
@@ -77,7 +103,7 @@ export function writeCache(spec: ProductSpec, matches: Match[], searched: number
 export async function findMatches(wishId: string): Promise<void> {
   const wish = getWish(wishId);
   if (!wish) return;
-  const spec = wish.spec;
+  const spec = wish.product;
   // A double-tapped "See matches" shouldn't pay for the same search twice.
   const flight = `${wishId}:${keyFor(spec)}`;
   if (inflight.has(flight)) return;
@@ -91,7 +117,7 @@ export async function findMatches(wishId: string): Promise<void> {
 
 const inflight = new Set<string>();
 
-async function search(wishId: string, spec: ProductSpec) {
+async function search(wishId: string, spec: Product) {
   db.prepare("INSERT OR REPLACE INTO match_runs (wish_id, searched, total, pending, sample) VALUES (?, 0, ?, 1, 0)").run(wishId, SOURCES.length);
   db.prepare("DELETE FROM matches WHERE wish_id = ?").run(wishId);
 
@@ -113,7 +139,7 @@ async function search(wishId: string, spec: ProductSpec) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // minScore 0: keep every listing so the grid shows real results even when scoring is keyword-only.
-        body: JSON.stringify({ query: matchQuery(spec), spec, sources: SOURCES, maxPerSource: MAX_PER_SOURCE, minScore: 0, sourceActors: sourceActors(matchQuery(spec)) }),
+        body: JSON.stringify({ query: matchQuery(spec), spec: actorSpec(spec), sources: SOURCES, maxPerSource: MAX_PER_SOURCE, minScore: 0, timeoutSecs: STORE_TIMEOUT_SECS, sourceActors: sourceActors(matchQuery(spec)) }),
       }),
       70_000,
       "apify",
@@ -141,40 +167,16 @@ async function search(wishId: string, spec: ProductSpec) {
  * Clearly-labelled sample data for when Apify is unavailable. Source is "sample" so the UI can
  * badge it; these are not real listings.
  */
-export function sampleMatches(spec: ProductSpec): Match[] {
-  const f = spec.features ?? [];
-  const want = (feat: string, label: string) => (f.includes(feat) ? [label] : []);
+export function sampleMatches(product: Product): Match[] {
+  const noun = product.category ?? product.title;
+  const features = childrenOf(product, product.rootId).map((c) => c.name.toLowerCase()).slice(0, 3);
   const s = (title: string, price: number, score: number, missing: string[]): Match => ({
     source: "sample", title, url: `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(title)}`, price, image: null, score, missing,
   });
-  switch (spec.category) {
-    case "dress":
-    case "skirt":
-    case "top":
-      return [
-        s("Convertible Wrap Midi Dress", 74, f.includes("converts_to_skirt") ? 62 : 70, [...want("phone_pockets", "phone-sized pockets"), ...(spec.color ? ["exact color"] : [])]),
-        s("Midi Dress with Pockets", 58, 55, [...want("converts_to_skirt", "doesn't convert to a skirt")]),
-        s("Two-Piece Set, Top and Midi Skirt", 66, 48, ["not one garment", ...want("phone_pockets", "pockets")]),
-        s("Satin Slip Dress", 49, 31, ["no pockets", "doesn't convert"]),
-      ];
-    case "backpack":
-      return [
-        s("Laptop Backpack with Phone Stand Strap", 89, 58, [...want("laptop_stand", "laptop stand")]),
-        s("Commuter Backpack, 15.6in", 64, 44, ["no stand"]),
-        s("Portable Laptop Stand (separate)", 29, 35, ["not a backpack"]),
-        s("Rolling Work Bag", 110, 22, ["not a backpack"]),
-      ];
-    case "helmet":
-      return [
-        s("Smart Bike Helmet with Bluetooth Speakers", 129, 76, ["over-ear headphone cups"]),
-        s("Helmet Audio Clip-On Kit", 59, 51, ["not a helmet"]),
-        s("Urban Bike Helmet, MIPS", 85, 40, [...want("headphones", "headphones")]),
-        s("Ski Helmet with Audio Pockets", 140, 33, ["for skiing, not cycling"]),
-      ];
-    default:
-      return [
-        s(`Something like a ${describeSpec(spec)}`, 45, 38, ["key feature"]),
-        s("Closest generic alternative", 30, 25, ["most of the wish"]),
-      ];
-  }
+  const price = product.targetPriceUsd ?? 60;
+  return [
+    s(`Classic ${noun}`, Math.round(price * 0.8), 52, features.slice(0, 2).length ? features.slice(0, 2) : ["the twist you described"]),
+    s(`${noun.charAt(0).toUpperCase() + noun.slice(1)} with accessories`, Math.round(price * 1.2), 44, features.slice(1, 3).length ? features.slice(1, 3) : ["exact design"]),
+    s(`Budget ${noun}`, Math.round(price * 0.5), 28, ["materials", "most features"]),
+  ];
 }

@@ -1,5 +1,5 @@
 import type {
-  Campaign, CartesiaTokenResponse, ConfigResponse, MatchesResponse, PledgeResponse, ProductSpec, TurnResponse, WishDTO,
+  Campaign, CartesiaTokenResponse, ConfigResponse, MatchesResponse, PledgeResponse, Product, WishDTO,
 } from "@wishit/shared";
 
 async function req<T>(method: string, path: string, body?: unknown, headers?: Record<string, string>): Promise<T> {
@@ -20,8 +20,9 @@ export const getConfig = () => (configPromise ??= req<ConfigResponse>("GET", "/a
 export const api = {
   createWish: () => req<WishDTO>("POST", "/api/wish"),
   getWish: (id: string) => req<WishDTO>("GET", `/api/wish/${id}`),
-  turn: (id: string, text: string) => req<TurnResponse>("POST", `/api/wish/${id}/turn`, { text }),
-  patchSpec: (id: string, patch: Partial<ProductSpec>) => req<{ spec: ProductSpec }>("PATCH", `/api/wish/${id}/spec`, patch),
+  /** Persist the client's product (and optionally a thumbnail data URL). Turns stream via lib/turn.ts. */
+  saveProduct: (id: string, product: Product, thumb?: string) => req<{ ok: boolean }>("PUT", `/api/wish/${id}/product`, { product, thumb }),
+  transcript: (id: string, user: string, genie: string) => req<{ ok: boolean }>("POST", `/api/wish/${id}/transcript`, { user, genie }),
   lock: (id: string) => req<{ ok: boolean }>("POST", `/api/wish/${id}/lock`),
   matches: (id: string) => req<MatchesResponse>("GET", `/api/wish/${id}/matches`),
   createCampaign: (body: { wishId: string; priceCents: number; targetBackers: number; deadlineAt: number }) =>
