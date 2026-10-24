@@ -6,11 +6,11 @@ import { orbSignal } from "./signals.ts";
 /**
  * UI variation 2's bubble as a real 3D object, drawn over the product canvas: a glass shell with a
  * soap-film sheen, a particle vortex and light ribbons inside that react to the voice (swirl while
- * listening, pulse while the genie speaks, spin hard while it thinks), and clouds that spin in
- * when the bubble first forms. The canvas is 1.7x the bubble so the clouds can orbit it.
+ * listening, pulse while the genie speaks, spin hard while it thinks). The canvas is a little larger
+ * than the bubble so the spring as it pops in isn't clipped.
  */
 
-export const BUBBLE3D_OVERSCAN = 1.7;
+export const BUBBLE3D_OVERSCAN = 1.2;
 // Saturated enough to read on the cream page (additive white would vanish into it).
 const PALETTE = ["#E9C46A", "#F08FB8", "#8FBFAE", "#FFFFFF", "#F2D88A", "#F4A8C8", "#9FBFB2"];
 
@@ -94,29 +94,6 @@ const ribbonFrag = /* glsl */ `
     #include <colorspace_fragment>
   }`;
 
-function cloudTexture(): THREE.CanvasTexture {
-  const c = document.createElement("canvas");
-  c.width = c.height = 128;
-  const g = c.getContext("2d")!;
-  let seed = 3;
-  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  for (let i = 0; i < 9; i++) {
-    const x = 34 + rnd() * 60, y = 44 + rnd() * 40, r = 18 + rnd() * 22;
-    const grad = g.createRadialGradient(x, y, 0, x, y, r);
-    grad.addColorStop(0, "rgba(255,255,255,1)");
-    grad.addColorStop(0.55, "rgba(255,255,255,0.75)");
-    grad.addColorStop(0.85, "rgba(255,255,255,0.2)");
-    grad.addColorStop(1, "rgba(255,255,255,0)");
-    g.fillStyle = grad;
-    g.beginPath();
-    g.arc(x, y, r, 0, Math.PI * 2);
-    g.fill();
-  }
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
-
 interface Targets { spin: number; pulse: number; tight: number; ribbons: number; fade: number }
 function targetsFor(state: string, level: number, dim: boolean): Targets {
   const amp = Math.min(1, level * 2.2);
@@ -132,15 +109,13 @@ function targetsFor(state: string, level: number, dim: boolean): Targets {
   return t;
 }
 
-function Scene({ revealed, burstKey, dim }: { revealed: boolean; burstKey: number; dim: boolean }) {
+function Scene({ revealed, dim }: { revealed: boolean; dim: boolean }) {
   const { size, gl } = useThree();
   const group = useRef<THREE.Group>(null);
   const inner = useRef<THREE.Group>(null);
   const cur = useRef<Targets>({ spin: 0.3, pulse: 0, tight: 0, ribbons: 0.2, fade: 0.6 });
   const spin = useRef(0);
   const reveal = useRef(0);
-  const burstAt = useRef(-1);
-  const cloudLevel = useRef(0);
 
   const front = useMemo(() => new THREE.ShaderMaterial({
     vertexShader: shellVert, fragmentShader: shellFrag, transparent: true, depthWrite: false,
@@ -191,24 +166,10 @@ function Scene({ revealed, burstKey, dim }: { revealed: boolean; burstKey: numbe
     return { g, m, tilt: new THREE.Euler(0.5 + i * 0.7, i * 1.1, 0.3 - i * 0.5) };
   }), []);
 
-  const cloudTex = useMemo(() => cloudTexture(), []);
-  const clouds = useMemo(() => Array.from({ length: 12 }, (_, i) => ({
-    base: (i / 12) * Math.PI * 2 + Math.random() * 0.4,
-    y: (Math.random() * 2 - 1) * 0.35,
-    s: 0.45 + Math.random() * 0.35,
-    speed: 0.5 + Math.random() * 0.35,
-    mat: new THREE.SpriteMaterial({ map: cloudTex, transparent: true, depthWrite: false, opacity: 0, toneMapped: false, color: new THREE.Color(["#F2CF72", "#F39CC2", "#9CCAB8"][i % 3]) }),
-  })), [cloudTex]);
-  const cloudRefs = useRef<(THREE.Sprite | null)[]>([]);
-
-  useEffect(() => {
-    if (burstKey > 0) burstAt.current = -2; // armed: starts on the next frame's clock
-  }, [burstKey]);
   useEffect(() => () => {
-    front.dispose(); back.dispose(); vortex.g.dispose(); vortex.m.dispose(); cloudTex.dispose();
+    front.dispose(); back.dispose(); vortex.g.dispose(); vortex.m.dispose();
     ribbons.forEach((r) => { r.g.dispose(); r.m.dispose(); });
-    clouds.forEach((c) => c.mat.dispose());
-  }, [front, back, vortex, ribbons, clouds, cloudTex]);
+  }, [front, back, vortex, ribbons]);
 
   useFrame((state, rawDt) => {
     const dt = Math.min(rawDt, 0.05);
@@ -239,25 +200,6 @@ function Scene({ revealed, burstKey, dim }: { revealed: boolean; burstKey: numbe
       inner.current.rotation.y = t * 0.12;
       inner.current.rotation.x = Math.sin(t * 0.21) * 0.25;
     }
-
-    // When the bubble forms the clouds spin in around it, then fade away.
-    if (burstAt.current === -2) burstAt.current = t;
-    const since = burstAt.current >= 0 ? t - burstAt.current : 99;
-    const rest = 0;
-    const cloudGoal = since < 0.5 ? since / 0.5 : since < 3.2 ? 1 : Math.max(rest, 1 - (since - 3.2) / 2.2);
-    cloudLevel.current += (cloudGoal * r - cloudLevel.current) * (1 - Math.exp(-dt * 3));
-    const swirl = since < 3.2 ? 2.6 - since * 0.6 : 0.35;
-    const radius = since < 1.4 ? 2.1 - (since / 1.4) * 0.85 : 1.18;
-    clouds.forEach((cl, i) => {
-      const sp = cloudRefs.current[i];
-      if (!sp) return;
-      const a = cl.base + t * cl.speed * swirl * 0.4 + since * 0.3;
-      const x = Math.cos(a) * radius, z = Math.sin(a) * radius;
-      sp.position.set(x, cl.y + Math.sin(a * 2) * 0.12, z);
-      sp.scale.setScalar(cl.s * (0.9 + 0.1 * Math.sin(t + i)));
-      // Behind the sphere: fainter, so they read as going around it.
-      cl.mat.opacity = cloudLevel.current * (z < 0 ? 0.45 : 0.95);
-    });
   });
 
   return (
@@ -274,9 +216,6 @@ function Scene({ revealed, burstKey, dim }: { revealed: boolean; burstKey: numbe
       <mesh material={front} renderOrder={2}>
         <sphereGeometry args={[1, 96, 64]} />
       </mesh>
-      {clouds.map((cl, i) => (
-        <sprite key={i} ref={(s) => { cloudRefs.current[i] = s; }} material={cl.mat} renderOrder={4} />
-      ))}
     </group>
   );
 }
@@ -284,19 +223,17 @@ function Scene({ revealed, burstKey, dim }: { revealed: boolean; burstKey: numbe
 export interface Bubble3DProps {
   /** Show the sphere (springs in when this turns true). */
   revealed: boolean;
-  /** Bump to spin the clouds in. */
-  burstKey: number;
   /** A product is showing inside: keep the vortex quiet so it doesn't cover it. */
   dim?: boolean;
 }
 
-export default function Bubble3D({ revealed, burstKey, dim = false }: Bubble3DProps) {
+export default function Bubble3D({ revealed, dim = false }: Bubble3DProps) {
   // Perspective camera at distance 9 framing the sphere (radius 1) at 1 / OVERSCAN of the canvas.
   const fov = (2 * Math.atan(BUBBLE3D_OVERSCAN / 9) * 180) / Math.PI;
   return (
     <div className="bubble3d" aria-hidden="true">
       <Canvas dpr={[1, 1.5]} gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }} camera={{ fov, position: [0, 0, 9], near: 0.1, far: 50 }} style={{ pointerEvents: "none" }}>
-        <Scene revealed={revealed} burstKey={burstKey} dim={dim} />
+        <Scene revealed={revealed} dim={dim} />
       </Canvas>
     </div>
   );

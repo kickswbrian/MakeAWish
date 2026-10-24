@@ -760,13 +760,13 @@ p { margin: 0; }
 .v2-phase-wait .bwrap, .v2-phase-words .bwrap, .v2-phase-swipe .bwrap, .v2-phase-ring .bwrap { opacity: 0; transform: scale(.35); }
 
 /* The 3D glass shell replaces the CSS one (Bubble3D draws rim, film, highlights and the voice). */
-.bubble3d { position: absolute; inset: -35%; pointer-events: none; z-index: 4; }
+.bubble3d { position: absolute; inset: -10%; pointer-events: none; z-index: 4; }
 .v2 .b-swirl, .v2 .b-tint, .v2 .b-glint, .v2 .b-hl1, .v2 .b-hl2, .v2 .b-hl3, .v2 .b-rim, .v2 .b-amp, .v2 .bshadow { display: none; }
 .v2 .bfloat { animation: none; scale: 1; }
 .v2 .bubble { background: radial-gradient(circle at 50% 55%, rgba(255, 255, 255, .06) 0 55%, rgba(255, 255, 255, .3) 80%, rgba(220, 231, 226, .35) 100%); box-shadow: 0 40px 90px rgba(197, 216, 207, .3); }
 
 /* The wish screen: only the (much bigger) bubble, the showroom swapping inside it, and captions. */
-/* clip, not hidden: the clouds' canvas overhangs the page, and hidden still lets it scroll sideways. */
+/* clip, not hidden: the bubble's canvas overhangs it, and hidden still lets the page scroll sideways. */
 .app.v2 { overflow: clip; }
 /* One centered stack: the bubble, the voice waves under it, then the captions. */
 .app.v2-landing {

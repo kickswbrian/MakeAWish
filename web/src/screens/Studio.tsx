@@ -742,9 +742,7 @@ export default function Studio() {
   introPlaying.current = v2 && phase !== "done";
   // The wish screen is just the bubble until there is a product; then the usual editor takes over.
   const v2Landing = v2 && mode === "voice" && !hasProduct;
-  const [burstKey, setBurstKey] = useState(0);
   useEffect(() => {
-    if (v2 && phase === "bubble") setBurstKey((k) => k + 1);
     // The genie edit card floats outside the app: close it so it doesn't hang over the intro.
     if (v2 && phase === "words") select(null);
   }, [v2, phase, select]);
@@ -823,7 +821,7 @@ export default function Studio() {
             onShown={setShownId}
           />
         </Bubble>
-        {v2 && <Bubble3D revealed={phase === "bubble" || phase === "done"} burstKey={burstKey} dim={hasProduct} />}
+        {v2 && <Bubble3D revealed={phase === "bubble" || phase === "done"} dim={hasProduct} />}
         {v2Landing && phase === "done" && (
           <button className="v2-tap" onClick={talk} aria-label={voice.active ? "Stop talking to the genie" : "Talk to the genie"} />
         )}
