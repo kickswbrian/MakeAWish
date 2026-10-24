@@ -11,9 +11,13 @@ export const INTERNAL_HEADER = "x-wishit-internal";
 
 const LOOPBACK = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
 
+const SECRET = Buffer.from(INTERNAL_SECRET);
+
 export function isInternal(req: Request): boolean {
   const given = req.get(INTERNAL_HEADER);
-  if (!given || given.length !== INTERNAL_SECRET.length) return false;
-  return LOOPBACK.has(req.socket.remoteAddress ?? "") && !req.get("x-forwarded-for")
-    && crypto.timingSafeEqual(Buffer.from(given), Buffer.from(INTERNAL_SECRET));
+  if (!given) return false;
+  // Compare bytes, not characters: a non-ASCII header of the right length must not throw.
+  const a = Buffer.from(given);
+  if (a.length !== SECRET.length) return false;
+  return LOOPBACK.has(req.socket.remoteAddress ?? "") && !req.get("x-forwarded-for") && crypto.timingSafeEqual(a, SECRET);
 }
