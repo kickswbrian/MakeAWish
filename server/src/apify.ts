@@ -95,7 +95,7 @@ export function getMatches(wishId: string): MatchesResponse {
   };
 }
 
-function save(wishId: string, matches: Match[], searched: number, total: number, sample: boolean) {
+function save(wishId: string, matches: Match[], searched: number, total: number, sample: boolean, pending = false) {
   db.transaction(() => {
     db.prepare("DELETE FROM matches WHERE wish_id = ?").run(wishId);
     const ins = db.prepare("INSERT INTO matches (wish_id, source, title, url, price, image, score, missing_json, extra_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -103,7 +103,7 @@ function save(wishId: string, matches: Match[], searched: number, total: number,
       const extra = { rating: m.rating ?? null, reviews: m.reviews ?? null, why: m.why };
       ins.run(wishId, m.source, m.title, m.url, m.price, m.image, Math.round(m.score), JSON.stringify(m.missing ?? []), JSON.stringify(extra));
     }
-    db.prepare("INSERT OR REPLACE INTO match_runs (wish_id, searched, total, pending, sample) VALUES (?, ?, ?, 0, ?)").run(wishId, searched, total, sample ? 1 : 0);
+    db.prepare("INSERT OR REPLACE INTO match_runs (wish_id, searched, total, pending, sample) VALUES (?, ?, ?, ?, ?)").run(wishId, searched, total, pending ? 1 : 0, sample ? 1 : 0);
   })();
   emit(`wish:${wishId}`, EVENTS.matchesReady, { wishId, ...getMatches(wishId) });
 }
@@ -161,7 +161,11 @@ async function search(wishId: string, spec: Product, thumb: string | null) {
   // No deployed Actor (or an outdated one): the server calls the store scrapers itself (same scrapers, one hop less).
   const direct = async () => {
     try {
-      const r = await searchStores(wanted(spec), { max: MAX_PER_SOURCE, timeoutSecs: STORE_TIMEOUT_SECS + 20, thumb });
+      // Matches stream into the grid as each scraper run is scored (still pending until all are in).
+      const r = await searchStores(wanted(spec), {
+        max: MAX_PER_SOURCE, timeoutSecs: STORE_TIMEOUT_SECS, thumb,
+        onPartial: (m, searched) => save(wishId, m.slice(0, KEEP), searched, SOURCES.length, false, true),
+      });
       const matches = r.matches.slice(0, KEEP);
       console.log(`[apify] ${matches.length} matches in ${Date.now() - started}ms, searched ${r.searched}/${r.total}, top ${matches.slice(0, 3).map((m) => m.score).join("/") || "-"}, cost ~$${(r.usd.apify + r.usd.claude).toFixed(3)} (apify $${r.usd.apify.toFixed(3)}, claude $${r.usd.claude.toFixed(3)})`);
       if (matches.length) writeCache(spec, matches, r.searched, r.total);

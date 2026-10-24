@@ -14,7 +14,8 @@ import { hash, withTimeout } from "./util.ts";
  *             accessories and spare parts.
  * Google Shopping has a backup scraper because Google changes its pages often.
  */
-type Store = { actorId: string; usdPerItem: number; input: (queries: string[], max: number) => object };
+/** batch: every query in one run (the scraper parallelizes internally); else one run per query. */
+type Store = { actorId: string; usdPerItem: number; batch?: boolean; input: (queries: string[], max: number) => object };
 
 const amazonSearch = (q: string) => `https://www.amazon.com/s?k=${encodeURIComponent(q).replace(/%20/g, "+")}`;
 const STORES: Record<string, Store[]> = {
@@ -26,6 +27,8 @@ const STORES: Record<string, Store[]> = {
     {
       actorId: "junglee/amazon-crawler",
       usdPerItem: 0.005,
+      // Crawls its start URLs in parallel: 3 searches in one run take ~9 s, about as long as one.
+      batch: true,
       input: (qs, max) => ({ categoryOrProductUrls: qs.map((q) => ({ url: amazonSearch(q) })), maxItemsPerStartUrl: max, maxSearchPagesPerStartUrl: 1, scrapeProductDetails: false, proxyCountry: "US" }),
     },
   ],
@@ -104,7 +107,29 @@ export function normalize(source: string, item: any): Listing | null {
   };
 }
 
-async function runActor(actorId: string, input: object, timeoutSecs: number): Promise<any[]> {
+/**
+ * Apify caps concurrent runs per account (5 on this plan; more start with 402). Runs past the cap
+ * wait here for a slot instead of failing, so two searches at once queue rather than error.
+ */
+const MAX_RUNS = Number(process.env.APIFY_MAX_RUNS) || 5;
+let running = 0;
+const waiting: (() => void)[] = [];
+async function slot<T>(fn: () => Promise<T>): Promise<T> {
+  if (running >= MAX_RUNS) await new Promise<void>((r) => waiting.push(r));
+  running++;
+  try {
+    return await fn();
+  } finally {
+    running--;
+    waiting.shift()?.();
+  }
+}
+
+function runActor(actorId: string, input: object, timeoutSecs: number): Promise<any[]> {
+  return slot(() => runActorNow(actorId, input, timeoutSecs));
+}
+
+async function runActorNow(actorId: string, input: object, timeoutSecs: number): Promise<any[]> {
   const url = `https://api.apify.com/v2/acts/${actorId.replace("/", "~")}/run-sync-get-dataset-items?timeout=${timeoutSecs}&memory=1024&clean=true`;
   const res = await withTimeout(
     fetch(url, { method: "POST", headers: { Authorization: `Bearer ${env.apifyToken}`, "Content-Type": "application/json" }, body: JSON.stringify(input) }),
@@ -116,13 +141,39 @@ async function runActor(actorId: string, input: object, timeoutSecs: number): Pr
   return Array.isArray(items) ? items : [];
 }
 
-/** One store, every query in one run: try each scraper in turn until one returns listings. Raw items too (for the match lab). */
+/**
+ * One scraper run per query, all in parallel. A single run with every query is ~3x slower: Google
+ * Shopping works through a batch's queries one after another (measured 33 s for 3 vs 7-15 s for 1).
+ * `onRun` gets each query's listings the moment its run finishes.
+ */
+async function runPerQuery(source: string, s: Store, queries: string[], max: number, timeoutSecs: number, onRun?: (listings: Listing[]) => Promise<void> | void) {
+  const raw: any[] = [];
+  let usd = 0;
+  const listings: Listing[] = [];
+  await Promise.all((s.batch ? [queries] : queries.map((q) => [q])).map(async (qs) => {
+    const q = qs.length === 1 ? qs[0] : `${qs.length} queries`;
+    const started = Date.now();
+    try {
+      const items = await runActor(s.actorId, s.input(qs, max), timeoutSecs);
+      raw.push(...items);
+      usd += items.length * s.usdPerItem;
+      const found = items.map((i) => normalize(source, i)).filter((l): l is Listing => !!l).map((l) => ({ ...l, query: l.query ?? (qs.length === 1 ? q : undefined) }));
+      console.log(`[apify] ${source} via ${s.actorId}: ${found.length} listings for "${q}" in ${Date.now() - started}ms`);
+      listings.push(...found);
+      if (found.length) await onRun?.(found);
+    } catch (err) {
+      console.warn(`[apify] ${source} via ${s.actorId} "${q}" failed after ${Date.now() - started}ms: ${(err as Error).message}`);
+    }
+  }));
+  return { listings, raw, usd };
+}
+
+/** One store: each scraper in turn until one returns listings, its queries run in parallel. Raw items too (for the match lab). */
 export async function searchStore(source: string, queries: string[], max: number, timeoutSecs: number): Promise<{ listings: Listing[]; raw: any[]; usd: number }> {
   for (const s of STORES[source]) {
     const started = Date.now();
     try {
-      const raw = await runActor(s.actorId, s.input(queries, max), timeoutSecs);
-      const listings = raw.map((i) => normalize(source, i)).filter((l): l is Listing => !!l);
+      const { listings, raw } = await runPerQuery(source, s, queries, max, timeoutSecs);
       console.log(`[apify] ${source} via ${s.actorId}: ${listings.length} listings for ${queries.length} queries in ${Date.now() - started}ms`);
       if (listings.length) return { listings, raw, usd: raw.length * s.usdPerItem };
     } catch (err) {
@@ -393,6 +444,11 @@ function rank(list: Scored[]): Match[] {
 
 export interface StoreSearch { matches: Match[]; searched: number; total: number; plan: SearchPlan; usd: { apify: number; claude: number } }
 
+/** Every store has answered: wait at most this long (from the first run) for the remaining queries. */
+const ENOUGH_MS = 15_000;
+/** Some store has answered: never wait longer than this. */
+const CUTOFF_MS = 22_000;
+
 /** Listings scored per store, at most (the best of each query first). */
 const PER_STORE = 15;
 
@@ -409,33 +465,70 @@ export function pickListings(queries: string[], found: Listing[], seen: Listing[
 }
 
 /**
- * Plan (usually cached already), then each store is searched and its listings scored as soon as
- * that store answers, so the slow store's wait hides the fast one's scoring.
+ * Plan (usually cached already), then every store x query runs as its own scraper run, all in
+ * parallel. Each run's listings are scored the moment it returns and `onPartial` gets the ranking
+ * so far, so the first matches show up after the fastest run (~7 s), not the slowest.
  */
-export async function searchStores(w: Wanted, opts: { max?: number; timeoutSecs?: number; thumb?: string | null } = {}): Promise<StoreSearch> {
+export async function searchStores(
+  w: Wanted,
+  opts: { max?: number; timeoutSecs?: number; thumb?: string | null; onPartial?: (matches: Match[], searched: number) => void } = {},
+): Promise<StoreSearch> {
   const max = opts.max ?? 5, timeoutSecs = opts.timeoutSecs ?? 60;
   const plan = await planSearch(w);
   const design = designImage(opts.thumb);
   const seen: Listing[] = [];
-  let apify = 0, claude = 0, searched = 0;
-  const perStore = await Promise.all(STORE_NAMES.map(async (s) => {
-    let found: Listing[];
-    try {
-      const r = await searchStore(s, plan.queries, max, timeoutSecs);
-      apify += r.usd;
-      searched++;
-      found = r.listings;
-    } catch {
-      return [];
-    }
-    const fresh = pickListings(plan.queries, found, seen);
+  const scored: Scored[] = [];
+  const answered = new Set<string>();
+  let apify = 0, claude = 0;
+  const score = async (source: string, found: Listing[]) => {
+    const fresh = pickListings([...new Set(found.map((l) => l.query ?? ""))], found, seen);
     const chunks: Listing[][] = [];
     for (let i = 0; i < fresh.length; i += CHUNK) chunks.push(fresh.slice(i, i + CHUNK));
     const done = await Promise.all(chunks.map((c) => scoreChunk(w, plan, c, design)));
     claude += done.reduce((t, d) => t + d.usd, 0);
-    return done.flatMap((d) => d.scored);
+    scored.push(...done.flatMap((d) => d.scored));
+    answered.add(source);
+    if (scored.length && !finished) opts.onPartial?.(rank([...scored]), answered.size);
+  };
+  let finished = false;
+  const started = Date.now();
+  const all = Promise.all(STORE_NAMES.map(async (source) => {
+    const [primary, ...backups] = STORES[source];
+    const r = await runPerQuery(source, primary, plan.queries, max, timeoutSecs, (found) => score(source, found));
+    apify += r.usd;
+    if (r.listings.length) return;
+    // Nothing from the main scraper: one batched run on each backup in turn.
+    for (const b of backups) {
+      const started = Date.now();
+      try {
+        const raw = await runActor(b.actorId, b.input(plan.queries, max), timeoutSecs);
+        apify += raw.length * b.usdPerItem;
+        const found = raw.map((i) => normalize(source, i)).filter((l): l is Listing => !!l);
+        console.log(`[apify] ${source} backup ${b.actorId}: ${found.length} listings in ${Date.now() - started}ms`);
+        if (found.length) return void (await score(source, found));
+      } catch (err) {
+        console.warn(`[apify] ${source} backup ${b.actorId} failed after ${Date.now() - started}ms: ${(err as Error).message}`);
+      }
+    }
   }));
-  return { matches: rank(perStore.flat()), searched, total: STORE_NAMES.length, plan, usd: { apify, claude: plan.usd + claude } };
+  // Scraper runs have a long tail (Google sometimes retries a blocked page for 30 s+): once every
+  // store has been heard from, a straggling extra query isn't worth waiting for.
+  await new Promise<void>((resolve) => {
+    const tick = setInterval(() => {
+      const t = Date.now() - started;
+      if ((answered.size === STORE_NAMES.length && t > ENOUGH_MS) || (scored.length && t > CUTOFF_MS)) {
+        clearInterval(tick);
+        console.log(`[apify] not waiting for slower runs after ${t}ms (${answered.size}/${STORE_NAMES.length} stores in)`);
+        resolve();
+      }
+    }, 250);
+    void all.finally(() => {
+      clearInterval(tick);
+      resolve();
+    });
+  });
+  finished = true;
+  return { matches: rank([...scored]), searched: answered.size, total: STORE_NAMES.length, plan, usd: { apify, claude: plan.usd + claude } };
 }
 
 function interleave<T>(lists: T[][]): T[] {
