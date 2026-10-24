@@ -9,12 +9,14 @@ import { z } from "zod/v4";
 // `memory` is the sub-run's memory in MB (CPU scales with it); `base` resolves relative listing URLs.
 export const DEFAULT_SOURCES = {
   amazon: {
-    // Output: { title, url, price: { value, currency }, thumbnailImage }; empty searches push { error, url } rows.
+    // Output: { title, url | asin, price: { value, currency }, thumbnailImage }; empty searches push
+    // { error, url } rows. Search-page data only (no product page visits), which keeps it fast.
     actorId: "junglee/amazon-crawler",
     input: {
       categoryOrProductUrls: [{ url: "https://www.amazon.com/s?k={{queryEncoded}}" }],
       maxItemsPerStartUrl: "{{max}}",
       maxSearchPagesPerStartUrl: 1,
+      scrapeProductDetails: false,
       proxyCountry: "US",
     },
     memory: 2048,
@@ -36,11 +38,11 @@ export const DEFAULT_SOURCES = {
     base: "https://www.etsy.com",
   },
   google_shopping: {
-    // Output: { title, link, price: "$24.99", imageUrl, source: <merchant> }. Hosted SERP API, no
-    // browser or proxy, so it answers in seconds. `num` is a string enum in its schema ("10" is the minimum).
-    actorId: "damilo/google-shopping-apify",
-    // Google returns up to 40 products per page whatever `num` says, so cap the spend (~8 results at $0.0035).
-    input: { query: "{{query}}", num: "10", max_pages: 1, country: "us", language: "en", date_range: "anytime" },
+    // Output: { productName, productLink, price, productImage (sometimes an inline data: URI) }.
+    // maxItems caps the run; without it the scraper keeps paging (and charging) until the timeout.
+    // (emastra/... now resolves to epctex/google-shopping-scraper.) The spend cap is a backstop.
+    actorId: "emastra/google-shopping-scraper",
+    input: { queries: ["{{query}}"], maxItems: "{{max}}", maxItemsPerQuery: "{{max}}", countryCode: "us" },
     maxChargeUsd: 0.03,
     memory: 1024,
     base: "https://www.google.com",
@@ -111,16 +113,20 @@ export function normalize(source, item, base = DEFAULT_SOURCES[source]?.base ?? 
   // Etsy titles carry page junk after a newline ("...Handmade in the USA\nRegions Etsy does business in:").
   const rawTitle = first(item.title, item.name, item.productName, item.productTitle, item.product_title);
   const title = rawTitle == null ? null : String(rawTitle).split("\n")[0].replace(/\s+/g, " ").trim();
-  const url = absoluteUrl(first(item.url, item.link, item.productUrl, item.product_url, item.productLink), base);
+  // Amazon's search-page-only results can come with just an ASIN.
+  const asinUrl = typeof item.asin === "string" && item.asin ? `https://www.amazon.com/dp/${item.asin}` : undefined;
+  const url = absoluteUrl(first(item.url, item.link, item.productUrl, item.product_url, item.productLink, asinUrl), base);
   if (!title || !url) return null;
   let image = first(item.thumbnailImage, item.productImage, item.imageUrl, item.image, item.thumbnail, item.mainImage, firstOf(item.images), firstOf(item.imageUrls));
   if (image && typeof image === "object") image = first(image.url, image.src, image.link);
+  // Inline base64 thumbnails (Google Shopping) are kept only when small.
+  const inline = typeof image === "string" && /^data:image\//.test(image) ? (image.length < 20000 ? image : null) : undefined;
   return {
     source,
     title: title.slice(0, 200),
     url,
     price: toPrice(first(item.price, item.Price, item.priceValue, item.currentPrice, item.extracted_price, item.priceString)),
-    image: absoluteUrl(image, base),
+    image: inline !== undefined ? inline : absoluteUrl(image, base),
   };
 }
 

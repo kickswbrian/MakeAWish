@@ -50,5 +50,14 @@ test("filled inputs use the types the store actors' schemas require", () => {
   assert.equal(fill(DEFAULT_SOURCES.amazon.input, vars).maxItemsPerStartUrl, 5);
   assert.equal(fill(DEFAULT_SOURCES.etsy.input, vars).maxItems, 5);
   assert.equal(fill(DEFAULT_SOURCES.etsy.input, vars).proxy.apifyProxyCountry, "US");
-  assert.equal(fill(DEFAULT_SOURCES.google_shopping.input, vars).num, "10"); // string enum in its schema
+  assert.equal(fill(DEFAULT_SOURCES.google_shopping.input, vars).maxItems, 5); // without it the scraper keeps paging
+  assert.equal(fill(DEFAULT_SOURCES.amazon.input, vars).scrapeProductDetails, false);
+});
+
+test("normalize handles search-page-only Amazon rows and inline thumbnails", () => {
+  assert.equal(normalize("amazon", { title: "Dress", asin: "B0ABC" }).url, "https://www.amazon.com/dp/B0ABC");
+  const small = "data:image/webp;base64," + "A".repeat(100);
+  assert.equal(normalize("google_shopping", { productName: "X", productLink: "https://www.google.com/shopping/product/1", productImage: small }).image, small);
+  const big = "data:image/webp;base64," + "A".repeat(30000);
+  assert.equal(normalize("google_shopping", { productName: "X", productLink: "https://www.google.com/shopping/product/1", productImage: big }).image, null);
 });

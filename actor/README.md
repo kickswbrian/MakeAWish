@@ -57,31 +57,32 @@ The whole run is budgeted from its own timeout: stores and scoring shrink to fit
 
 ### Store actors
 
-Checked on 2026-10-24 against each actor's published input schema, sample output and pricing (Apify API, no live run yet). Prices are the list price per result at 5 results per store.
+Checked on 2026-10-24 against each actor's published input schema, sample output and pricing. Prices are the list price per result at 5 results per store.
 
 | Source | Default Store actor | Input we send | Output fields read | List price, 5 results |
 | --- | --- | --- | --- | --- |
-| amazon | `junglee/amazon-crawler` | search URL, `maxItemsPerStartUrl`, 1 page, `proxyCountry: "US"` | `title`, `url`, `price.value`, `thumbnailImage` | ~$0.025 ($0.005/result) |
-| etsy | `epctex/etsy-scraper` | `search`, `maxItems`, `endPage: 1`, RESIDENTIAL proxy | `name`, `url`, `Price` ("$49.00+"), `images[0]` | ~$0.017 ($0.0034/result) + compute and residential proxy |
-| google_shopping | `damilo/google-shopping-apify` | `query`, `num: "10"` (string enum), 1 page, `us`/`en` | `title`, `link`, `price` ("$24.99"), `imageUrl` | ~$0.0175, capped at $0.03 |
+| amazon | `junglee/amazon-crawler` | search URL, `maxItemsPerStartUrl`, 1 page, `scrapeProductDetails: false`, `proxyCountry: "US"` | `title`, `url` or `asin`, `price.value`, `thumbnailImage` | ~$0.025 ($0.005/result) |
+| etsy | `epctex/etsy-scraper` | `search`, `maxItems`, `endPage: 1`, RESIDENTIAL proxy in the US | `name`, `url`, `Price` ("$49.00+"), `images[0]` | ~$0.017 ($0.0034/result) + compute and residential proxy |
+| google_shopping | `emastra/google-shopping-scraper` (now `epctex/google-shopping-scraper`) | `queries`, `maxItems`, `maxItemsPerQuery`, `countryCode: "us"` | `productName`, `productLink`, `price`, `productImage` (small inline `data:` thumbnails kept) | ~$0.022 ($0.0044/result), capped at $0.03 |
 
-Why these:
+Notes:
 
-- **Google Shopping** was `emastra/google-shopping-scraper`, which now resolves to `epctex/google-shopping-scraper`. Our input used `maxPagesPerQuery` and `resultsPerPage`, which that actor doesn't have, so nothing capped the result count; and it outputs `productName`/`productImage`, which we didn't read, so every Google Shopping listing was dropped. It also scrapes Google through a SERP proxy (472 runs in the last 30 days, 20 timed out). `damilo/google-shopping-apify` uses a hosted SERP API, answers in seconds, and had 10,604 runs in the last 30 days with 94% succeeded and none timed out. To go back, override it (see below).
-- **Etsy** needs the RESIDENTIAL proxy group (its own prefill uses it; Etsy blocks datacenter IPs), and its price field is `Price` with a capital P.
+- **Wish it searches Amazon and Google Shopping only** (`SOURCES` in `server/src/apify.ts`): the Etsy scraper drives a browser and doesn't finish inside the per-store wait. The server also sends its own `sourceActors` inputs, so store settings can be tuned without redeploying this actor.
+- **Google Shopping** needs `maxItems`: without it the scraper keeps paging (and charging per result) until it times out. The old input used `maxPagesPerQuery`/`resultsPerPage`, which it doesn't have. An alternative is `damilo/google-shopping-apify`, a hosted SERP API (see the override below; its `num` is a string enum); `normalize()` already reads its output.
+- **Etsy** needs the RESIDENTIAL proxy group (Etsy blocks datacenter IPs) pinned to the US (otherwise prices come back in local currency), and its price field is `Price` with a capital P.
 - All three are pay-per-event now (Apify retired rental pricing in October 2026). Every sub-run gets `maxTotalChargeUsd` (about $0.06 at 5 results, $0.03 for Google Shopping) so one misbehaving store can't run up the bill. `_meta.costUsd` adds up charged events plus platform usage where the user pays it, priced at the free-tier rate, so it is an upper estimate.
 
-Swap any of them without redeploying via the `sourceActors` input, e.g. back to the old Google Shopping actor:
+Swap any of them without redeploying via the `sourceActors` input, e.g. to the hosted-API Google Shopping actor:
 
 ```json
-{ "sourceActors": { "google_shopping": { "actorId": "epctex/google-shopping-scraper", "input": { "queries": ["{{query}}"], "maxItems": "{{max}}", "countryCode": "us" } } } }
+{ "sourceActors": { "google_shopping": { "actorId": "damilo/google-shopping-apify", "input": { "query": "{{query}}", "num": "10", "max_pages": 1, "country": "us", "language": "en", "date_range": "anytime" } } } }
 ```
 
 `{{query}}` (the store search query), `{{queryEncoded}}` and `{{max}}` are substituted into the input template; a bare `"{{max}}"` becomes a number. `normalize()` in `src/sources.js` reads the common field spellings (`title`/`name`/`productName`, `url`/`link`/`productLink`, `price`/`Price`, image fields and arrays), so most overrides work without code changes.
 
 ## Cost control
 
-Defaults are 5 results per store, 3 stores, a spend cap on every store run and one LLM call per run: roughly $0.06 to $0.08 per search at list prices plus the Claude call. Wish it caches results for 24 h by product (an empty result is cached too, as long as at least one store answered), and its `DEMO_MODE=1` serves from cache only, so rehearsals cost nothing.
+Defaults are 5 results per store, a spend cap on every store run and one LLM call per run: roughly $0.05 per Wish it search (Amazon + Google Shopping) at list prices plus the Claude call. Wish it caches results for 24 h by product, only when every store answered and Claude did the scoring (including a real "nothing close"), has a daily search cap, and its `DEMO_MODE=1` serves from cache only, so rehearsals cost nothing.
 
 ## Deploy
 

@@ -8,6 +8,13 @@ export const MODELS_DIR = path.join(DATA_DIR, "models");
 export const WEB_DIST = path.join(ROOT, "web", "dist");
 
 const s = (k: string) => (process.env[k] && process.env[k]!.trim()) || undefined;
+const n = (k: string, fallback: number) => {
+  const v = Number(s(k));
+  return Number.isFinite(v) && v >= 0 ? v : fallback;
+};
+
+/** Public deployment: stricter limits, locked-down CORS and admin, generic 500s. */
+export const isProd = process.env.NODE_ENV === "production";
 
 export const env = {
   port: Number(process.env.PORT ?? 3000),
@@ -24,15 +31,41 @@ export const env = {
   stripeSecret: s("STRIPE_SECRET_KEY"),
   stripePublishable: s("STRIPE_PUBLISHABLE_KEY"),
   stripeWebhookSecret: s("STRIPE_WEBHOOK_SECRET"),
+  /** Extra origins allowed to open Socket.IO connections (comma-separated). PUBLIC_URL is always allowed. */
+  allowedOrigins: (s("ALLOWED_ORIGINS") ?? "").split(",").map((o) => o.trim()).filter(Boolean),
+  /**
+   * Daily caps on paid calls, across all users. Past a cap the app degrades to its free fallback
+   * (rule-based genie, sample matches, parametric 3D, browser speech) instead of erroring. 0 = off.
+   */
+  budget: {
+    llmTurns: n("DAILY_LLM_TURNS", 1500),
+    apifySearches: n("DAILY_APIFY_SEARCHES", 60),
+    meshyModels: n("DAILY_MESHY_MODELS", 30),
+    cartesiaTokens: n("DAILY_CARTESIA_TOKENS", 600),
+  },
 };
 
 export const paymentMode: "stripe" | "mock" = env.stripeSecret && env.stripePublishable ? "stripe" : "mock";
+
+/** Refuse to boot a public deployment with settings that leave it open. */
+export function assertSafeConfig() {
+  if (!isProd) return;
+  const problems: string[] = [];
+  if (!env.adminToken || env.adminToken.length < 24) problems.push("ADMIN_TOKEN must be set (24+ chars); admin routes are otherwise open");
+  if (paymentMode === "stripe" && !env.stripeWebhookSecret) problems.push("STRIPE_WEBHOOK_SECRET is required with Stripe keys; unsigned webhooks could fake payments");
+  if (paymentMode === "stripe" && env.stripeSecret?.startsWith("sk_live")) console.warn("[wish-it] WARNING: live Stripe key in use");
+  if (!env.publicUrl.startsWith("https://")) problems.push("PUBLIC_URL must be the https:// address of the deployment");
+  if (problems.length) {
+    console.error(`[wish-it] refusing to start in production:\n  - ${problems.join("\n  - ")}`);
+    process.exit(1);
+  }
+}
 
 export function logConfig() {
   const on = (b: unknown) => (b ? "on " : "off");
   console.log(
     [
-      `[wish-it] ${env.publicUrl}  demoMode=${env.demoMode}`,
+      `[wish-it] ${env.publicUrl}  demoMode=${env.demoMode}  ${isProd ? "PRODUCTION" : "development"}`,
       `  brain    ${on(env.anthropicKey)} ${env.anthropicKey ? env.brainModel : "(rule-based fallback)"}`,
       `  cartesia ${on(env.cartesiaKey)} ${env.cartesiaKey ? "" : "(browser speech fallback)"}`,
       `  apify    ${on(env.apifyToken && env.apifyActor)} ${env.apifyToken && env.apifyActor ? env.apifyActor : "(sample matches)"}`,

@@ -42,30 +42,30 @@ export default function Debug() {
         <h2>3D debug</h2>
         <div className="debug-presets">
           {Object.entries(PRESETS).map(([k, v]) => (
-            <button key={k} onClick={() => load(v)}>{k}</button>
+            <button key={k} className="chip sm" onClick={() => load(v)}>{k}</button>
           ))}
         </div>
         <div className="debug-presets">
           {(["mini", "knee", "midi", "maxi"] as const).map((l) => (
-            <button key={l} onClick={() => load({ ...spec, length: l })}>{l}</button>
+            <button key={l} className="chip sm" onClick={() => load({ ...spec, length: l })}>{l}</button>
           ))}
           {(["fitted", "a_line", "wrap", "flowy"] as const).map((l) => (
-            <button key={l} onClick={() => load({ ...spec, silhouette: l })}>{l}</button>
+            <button key={l} className="chip sm" onClick={() => load({ ...spec, silhouette: l })}>{l}</button>
           ))}
           {(["none", "cap", "short", "long"] as const).map((l) => (
-            <button key={l} onClick={() => load({ ...spec, sleeves: l })}>sleeves {l}</button>
+            <button key={l} className="chip sm" onClick={() => load({ ...spec, sleeves: l })}>sleeves {l}</button>
           ))}
           {(["crew", "v", "square", "halter"] as const).map((l) => (
-            <button key={l} onClick={() => load({ ...spec, neckline: l })}>{l}</button>
+            <button key={l} className="chip sm" onClick={() => load({ ...spec, neckline: l })}>{l}</button>
           ))}
           {["#1F8A5B", "#B9A3F0", "#D7263D", "#F6D44A", "#1F2A55"].map((c) => (
-            <button key={c} onClick={() => load({ ...spec, color: c })}><span className="swatch" style={{ background: c }} />{c}</button>
+            <button key={c} className="chip sm" onClick={() => load({ ...spec, color: c })}><span className="swatch" style={{ background: c }} />{c}</button>
           ))}
-          <button onClick={() => setCelebrate((n) => n + 1)}>celebrate spin</button>
+          <button className="chip sm" onClick={() => setCelebrate((n) => n + 1)}>celebrate spin</button>
         </div>
         <textarea value={text} onChange={(e) => apply(e.target.value)} spellCheck={false} />
         {err && <div className="err">{err}</div>}
-        <input placeholder="Hero GLB url (e.g. /models/x.glb)" value={hero} onChange={(e) => setHero(e.target.value)} className="field" style={{ padding: 10, borderRadius: 10, background: "rgba(0,0,0,.3)", border: "1px solid var(--glass-border)" }} />
+        <input placeholder="Hero GLB url (e.g. /models/x.glb)" value={hero} onChange={(e) => setHero(e.target.value)} className="input" aria-label="Hero GLB url" style={{ flex: "none" }} />
       </div>
       <div className="debug-canvas">
         <Stage spec={spec} framing="debug" heroUrl={hero || null} celebrateKey={celebrate} />

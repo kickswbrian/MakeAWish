@@ -4,9 +4,27 @@ import { emit } from "./bus.ts";
 import { env } from "./env.ts";
 import { hash } from "./util.ts";
 import { getWish } from "./wishes.ts";
+import { spend } from "./security.ts";
 
 const CACHE_MS = 24 * 3600_000;
-export const SOURCES = ["amazon", "etsy", "google_shopping"];
+// Etsy's scraper (Playwright) can't finish inside the Actor's per-store timeout, so it's left out.
+export const SOURCES = ["amazon", "google_shopping"];
+const MAX_PER_SOURCE = 5;
+/**
+ * Store inputs sent through the Actor's `sourceActors` override, so they can be tuned without
+ * redeploying it. Google Shopping ignores page limits and keeps paging (and charging per result)
+ * until it times out unless maxItems is set.
+ */
+const sourceActors = (query: string) => ({
+  amazon: {
+    actorId: "junglee/amazon-crawler",
+    input: { categoryOrProductUrls: [{ url: `https://www.amazon.com/s?k=${encodeURIComponent(query).replace(/%20/g, "+")}` }], maxItemsPerStartUrl: MAX_PER_SOURCE, maxSearchPagesPerStartUrl: 1, scrapeProductDetails: false, proxyCountry: "US" },
+  },
+  google_shopping: {
+    actorId: "emastra/google-shopping-scraper",
+    input: { queries: [query], maxItems: MAX_PER_SOURCE, maxItemsPerQuery: MAX_PER_SOURCE, countryCode: "us" },
+  },
+});
 
 // Actor run limits. The actor budgets itself from its run timeout: stores get up to 35 s, Claude what's
 // left (at most 35 s), and it pushes results ~8 s before the deadline. A run that still hits its timeout
@@ -110,16 +128,20 @@ export function writeCache(spec: ProductSpec, matches: Match[], searched: number
     .run(keyFor(spec), matchQuery(spec), JSON.stringify(matches), searched, total, Date.now());
 }
 
-// Wishes with a search in progress in this process: a second lock (or a boot resume racing a lock)
-// joins the running search instead of paying for another one.
-const inFlight = new Set<string>();
+// Searches in progress in this process, by wish and product: a double-tapped "See matches" (or a boot
+// resume racing a lock) shouldn't pay for the same search twice.
+const inflight = new Set<string>();
 
 /** Kick off a match search for a locked wish. Never throws (callers fire and forget it). */
 export async function findMatches(wishId: string): Promise<void> {
-  if (inFlight.has(wishId)) return;
-  inFlight.add(wishId);
+  let flight: string | null = null;
   try {
-    await searchAndSave(wishId);
+    const wish = getWish(wishId);
+    if (!wish) return;
+    const key = `${wishId}:${keyFor(wish.spec)}`;
+    if (inflight.has(key)) return;
+    inflight.add((flight = key));
+    await searchAndSave(wishId, wish.spec);
   } catch (err) {
     console.error(`[apify] match search for ${wishId} crashed:`, err);
     try {
@@ -129,7 +151,7 @@ export async function findMatches(wishId: string): Promise<void> {
       console.error("[apify] could not save fallback matches:", e);
     }
   } finally {
-    inFlight.delete(wishId);
+    if (flight) inflight.delete(flight);
   }
 }
 
@@ -159,10 +181,7 @@ export function resumePendingMatches(now = Date.now()): void {
   }
 }
 
-async function searchAndSave(wishId: string): Promise<void> {
-  const wish = getWish(wishId);
-  if (!wish) return;
-  const spec = wish.spec;
+async function searchAndSave(wishId: string, spec: ProductSpec): Promise<void> {
   db.prepare("INSERT OR REPLACE INTO match_runs (wish_id, searched, total, pending, sample, started_at) VALUES (?, 0, ?, 1, 0, ?)").run(wishId, SOURCES.length, Date.now());
   db.prepare("DELETE FROM matches WHERE wish_id = ?").run(wishId);
 
@@ -171,8 +190,8 @@ async function searchAndSave(wishId: string): Promise<void> {
     console.log(`[apify] cache hit "${matchQuery(spec)}"`);
     return save(wishId, cached.matches, cached.searched, cached.total, false);
   }
-  if (!env.apifyToken || !env.apifyActor || env.demoMode) {
-    console.log(`[apify] ${env.demoMode ? "DEMO_MODE cache miss" : "no APIFY_TOKEN/APIFY_ACTOR"}, serving sample matches`);
+  if (!env.apifyToken || !env.apifyActor || env.demoMode || !spend("apifySearches")) {
+    console.log(`[apify] ${env.demoMode ? "DEMO_MODE cache miss" : env.apifyToken && env.apifyActor ? "daily search cap reached" : "no APIFY_TOKEN/APIFY_ACTOR"}, serving sample matches`);
     return save(wishId, sampleMatches(spec), SOURCES.length, SOURCES.length, true);
   }
 
@@ -207,13 +226,17 @@ const num = (v: unknown): number | null => (v == null || v === "" || !Number.isF
 
 /** One synchronous run of the wish-matcher actor. Throws on HTTP errors, timeouts and unexpected bodies. */
 export async function runActor(spec: ProductSpec) {
+  const q = searchQuery(spec);
   const params = new URLSearchParams({ timeout: String(RUN_TIMEOUT_SECS), memory: String(RUN_MEMORY_MB) });
   const url = `https://api.apify.com/v2/acts/${actorPath(env.apifyActor!)}/run-sync-get-dataset-items?${params}`;
   const res = await fetch(url, {
     method: "POST",
     // Token in a header, not the query string, so it can't end up in logged URLs.
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.apifyToken}` },
-    body: JSON.stringify({ query: matchQuery(spec), searchQuery: searchQuery(spec), spec, sources: SOURCES, maxPerSource: 5 }),
+    // query is what Claude scores against; stores get the short searchQuery (also baked into the
+    // sourceActors inputs). minScore 0 keeps every listing so the grid shows real results even when
+    // scoring falls back to keywords.
+    body: JSON.stringify({ query: matchQuery(spec), searchQuery: q, spec, sources: SOURCES, maxPerSource: MAX_PER_SOURCE, minScore: 0, sourceActors: sourceActors(q) }),
     // Aborts the request itself (a bare Promise.race would leave the socket open).
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   }).catch((err: Error) => {
