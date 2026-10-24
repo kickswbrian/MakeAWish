@@ -2,22 +2,61 @@ import { colorName, describeSpec, EVENTS, type Match, type MatchesResponse, type
 import { db } from "./db.ts";
 import { emit } from "./bus.ts";
 import { env } from "./env.ts";
-import { hash, withTimeout } from "./util.ts";
+import { hash } from "./util.ts";
 import { getWish } from "./wishes.ts";
 
 const CACHE_MS = 24 * 3600_000;
 export const SOURCES = ["amazon", "etsy", "google_shopping"];
 
-/** Normalized query: stable across field order and wording noise. */
+// Actor run limits. The actor gives each store ~40 s (+10 s guard) and Claude up to 2 x 20 s, so a
+// worst-case run is ~95 s; a run that hits its own timeout makes the sync endpoint return an error.
+const RUN_TIMEOUT_SECS = 120;
+const FETCH_TIMEOUT_MS = (RUN_TIMEOUT_SECS + 15) * 1000;
+// The actor only waits on HTTP calls, so it doesn't need the platform default memory (billed per GB-hour).
+const RUN_MEMORY_MB = 512;
+
+/** Full description the listings are scored against: stable across field order and wording noise. */
 export function matchQuery(spec: ProductSpec): string {
-  return describeSpec(spec).toLowerCase().replace(/\s+/g, " ").trim();
+  const d = spec.category === "generic" && spec.name ? describeSpec(spec).replace(/\bwish\b/, spec.name) : describeSpec(spec);
+  return d.toLowerCase().replace(/\s+/g, " ").trim();
 }
+
+/** Short, store-friendly words per known feature: before the noun ("convertible dress") or after it. */
+const FEATURE_WORDS: Record<string, { pre?: string; post?: string }> = {
+  converts_to_skirt: { pre: "convertible" },
+  phone_pockets: { post: "with pockets" },
+  laptop_stand: { post: "with laptop stand" },
+  headphones: { post: "with headphones" },
+};
+
+/**
+ * What gets typed into each store's search box. Marketplace search returns little or nothing for a
+ * whole feature sentence ("... that converts to a skirt, with phone pockets"), so keep the product
+ * noun, the color and the single most distinctive feature; Claude still scores against matchQuery.
+ */
+export function searchQuery(spec: ProductSpec): string {
+  const generic = spec.category === "generic";
+  const noun = generic ? (spec.name ?? "").trim() : spec.category;
+  const color = spec.color ? colorName(spec.color) : "";
+  const length = spec.length && (spec.category === "dress" || spec.category === "skirt") && spec.length !== "knee" ? spec.length : "";
+  const feats = spec.features ?? [];
+  const known = feats.find((f) => FEATURE_WORDS[f]);
+  const words = known ? FEATURE_WORDS[known] : !generic && feats[0] ? { post: `with ${feats[0].replace(/_/g, " ")}` } : {};
+  const q = [color, words.pre, length, noun || matchQuery(spec), words.post].filter(Boolean).join(" ");
+  return q.toLowerCase().replace(/\s+/g, " ").trim().split(" ").slice(0, 7).join(" ");
+}
+
 /**
  * Cache key: what identifies the product (category, features, color family), not wording or small
  * tweaks like "a little shorter", so the pre-warmed demo wish still hits the cache on stage.
+ * `v` changes when the search itself changes, so results from an older pipeline aren't served forever
+ * (DEMO_MODE never expires cache rows).
  */
 const keyFor = (spec: ProductSpec) =>
-  hash(JSON.stringify({ c: spec.category, f: [...(spec.features ?? [])].sort(), color: spec.color ? colorName(spec.color) : null, n: spec.category === "generic" ? (spec.name ?? "").toLowerCase() : null }));
+  hash(JSON.stringify({ v: 2, c: spec.category, f: [...(spec.features ?? [])].sort(), color: spec.color ? colorName(spec.color) : null, n: spec.category === "generic" ? (spec.name ?? "").toLowerCase() : null }));
+
+/** APIFY_ACTOR may be written "user/wish-matcher"; the API path wants "user~wish-matcher". */
+const actorPath = (id: string) => encodeURIComponent(id.trim().replace("/", "~"));
 
 export function getMatches(wishId: string): MatchesResponse {
   const run = db.prepare("SELECT * FROM match_runs WHERE wish_id = ?").get(wishId) as
@@ -75,33 +114,65 @@ export async function findMatches(wishId: string): Promise<void> {
 
   const started = Date.now();
   try {
-    const url = `https://api.apify.com/v2/acts/${encodeURIComponent(env.apifyActor)}/run-sync-get-dataset-items?token=${env.apifyToken}&timeout=60`;
-    const res = await withTimeout(
-      fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: matchQuery(spec), spec, sources: SOURCES, maxPerSource: 5 }),
-      }),
-      70_000,
-      "apify",
-    );
-    if (!res.ok) throw new Error(`apify ${res.status}: ${(await res.text()).slice(0, 300)}`);
-    const items = (await res.json()) as any[];
-    const meta = items.find((i) => i && i._meta);
-    const matches: Match[] = items
-      .filter((i) => i && !i._meta && i.title && i.url)
-      .map((i) => ({ source: String(i.source ?? "web"), title: String(i.title), url: String(i.url), price: i.price == null ? null : Number(i.price), image: i.image ?? null, score: Number(i.score ?? 0), missing: Array.isArray(i.missing) ? i.missing.map(String) : [] }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 6);
-    const searched = meta?._meta?.searched ?? new Set(matches.map((m) => m.source)).size;
-    const total = meta?._meta?.total ?? SOURCES.length;
-    console.log(`[apify] ${matches.length} matches in ${Date.now() - started}ms, searched ${searched}/${total}, cost ~$${meta?._meta?.costUsd ?? "?"}`);
-    if (matches.length) writeCache(spec, matches, searched, total);
+    const { matches, searched, total, costUsd } = await runActor(spec);
+    console.log(`[apify] ${matches.length} matches in ${Date.now() - started}ms, searched ${searched}/${total}, cost ~$${costUsd ?? "?"}`);
+    // No store answered: that's an outage, not "nothing like it exists", so don't present it as a result.
+    if (searched === 0) throw new Error(`no store answered (0 of ${total})`);
+    // Cache empty results too when stores did answer: "nothing close" is a real answer, and re-running
+    // a paid search on every lock (or falling back to samples in DEMO_MODE) would be wrong.
+    writeCache(spec, matches, searched, total);
     save(wishId, matches, searched, total, false);
   } catch (err) {
     console.warn("[apify] failed, serving sample matches:", (err as Error).message);
     save(wishId, sampleMatches(spec), 0, SOURCES.length, true);
   }
+}
+
+const num = (v: unknown): number | null => (v == null || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
+
+/** One synchronous run of the wish-matcher actor. Throws on HTTP errors, timeouts and unexpected bodies. */
+export async function runActor(spec: ProductSpec) {
+  const params = new URLSearchParams({ timeout: String(RUN_TIMEOUT_SECS), memory: String(RUN_MEMORY_MB) });
+  const url = `https://api.apify.com/v2/acts/${actorPath(env.apifyActor!)}/run-sync-get-dataset-items?${params}`;
+  const res = await fetch(url, {
+    method: "POST",
+    // Token in a header, not the query string, so it can't end up in logged URLs.
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.apifyToken}` },
+    body: JSON.stringify({ query: matchQuery(spec), searchQuery: searchQuery(spec), spec, sources: SOURCES, maxPerSource: 5 }),
+    // Aborts the request itself (a bare Promise.race would leave the socket open).
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  }).catch((err: Error) => {
+    throw new Error(err.name === "TimeoutError" ? `apify timed out after ${FETCH_TIMEOUT_MS}ms` : `apify fetch failed: ${err.message}`);
+  });
+  if (!res.ok) {
+    // Failed/timed-out runs come back as 4xx JSON: { error: { type: "run-failed", message: "... status: TIMED-OUT" } }.
+    const body = await res.text();
+    let msg = body.slice(0, 300);
+    try {
+      const e = JSON.parse(body)?.error;
+      if (e?.message) msg = `${e.type ?? "error"}: ${e.message}`;
+    } catch {}
+    throw new Error(`apify ${res.status}: ${msg}`);
+  }
+  const items = (await res.json()) as unknown;
+  if (!Array.isArray(items)) throw new Error(`apify returned ${typeof items}, expected a dataset item array`);
+  const meta = items.find((i) => i && typeof i === "object" && i._meta)?._meta;
+  const matches: Match[] = items
+    .filter((i) => i && typeof i === "object" && !i._meta && i.title && i.url)
+    .map((i) => ({
+      source: String(i.source ?? "web"),
+      title: String(i.title),
+      url: String(i.url),
+      price: num(i.price),
+      image: typeof i.image === "string" && i.image ? i.image : null,
+      score: Math.max(0, Math.min(100, num(i.score) ?? 0)),
+      missing: Array.isArray(i.missing) ? i.missing.map(String) : [],
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 6);
+  const searched = num(meta?.searched) ?? new Set(matches.map((m) => m.source)).size;
+  const total = num(meta?.total) ?? SOURCES.length;
+  return { matches, searched, total, costUsd: num(meta?.costUsd) };
 }
 
 /**
@@ -140,7 +211,7 @@ export function sampleMatches(spec: ProductSpec): Match[] {
       ];
     default:
       return [
-        s(`Something like a ${describeSpec(spec)}`, 45, 38, ["key feature"]),
+        s(`Something like a ${matchQuery(spec)}`, 45, 38, ["key feature"]),
         s("Closest generic alternative", 30, 25, ["most of the wish"]),
       ];
   }
