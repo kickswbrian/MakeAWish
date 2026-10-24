@@ -724,19 +724,20 @@ p { margin: 0; }
    and the 3D bubble springs out of it with clouds and sparkles (Bubble3D). */
 .v2-intro { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: var(--cream); cursor: pointer; overflow: hidden; transition: background .5s ease; }
 .v2-intro.swipe { background: transparent; }
-.v2-words { display: flex; flex-direction: column; align-items: center; font-weight: 800; letter-spacing: -0.05em; font-size: clamp(56px, 13vw, 132px); line-height: 1.04; text-align: center; padding: 0 16px; }
-/* "Want it?" starts big off to the right and swipes in; "Wish it." then magics in letter by letter. */
-.v2-w1 { color: var(--ink); will-change: transform, opacity; animation: v2swipeIn .75s cubic-bezier(.16, 1, .3, 1) .1s both; }
-.v2-w2 { display: inline-flex; }
-.v2-l { display: inline-block; will-change: transform, opacity; animation: v2magicIn .7s cubic-bezier(.2, .9, .3, 1.2) both; animation-delay: calc(.95s + var(--i) * 70ms); }
-.v2-intro.swipe .v2-words { animation: v2swipe .55s cubic-bezier(.7, 0, .84, 0) both; }
-@keyframes v2swipeIn { from { opacity: 0; transform: translateX(70vw) scale(1.7); } 40% { opacity: 1; } to { opacity: 1; transform: none; } }
-@keyframes v2magicIn {
-  0% { opacity: 0; transform: translateY(.25em) scale(.4); }
-  60% { opacity: 1; transform: translateY(-.04em) scale(1.08); }
-  100% { opacity: 1; transform: none; }
-}
-@keyframes v2swipe { 0% { transform: none; } 30% { transform: scale(1.3); opacity: 1; } 100% { transform: translateX(-140vw) scale(2.8); opacity: 0; } }
+.v2-words { display: flex; flex-direction: column; align-items: center; font-weight: 800; letter-spacing: -0.05em; font-size: clamp(64px, 15vw, 176px); line-height: 1.04; text-align: center; padding: 0 16px; }
+/* The words keep one size throughout: "Want it?" slides in from the right, "Wish it." traces itself in
+   outline and then fills with color, and the pair sweeps off to the left. */
+.v2-w1 { color: var(--ink); will-change: transform, opacity; animation: v2slideIn .8s cubic-bezier(.16, 1, .3, 1) .1s both; }
+.v2-w2 { display: block; width: 4.2em; height: 1.04em; overflow: visible; }
+.v2-w2 text { font-family: var(--font); font-weight: 800; font-size: 100px; letter-spacing: -5px; }
+.v2-w2-line { fill: none; stroke: url(#v2wishg); stroke-width: 1.8; stroke-linejoin: round; stroke-dasharray: 700; stroke-dashoffset: 700; animation: v2trace 1.2s cubic-bezier(.45, 0, .2, 1) .85s forwards; }
+.v2-w2-fill { fill: url(#v2wishg); }
+.v2-w2-wipe { transform-box: fill-box; transform-origin: 0 50%; transform: scaleX(0); animation: v2wipe .7s cubic-bezier(.6, 0, .2, 1) 1.8s forwards; }
+.v2-intro.swipe .v2-words { will-change: transform, opacity; animation: v2swipe .55s cubic-bezier(.6, 0, .84, 0) both; }
+@keyframes v2slideIn { from { opacity: 0; transform: translateX(60vw); } 40% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes v2trace { to { stroke-dashoffset: 0; } }
+@keyframes v2wipe { to { transform: scaleX(1); } }
+@keyframes v2swipe { 0% { transform: none; } 25% { transform: translateX(3vw); opacity: 1; } 100% { transform: translateX(-130vw); opacity: 0; } }
 
 .v2-ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 5; }
 .v2-ring-track { fill: none; stroke: rgba(197, 216, 207, .4); stroke-width: .7; animation: fadeOnly .5s ease both; }

@@ -736,9 +736,9 @@ export default function Studio() {
 
   // ---------- UI variation 2 (press 2; 1 goes back) ----------
   const { variant, introKey } = useUiVariant();
-  const v2 = variant === "2";
+  const v2 = variant !== "1";
   const settled = useFramesSettled();
-  const [phase, skipIntro] = useIntroPhase(introKey, v2, settled);
+  const [phase, skipIntro] = useIntroPhase(introKey, v2, settled, variant === "3");
   introPlaying.current = v2 && phase !== "done";
   // While the words and the ring play, nothing 3D is visible: stop both canvases so the intro gets the
   // whole GPU. (They do render during "wait", so their shaders are built before the bubble appears.)
@@ -753,6 +753,8 @@ export default function Studio() {
   const idle = useIdle(
     `${voice.interim}|${lastCaption?.id ?? ""}|${voice.state}|${voice.active}|${busy}|${typing}|${text}`,
     v2Landing && phase === "done" && !busy && !voice.interim && (voice.state === "idle" || voice.state === "listening"),
+    // Right away until something's been said; after that, once the last caption has had a moment.
+    lastCaption ? 8000 : 0,
   );
   // Nothing on screen to type into: start typing anywhere and the box opens with that letter.
   useEffect(() => {
