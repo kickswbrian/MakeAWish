@@ -155,7 +155,11 @@ function guessFeatures(text: string, category: Category): string[] {
 export function productDetails(text: string, current: ProductSpec): SpecPatch {
   const p = guessRest(text, current, current.category);
   const head = text.split(/\b(?:with|that|which|and|but)\b|,/i)[0];
-  const c = findColor(" " + head.toLowerCase() + " ");
+  const t = " " + text.toLowerCase().replace(/[^a-z0-9#' ]+/g, " ").replace(/\s+/g, " ") + " ";
+  const names = Object.keys(COLOR_NAMES).sort((a, b) => b.length - a.length).map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  // "...with headphones in blue", "...that's navy", "...in matte black": the product's color.
+  const trailing = new RegExp(`\\b(?:in|that'?s|thats|it'?s|colou?red|all)\\s+(?:(?:a|an|matte|glossy|shiny|light|dark|bright|deep|pale|pastel)\\s+)*(${names})\\s*$|\\b(?:in|that'?s|thats|colou?red)\\s+(?:(?:a|an|matte|glossy|shiny|light|dark|bright|deep|pale|pastel)\\s+)*(${names})\\b(?!\\s+[a-z]+(?:s)?\\b(?!\\s*$))`).exec(t.trim());
+  const c = findColor(" " + head.toLowerCase() + " ") ?? (trailing ? COLOR_NAMES[trailing[1] ?? trailing[2]] : null);
   if (c) p.color = c;
   else delete p.color;
   delete p.addons;
