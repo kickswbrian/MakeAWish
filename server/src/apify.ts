@@ -4,9 +4,27 @@ import { emit } from "./bus.ts";
 import { env } from "./env.ts";
 import { hash, withTimeout } from "./util.ts";
 import { getWish } from "./wishes.ts";
+import { spend } from "./security.ts";
 
 const CACHE_MS = 24 * 3600_000;
-export const SOURCES = ["amazon", "etsy", "google_shopping"];
+// Etsy's scraper (Playwright) can't finish inside the Actor's per-store timeout, so it's left out.
+export const SOURCES = ["amazon", "google_shopping"];
+const MAX_PER_SOURCE = 5;
+/**
+ * Store inputs sent through the Actor's `sourceActors` override, so they can be tuned without
+ * redeploying it. Google Shopping ignores page limits and keeps paging (and charging per result)
+ * until it times out unless maxItems is set.
+ */
+const sourceActors = (query: string) => ({
+  amazon: {
+    actorId: "junglee/amazon-crawler",
+    input: { categoryOrProductUrls: [{ url: `https://www.amazon.com/s?k=${encodeURIComponent(query).replace(/%20/g, "+")}` }], maxItemsPerStartUrl: MAX_PER_SOURCE, maxSearchPagesPerStartUrl: 1, scrapeProductDetails: false, proxyCountry: "US" },
+  },
+  google_shopping: {
+    actorId: "emastra/google-shopping-scraper",
+    input: { queries: [query], maxItems: MAX_PER_SOURCE, maxItemsPerQuery: MAX_PER_SOURCE, countryCode: "us" },
+  },
+});
 
 /** Normalized query: stable across field order and wording noise. */
 export function matchQuery(spec: ProductSpec): string {
@@ -60,6 +78,20 @@ export async function findMatches(wishId: string): Promise<void> {
   const wish = getWish(wishId);
   if (!wish) return;
   const spec = wish.spec;
+  // A double-tapped "See matches" shouldn't pay for the same search twice.
+  const flight = `${wishId}:${keyFor(spec)}`;
+  if (inflight.has(flight)) return;
+  inflight.add(flight);
+  try {
+    await search(wishId, spec);
+  } finally {
+    inflight.delete(flight);
+  }
+}
+
+const inflight = new Set<string>();
+
+async function search(wishId: string, spec: ProductSpec) {
   db.prepare("INSERT OR REPLACE INTO match_runs (wish_id, searched, total, pending, sample) VALUES (?, 0, ?, 1, 0)").run(wishId, SOURCES.length);
   db.prepare("DELETE FROM matches WHERE wish_id = ?").run(wishId);
 
@@ -68,8 +100,8 @@ export async function findMatches(wishId: string): Promise<void> {
     console.log(`[apify] cache hit "${matchQuery(spec)}"`);
     return save(wishId, cached.matches, cached.searched, cached.total, false);
   }
-  if (!env.apifyToken || !env.apifyActor || env.demoMode) {
-    console.log(`[apify] ${env.demoMode ? "DEMO_MODE cache miss" : "no APIFY_TOKEN/APIFY_ACTOR"}, serving sample matches`);
+  if (!env.apifyToken || !env.apifyActor || env.demoMode || !spend("apifySearches")) {
+    console.log(`[apify] ${env.demoMode ? "DEMO_MODE cache miss" : env.apifyToken && env.apifyActor ? "daily search cap reached" : "no APIFY_TOKEN/APIFY_ACTOR"}, serving sample matches`);
     return save(wishId, sampleMatches(spec), SOURCES.length, SOURCES.length, true);
   }
 
@@ -80,7 +112,8 @@ export async function findMatches(wishId: string): Promise<void> {
       fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: matchQuery(spec), spec, sources: SOURCES, maxPerSource: 5 }),
+        // minScore 0: keep every listing so the grid shows real results even when scoring is keyword-only.
+        body: JSON.stringify({ query: matchQuery(spec), spec, sources: SOURCES, maxPerSource: MAX_PER_SOURCE, minScore: 0, sourceActors: sourceActors(matchQuery(spec)) }),
       }),
       70_000,
       "apify",

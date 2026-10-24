@@ -132,7 +132,7 @@ export function Helmet({ spec, flash }: { spec: ProductSpec; flash: MutableRefOb
   const vent = useMemo(() => new THREE.MeshStandardMaterial({ color: "#15121f", roughness: 0.6 }), []);
   const cup = useMemo(() => new THREE.MeshStandardMaterial({ color: "#1c1a26", metalness: 0.5, roughness: 0.35 }), []);
   const on = useRef(hasPhones ? 1 : 0);
-  const head = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#ebe5f8", roughness: 0.55, sheen: 0.4, emissive: "#b9a3f0", emissiveIntensity: 0.05 }), []);
+  const head = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#F4F1EA", roughness: 0.55, sheen: 0.4, emissive: "#C5D8CF", emissiveIntensity: 0.05 }), []);
   useFrame((state, dt) => {
     on.current += ((hasPhones ? 1 : 0) - on.current) * morphK(dt);
     if (cups.current) {

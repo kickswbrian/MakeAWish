@@ -3,6 +3,7 @@ import path from "node:path";
 import { describeSpec, EVENTS, type ProductSpec } from "@wishit/shared";
 import { db } from "./db.ts";
 import { emit } from "./bus.ts";
+import { spend } from "./security.ts";
 import { env, MODELS_DIR } from "./env.ts";
 import { hash, sleep } from "./util.ts";
 import { getWish, setWishModel } from "./wishes.ts";
@@ -42,7 +43,8 @@ export async function startMeshy(wishId: string): Promise<void> {
 
   const cached = cachedFileFor(prompt);
   if (cached) return ready(cached);
-  if (!env.meshyKey || env.demoMode) return;
+  // Past the daily cap the parametric model stays on screen.
+  if (!env.meshyKey || env.demoMode || !spend("meshyModels")) return;
 
   try {
     const auth = { Authorization: `Bearer ${env.meshyKey}`, "Content-Type": "application/json" };

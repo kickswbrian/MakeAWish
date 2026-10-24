@@ -9,7 +9,8 @@ async function req<T>(method: string, path: string, body?: unknown, headers?: Re
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((data as { error?: string }).error ?? `Request failed (${res.status})`);
+  // Server errors are { error: { code, message, requestId } }.
+  if (!res.ok) throw new Error((data as { error?: { message?: string } }).error?.message ?? `Request failed (${res.status})`);
   return data as T;
 }
 

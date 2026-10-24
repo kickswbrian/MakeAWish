@@ -38,7 +38,7 @@ void main() {
   float f = pow(1.0 - max(dot(vN, vView), 0.0), 2.0);
   vec3 col = mix(uA, uB, 0.5 + 0.5 * vNoise);
   col = mix(col, uC, f);
-  gl_FragColor = vec4(col * (0.35 + f * 1.4) * uGlow, 0.5 + 0.5 * f);
+  gl_FragColor = vec4(col * (0.85 + f * 0.35) * min(uGlow, 1.15), 0.35 + 0.55 * f);
 }`;
 
 /** The genie's sparkle orb. Idle breathes, listening ripples with the mic, thinking swirls, speaking pulses. */
@@ -55,7 +55,7 @@ export function Orb({ visible = true }: { visible?: boolean }) {
         transparent: true,
         uniforms: {
           uTime: { value: 0 }, uLevel: { value: 0 }, uSwirl: { value: 0 }, uGlow: { value: 1 },
-          uA: { value: new THREE.Color("#7b5cf0") }, uB: { value: new THREE.Color("#5fd3b0") }, uC: { value: new THREE.Color("#ffe6b0") },
+          uA: { value: new THREE.Color("#C5D8CF") }, uB: { value: new THREE.Color("#F9C6DC") }, uC: { value: new THREE.Color("#FFFFFF") },
         },
       }),
     [],
@@ -88,11 +88,11 @@ export function Orb({ visible = true }: { visible?: boolean }) {
     if (moons.current) moons.current.rotation.y += dt * (0.6 + swirlSpeed * 0.5);
     if (visible && t - cur.lastSparkle > 0.07) {
       cur.lastSparkle = t;
-      fx.band({ y0: ORB_Y - 0.55, y1: ORB_Y + 0.45, r: 0.66 }, 2, Math.random() < 0.6 ? "#ffe6b0" : "#b9a3f0");
+      fx.band({ y0: ORB_Y - 0.55, y1: ORB_Y + 0.45, r: 0.66 }, 2, Math.random() < 0.6 ? "#E9C46A" : "#F4A8C8");
     }
     if (visible && st === "thinking" && t - cur.lastInward > 0.12) {
       cur.lastInward = t;
-      fx.inward([0, ORB_Y, 0], ORB_R, 10, Math.random() < 0.5 ? "#f2c96b" : "#b9a3f0");
+      fx.inward([0, ORB_Y, 0], ORB_R, 10, Math.random() < 0.5 ? "#E9C46A" : "#F4A8C8");
     }
   });
 
@@ -104,7 +104,7 @@ export function Orb({ visible = true }: { visible?: boolean }) {
         </mesh>
         <mesh ref={core}>
           <sphereGeometry args={[ORB_R * 0.45, 32, 24]} />
-          <meshBasicMaterial color={new THREE.Color(1.6, 1.4, 2.0)} toneMapped={false} transparent opacity={0.5} />
+          <meshBasicMaterial color={new THREE.Color(1.3, 1.25, 1.05)} toneMapped={false} transparent opacity={0.5} />
         </mesh>
         <group ref={moons}>
           {[0, 1, 2].map((i) => (

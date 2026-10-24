@@ -215,7 +215,8 @@ export function useVoice({ onTurn, onInterim }: Opts) {
     if (!startBrowserRec()) setMicStatus("failed");
   }, [bargeIn, finalTurn, startBrowserRec]);
 
-  const end = useCallback(() => {
+  /** Closes the mic and speech recognition; anything the genie is saying finishes. */
+  const stopListening = useCallback(() => {
     activeRef.current = false;
     setActive(false);
     stt.current?.stop();
@@ -226,8 +227,12 @@ export function useVoice({ onTurn, onInterim }: Opts) {
     stream.current = null;
     setInterim("");
     setMicStatus("off");
+  }, []);
+
+  const end = useCallback(() => {
+    stopListening();
     stopSpeaking();
-  }, [stopSpeaking]);
+  }, [stopListening, stopSpeaking]);
 
   const toggleMute = useCallback(() => {
     const m = !mutedRef.current;
@@ -336,7 +341,7 @@ export function useVoice({ onTurn, onInterim }: Opts) {
 
   return {
     mode, state, active, muted, interim, captions, micStatus, ttsFailed, voices, voiceId, timing,
-    start, end, toggleMute, speak, stopSpeaking, setThinking, setVoiceId, addCaption,
+    start, end, stopListening, toggleMute, speak, stopSpeaking, setThinking, setVoiceId, addCaption,
     /** Typed text and tapped examples take the same path as a spoken turn. */
     submit: finalTurn,
   };

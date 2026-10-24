@@ -9,7 +9,7 @@ import { usePartMaterials, usePattern } from "./materials.ts";
 const SK_ROWS = 30, SK_COLS = 72;
 const BD_ROWS = 18, BD_COLS = 72;
 
-export const DEFAULT_COLOR = "#B9A3F0";
+export const DEFAULT_COLOR = "#DCC7A2";
 
 /** Clothing on a stylized dress form. Every spec change morphs over ~400 ms instead of popping. */
 export function Garment({ spec, flash }: { spec: ProductSpec; flash: MutableRefObject<number> }) {
@@ -213,7 +213,7 @@ export function Mannequin() {
     });
     return g;
   }, []);
-  const mat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#ebe5f8", roughness: 0.55, sheen: 0.4, emissive: "#b9a3f0", emissiveIntensity: 0.05 }), []);
+  const mat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#F4F1EA", roughness: 0.55, sheen: 0.4, emissive: "#C5D8CF", emissiveIntensity: 0.05 }), []);
   return (
     <group>
       <mesh geometry={geo} material={mat} />

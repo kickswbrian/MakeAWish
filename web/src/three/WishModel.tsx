@@ -112,21 +112,21 @@ function Pedestal() {
     c.width = c.height = 128;
     const g = c.getContext("2d")!;
     const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-    grad.addColorStop(0, "rgba(185,163,240,0.9)");
-    grad.addColorStop(0.4, "rgba(152,226,198,0.35)");
-    grad.addColorStop(1, "rgba(0,0,0,0)");
+    grad.addColorStop(0, "rgba(255,255,255,0.9)");
+    grad.addColorStop(0.4, "rgba(255,255,255,0.35)");
+    grad.addColorStop(1, "rgba(255,255,255,0)");
     g.fillStyle = grad;
     g.fillRect(0, 0, 128, 128);
     return new THREE.CanvasTexture(c);
   }, []);
   useFrame((s) => {
-    if (ring.current) ring.current.color.setRGB(0.6, 1.5 + Math.sin(s.clock.elapsedTime * 1.5) * 0.25, 1.2);
+    if (ring.current) ring.current.color.setRGB(0.95, 0.85 + Math.sin(s.clock.elapsedTime * 1.5) * 0.06, 0.54);
   });
   return (
     <group>
       <mesh position={[0, 0.05, 0]}>
         <cylinderGeometry args={[0.56, 0.62, 0.1, 64]} />
-        <meshPhysicalMaterial color="#2a2152" roughness={0.25} metalness={0.2} clearcoat={1} emissive="#3a2a80" emissiveIntensity={0.25} />
+        <meshPhysicalMaterial color="#FFFFFF" roughness={0.3} metalness={0} clearcoat={1} emissive="#F2D88A" emissiveIntensity={0.12} />
       </mesh>
       <mesh position={[0, 0.101, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.5, 0.53, 96]} />
@@ -134,7 +134,7 @@ function Pedestal() {
       </mesh>
       <mesh position={[0, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[2.6, 2.6]} />
-        <meshBasicMaterial map={glowTex} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+        <meshBasicMaterial map={glowTex} color="#F2D88A" transparent opacity={0.55} depthWrite={false} />
       </mesh>
     </group>
   );
@@ -148,13 +148,15 @@ export interface WishModelProps {
   pedestal?: boolean;
   /** Hold the model at this angle (radians, 0 = front) instead of turning slowly. */
   facing?: number;
+  /** Show the 3D wish orb for a generic wish. Off when a CSS bubble already plays that role. */
+  orb?: boolean;
 }
 
 /**
  * The product on its pedestal. Instant parametric model per category, a wish orb for anything
  * else, and an optional Meshy GLB that dissolves in when it arrives.
  */
-export function WishModel({ spec, heroUrl, celebrateKey = 0, pedestal = true, facing }: WishModelProps) {
+export function WishModel({ spec, heroUrl, celebrateKey = 0, pedestal = true, orb = true, facing }: WishModelProps) {
   const [heroReady, setHeroReady] = useState<{ url: string; look: string } | null>(null);
   const [heroFailed, setHeroFailed] = useState<string | null>(null);
   const look = JSON.stringify(VISUAL_FIELDS.map((f) => spec[f]));
@@ -175,7 +177,7 @@ export function WishModel({ spec, heroUrl, celebrateKey = 0, pedestal = true, fa
   specRef.current = spec;
   const sizeGroup = useRef<THREE.Group>(null);
   const size = useRef(spec.scale ?? 1);
-  const accent = spec.color ?? "#b9a3f0";
+  const accent = spec.color ?? "#C5D8CF";
 
   // First appearance: particles swirl up from below (the mic) and assemble into the product.
   useEffect(() => {
@@ -197,7 +199,7 @@ export function WishModel({ spec, heroUrl, celebrateKey = 0, pedestal = true, fa
       const key = `${b.y0}:${b.y1}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      fx.band(b, 160, "#f2c96b");
+      fx.band(b, 160, "#E9C46A");
       fx.band(b, 90, accent);
     }
   }, [spec, shown, accent]);
@@ -212,7 +214,7 @@ export function WishModel({ spec, heroUrl, celebrateKey = 0, pedestal = true, fa
     if (target !== shown && !swapping.current) {
       if (shown === "orb") {
         // The orb bursts into particles that assemble into the product in the same spot.
-        fx.burst([0, ORB_Y, 0], 260, "#ffe6b0", 1.4);
+        fx.burst([0, ORB_Y, 0], 260, "#F4A8C8", 1.4);
         fx.assemble([0, ORB_Y, 0], boundsFor(target, specRef.current), 520, accent, 0.85);
         swapping.current = true;
         appear.current = 0;
@@ -221,7 +223,7 @@ export function WishModel({ spec, heroUrl, celebrateKey = 0, pedestal = true, fa
         appear.current -= dt * 5;
         if (appear.current <= 0) {
           fx.band(boundsFor(shown, specRef.current), 260, accent);
-          if (target !== "orb") fx.assemble([0, 1.0, 0], boundsFor(target, specRef.current), 480, target === "hero" ? "#f2c96b" : accent, 0.9);
+          if (target !== "orb") fx.assemble([0, 1.0, 0], boundsFor(target, specRef.current), 480, target === "hero" ? "#E9C46A" : accent, 0.9);
           swapping.current = true;
           appear.current = 0;
           setShown(target);
@@ -252,7 +254,7 @@ export function WishModel({ spec, heroUrl, celebrateKey = 0, pedestal = true, fa
   return (
     <group ref={spin}>
       {pedestal && <Pedestal />}
-      <Orb visible={shown === "orb" && targetKind === "orb"} />
+      {orb && <Orb visible={shown === "orb" && targetKind === "orb"} />}
       <group ref={sizeGroup}>
       <group ref={scaleGroup}>
         {clothing && <Mannequin />}
@@ -260,7 +262,7 @@ export function WishModel({ spec, heroUrl, celebrateKey = 0, pedestal = true, fa
         {shown === "backpack" && <Backpack spec={spec} flash={flash} />}
         {shown === "helmet" && <Helmet spec={spec} flash={flash} />}
         {shown === "body" && spec.body && <GenericBody spec={spec} flash={flash} />}
-        {shown !== "hero" && (shown !== "orb" || targetKind === "orb") && shown === targetKind && (
+        {shown !== "hero" && (shown !== "orb" || (targetKind === "orb" && orb)) && shown === targetKind && (
           <>
             <Decals spec={spec} />
             <Addons spec={spec} flash={flash} />

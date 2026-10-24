@@ -208,7 +208,7 @@ function DecalMesh({ spec, d, ink }: { spec: ProductSpec; d: Decal; ink: string 
 }
 
 export function Decals({ spec }: { spec: ProductSpec }) {
-  const ink = contrastInk(spec.color ?? "#B9A3F0");
+  const ink = contrastInk(spec.color ?? "#C5D8CF");
   return (
     <group>
       {(spec.decals ?? []).map((d, i) => <DecalMesh key={`${i}:${d.kind}:${d.content}:${d.placement}`} spec={spec} d={d} ink={ink} />)}
@@ -374,13 +374,13 @@ function frame(at: Anchor, upright: boolean): THREE.Quaternion {
 export function Addons({ spec, flash }: { spec: ProductSpec; flash: MutableRefObject<number> }) {
   const trim = useMemo(() => new THREE.MeshPhysicalMaterial({ roughness: 0.5, clearcoat: 0.2 }), []);
   const color = useMemo(() => new THREE.Color(), []);
-  color.set(spec.color ?? "#B9A3F0").multiplyScalar(0.6);
+  color.set(spec.color ?? "#C5D8CF").multiplyScalar(0.6);
   useFrame((_s, dt) => {
     trim.color.lerp(color, morphK(dt));
     trim.emissive.copy(trim.color);
     trim.emissiveIntensity = flash.current * 0.5;
   });
-  const accent = luminance(spec.color ?? "#B9A3F0") > 0.6 ? "#c99a2e" : "#f2c96b";
+  const accent = luminance(spec.color ?? "#C5D8CF") > 0.6 ? "#c99a2e" : "#f2c96b";
   return (
     <group>
       {(spec.addons ?? []).map((a, i) => <AddonMesh key={`${i}:${a.name}:${a.placement}:${a.shape}`} spec={spec} a={a} trim={trim} accent={accent} />)}
@@ -392,7 +392,7 @@ export function Addons({ spec, flash }: { spec: ProductSpec; flash: MutableRefOb
 
 /** Any other product: a simple body in the product's color, so edits show up before the AI mesh lands. */
 export function GenericBody({ spec, flash }: { spec: ProductSpec; flash: MutableRefObject<number> }) {
-  const { mat, part } = useProductMaterial(spec, "#B9A3F0", flash, { roughness: 0.4, clearcoat: 0.6 });
+  const { mat, part } = useProductMaterial(spec, "#C5D8CF", flash, { roughness: 0.4, clearcoat: 0.6 });
   const L = bodyLayout(spec)!;
   const ref = usePartTransform(spec, "body");
   const cy = L.y0 + L.h / 2;
