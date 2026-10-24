@@ -7,9 +7,11 @@ import { Garment, Mannequin } from "./Garment.tsx";
 import { Backpack, Helmet } from "./Products.tsx";
 import { Orb, ORB_R, ORB_Y } from "./Orb.tsx";
 import { fx, type Bounds } from "./signals.ts";
-import { HEM_Y } from "./shapes.ts";
+import { HEM_Y, morphK } from "./shapes.ts";
+import { Addons, Decals, GenericBody } from "./Extras.tsx";
+import { anchorFor, bodyLayout } from "./anchors.ts";
 
-type Kind = Exclude<Category, "generic"> | "orb" | "hero";
+type Kind = Exclude<Category, "generic"> | "orb" | "hero" | "body";
 
 const BOUNDS: Record<Kind, Bounds> = {
   dress: { y0: 0.35, y1: 1.58, r: 0.27 },
@@ -19,10 +21,27 @@ const BOUNDS: Record<Kind, Bounds> = {
   helmet: { y0: 0.82, y1: 1.32, r: 0.38 },
   orb: { y0: ORB_Y - ORB_R, y1: ORB_Y + ORB_R, r: ORB_R },
   hero: { y0: 0.15, y1: 1.6, r: 0.4 },
+  body: { y0: 0.1, y1: 1.0, r: 0.4 },
 };
 
+/** Generic bodies vary in size, so their bounds come from the spec. */
+const boundsFor = (kind: Kind, spec: ProductSpec): Bounds => {
+  const L = kind === "body" ? bodyLayout(spec) : null;
+  return L ? { y0: 0.1, y1: L.y0 + L.h, r: Math.max(L.w, L.d) / 2 + 0.05 } : BOUNDS[kind];
+};
+
+/** Region around the newest decal or add-on, so the shimmer lands where the edit happened. */
+function editRegion(spec: ProductSpec, field: "decals" | "addons"): Bounds | null {
+  const list = field === "decals" ? spec.decals : spec.addons;
+  const last = list?.[list.length - 1];
+  if (!last) return null;
+  const a = anchorFor(spec, last.placement);
+  return { y0: a.pos[1] - 0.12, y1: a.pos[1] + 0.12, r: Math.hypot(a.pos[0], a.pos[2]) + 0.08 };
+}
+
 function regionFor(field: SpecField, spec: ProductSpec, kind: Kind): Bounds {
-  const whole = BOUNDS[kind];
+  const whole = boundsFor(kind, spec);
+  if ((field === "decals" || field === "addons") && kind !== "orb" && kind !== "hero") return editRegion(spec, field) ?? whole;
   if (!CLOTHING.includes(spec.category)) {
     if (field === "features") return kind === "backpack" ? { y0: 1.05, y1: 1.45, r: 0.36 } : { y0: 0.85, y1: 1.15, r: 0.42 };
     return whole;
@@ -43,7 +62,10 @@ function regionFor(field: SpecField, spec: ProductSpec, kind: Kind): Bounds {
   }
 }
 
-const VISUAL_FIELDS: SpecField[] = ["category", "length", "silhouette", "sleeves", "neckline", "color", "fabric", "pattern", "features"];
+const VISUAL_FIELDS: SpecField[] = [
+  "category", "length", "silhouette", "sleeves", "neckline", "color", "fabric", "pattern", "features",
+  "finish", "scale", "parts", "decals", "addons", "body",
+];
 const easeOutBack = (x: number) => 1 + 2.2 * Math.pow(x - 1, 3) + 1.2 * Math.pow(x - 1, 2);
 
 class GlbBoundary extends Component<{ children: ReactNode; onError: () => void }, { failed: boolean }> {
@@ -124,19 +146,21 @@ export interface WishModelProps {
   /** Increment to trigger the goal-hit spin. */
   celebrateKey?: number;
   pedestal?: boolean;
+  /** Hold the model at this angle (radians, 0 = front) instead of turning slowly. */
+  facing?: number;
 }
 
 /**
  * The product on its pedestal. Instant parametric model per category, a wish orb for anything
  * else, and an optional Meshy GLB that dissolves in when it arrives.
  */
-export function WishModel({ spec, heroUrl, celebrateKey = 0, pedestal = true }: WishModelProps) {
+export function WishModel({ spec, heroUrl, celebrateKey = 0, pedestal = true, facing }: WishModelProps) {
   const [heroReady, setHeroReady] = useState<{ url: string; look: string } | null>(null);
   const [heroFailed, setHeroFailed] = useState<string | null>(null);
   const look = JSON.stringify(VISUAL_FIELDS.map((f) => spec[f]));
   // The GLB is a snapshot of the locked spec: a later voice edit falls back to the live parametric model.
   const useHero = !!heroUrl && heroReady?.url === heroUrl && heroReady.look === look && heroFailed !== heroUrl;
-  const targetKind: Kind = useHero ? "hero" : spec.category === "generic" ? "orb" : spec.category;
+  const targetKind: Kind = useHero ? "hero" : spec.category === "generic" ? (spec.body ? "body" : "orb") : spec.category;
   const [shown, setShown] = useState<Kind>(targetKind);
   const targetRef = useRef(targetKind);
   targetRef.current = targetKind;
@@ -147,11 +171,15 @@ export function WishModel({ spec, heroUrl, celebrateKey = 0, pedestal = true }: 
   const spin = useRef<THREE.Group>(null);
   const spinBoost = useRef(0);
   const prevSpec = useRef<ProductSpec | null>(null);
+  const specRef = useRef(spec);
+  specRef.current = spec;
+  const sizeGroup = useRef<THREE.Group>(null);
+  const size = useRef(spec.scale ?? 1);
   const accent = spec.color ?? "#b9a3f0";
 
   // First appearance: particles swirl up from below (the mic) and assemble into the product.
   useEffect(() => {
-    if (shown !== "orb") fx.assemble([0, 0.2, 0.9], BOUNDS[shown], 420, accent, 0.8);
+    if (shown !== "orb") fx.assemble([0, 0.2, 0.9], boundsFor(shown, spec), 420, accent, 0.8);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -185,15 +213,15 @@ export function WishModel({ spec, heroUrl, celebrateKey = 0, pedestal = true }: 
       if (shown === "orb") {
         // The orb bursts into particles that assemble into the product in the same spot.
         fx.burst([0, ORB_Y, 0], 260, "#ffe6b0", 1.4);
-        fx.assemble([0, ORB_Y, 0], BOUNDS[target], 520, accent, 0.85);
+        fx.assemble([0, ORB_Y, 0], boundsFor(target, specRef.current), 520, accent, 0.85);
         swapping.current = true;
         appear.current = 0;
         setShown(target);
       } else {
         appear.current -= dt * 5;
         if (appear.current <= 0) {
-          fx.band(BOUNDS[shown], 260, accent);
-          if (target !== "orb") fx.assemble([0, 1.0, 0], BOUNDS[target], 480, target === "hero" ? "#f2c96b" : accent, 0.9);
+          fx.band(boundsFor(shown, specRef.current), 260, accent);
+          if (target !== "orb") fx.assemble([0, 1.0, 0], boundsFor(target, specRef.current), 480, target === "hero" ? "#f2c96b" : accent, 0.9);
           swapping.current = true;
           appear.current = 0;
           setShown(target);
@@ -207,9 +235,16 @@ export function WishModel({ spec, heroUrl, celebrateKey = 0, pedestal = true }: 
       const s = shown === "orb" ? 1 : Math.max(0.0001, easeOutBack(Math.max(0, appear.current)));
       scaleGroup.current.scale.setScalar(s);
     }
+    // Overall size grows from the pedestal top, so a bigger product never sinks into it.
+    size.current += ((specRef.current.scale ?? 1) - size.current) * morphK(dt);
+    if (sizeGroup.current) {
+      sizeGroup.current.scale.setScalar(size.current);
+      sizeGroup.current.position.y = 0.1 * (1 - size.current);
+    }
     if (spin.current) {
       spinBoost.current *= Math.pow(0.45, dt);
-      spin.current.rotation.y += dt * (0.22 + spinBoost.current);
+      if (facing !== undefined) spin.current.rotation.y = facing;
+      else spin.current.rotation.y += dt * (0.22 + spinBoost.current);
     }
   });
 
@@ -218,11 +253,19 @@ export function WishModel({ spec, heroUrl, celebrateKey = 0, pedestal = true }: 
     <group ref={spin}>
       {pedestal && <Pedestal />}
       <Orb visible={shown === "orb" && targetKind === "orb"} />
+      <group ref={sizeGroup}>
       <group ref={scaleGroup}>
         {clothing && <Mannequin />}
         {clothing && <Garment key={shown} spec={spec} flash={flash} />}
         {shown === "backpack" && <Backpack spec={spec} flash={flash} />}
         {shown === "helmet" && <Helmet spec={spec} flash={flash} />}
+        {shown === "body" && spec.body && <GenericBody spec={spec} flash={flash} />}
+        {shown !== "hero" && (shown !== "orb" || targetKind === "orb") && shown === targetKind && (
+          <>
+            <Decals spec={spec} />
+            <Addons spec={spec} flash={flash} />
+          </>
+        )}
         {heroUrl && heroFailed !== heroUrl && (
           <group visible={shown === "hero"}>
             <GlbBoundary key={heroUrl} onError={() => setHeroFailed(heroUrl)}>
@@ -232,6 +275,7 @@ export function WishModel({ spec, heroUrl, celebrateKey = 0, pedestal = true }: 
             </GlbBoundary>
           </group>
         )}
+      </group>
       </group>
     </group>
   );

@@ -12,12 +12,47 @@ const PRESETS: Record<string, ProductSpec> = {
   Backpack: { category: "backpack", color: "#7FB7A4", features: ["laptop_stand", "phone_pockets"] },
   Helmet: { category: "helmet", color: "#F28DB2", features: ["headphones"] },
   Orb: { category: "generic", name: "Self-watering desk planter" },
+  "Judge edits: dress": {
+    category: "dress", length: "midi", sleeves: "three_quarter", neckline: "sweetheart", color: "#1F2A55", fabric: "velvet", features: ["phone_pockets"],
+    parts: { pockets: { scale: 1.6, color: "#E2B13C" } },
+    decals: [{ kind: "emoji", content: "🐉", placement: "back", size: 1.4 }, { kind: "text", content: "WISH IT", placement: "front" }],
+    addons: [{ name: "belt", shape: "torus", placement: "waist", color: "#1A1A1D" }, { name: "bow", shape: "bow", placement: "back" }],
+  },
+  "Judge edits: backpack": {
+    category: "backpack", color: "#1A1A1D", pattern: "camo", features: ["phone_pockets"],
+    parts: { straps: { color: "#D7263D", scale: 1.4 }, zipper: { color: "#C0C4CC" } },
+    decals: [{ kind: "text", content: "CAL HACKS", placement: "front" }, { kind: "shape", content: "star", placement: "back", color: "#D7263D", size: 1.5 }],
+    addons: [{ name: "cup holder", shape: "cylinder", placement: "right" }, { name: "solar panel", shape: "box", placement: "top" }, { name: "wings", shape: "fin", placement: "back", count: 2 }],
+  },
+  "Judge edits: helmet": {
+    category: "helmet", color: "#F6D44A", finish: "metallic", features: ["headphones"], parts: { visor: { color: "#1A1A1D", scale: 1.3 } },
+    decals: [{ kind: "shape", content: "lightning", placement: "left" }, { kind: "emoji", content: "🐱", placement: "front" }],
+    addons: [{ name: "cat ears", shape: "cone", placement: "top", count: 2 }, { name: "tail light", shape: "sphere", placement: "back", glow: true }],
+  },
+  "Judge edits: mug": {
+    category: "generic", name: "Coffee Mug", color: "#F4EBD0", body: { shape: "cylinder", width: 0.36, height: 0.4 },
+    decals: [{ kind: "emoji", content: "🐱", placement: "front", size: 1.3 }], addons: [{ name: "handle", shape: "torus", placement: "right" }],
+  },
 };
+
+/** ?facing=front|back|left|right holds the model still (seen from the camera). */
+const FACING: Record<string, number> = { front: 0, back: Math.PI, left: Math.PI / 2, right: -Math.PI / 2 };
+
+/** ?spec=<url-encoded JSON> opens the bench on that spec (used for headless screenshots). */
+function specFromUrl(): ProductSpec | null {
+  const raw = new URLSearchParams(window.location.search).get("spec");
+  if (!raw) return null;
+  try {
+    return applyPatch(defaultSpec, JSON.parse(raw)).spec;
+  } catch {
+    return null;
+  }
+}
 
 /** Step A1's test bench: edit the spec JSON, watch the model morph. */
 export default function Debug() {
-  const [spec, setSpec] = useState<ProductSpec>(PRESETS["Demo dress"]);
-  const [text, setText] = useState(JSON.stringify(PRESETS["Demo dress"], null, 2));
+  const [spec, setSpec] = useState<ProductSpec>(() => specFromUrl() ?? PRESETS["Demo dress"]);
+  const [text, setText] = useState(() => JSON.stringify(specFromUrl() ?? PRESETS["Demo dress"], null, 2));
   const [err, setErr] = useState<string | null>(null);
   const [hero, setHero] = useState("");
   const [celebrate, setCelebrate] = useState(0);
@@ -68,7 +103,7 @@ export default function Debug() {
         <input placeholder="Hero GLB url (e.g. /models/x.glb)" value={hero} onChange={(e) => setHero(e.target.value)} className="field" style={{ padding: 10, borderRadius: 10, background: "rgba(0,0,0,.3)", border: "1px solid var(--glass-border)" }} />
       </div>
       <div className="debug-canvas">
-        <Stage spec={spec} framing="debug" heroUrl={hero || null} celebrateKey={celebrate} />
+        <Stage spec={spec} framing="debug" heroUrl={hero || null} celebrateKey={celebrate} facing={FACING[new URLSearchParams(window.location.search).get("facing") ?? ""]} />
       </div>
     </div>
   );

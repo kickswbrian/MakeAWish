@@ -1,78 +1,15 @@
-import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
+import { useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { ProductSpec } from "@wishit/shared";
-import {
-  FABRIC_LOOK, fillWrapGrid, HEM_Y, HIP_Y, makeWrapGrid, morphK, patternTexture, smooth,
-  TORSO_ZS, torsoR, torsoXS, WAIST_Y,
-} from "./shapes.ts";
+import { fillWrapGrid, HIP_Y, makeWrapGrid, morphK, smooth, TORSO_ZS, torsoR, torsoXS, WAIST_Y } from "./shapes.ts";
+import { skirtPoint, targetsFor, topY, type Targets } from "./garmentShape.ts";
+import { usePartMaterials, usePattern } from "./materials.ts";
 
 const SK_ROWS = 30, SK_COLS = 72;
 const BD_ROWS = 18, BD_COLS = 72;
 
-interface Targets {
-  hem: number; wF: number; wA: number; wW: number; wFl: number;
-  nCrew: number; nV: number; nSq: number; nH: number;
-  sleeveL: number; sleeveR: number; bodiceBottom: number;
-  roughness: number; sheen: number; sheenRoughness: number; clearcoat: number;
-  pockets: number; seam: number;
-}
-
 export const DEFAULT_COLOR = "#B9A3F0";
-
-function targetsFor(spec: ProductSpec): Targets {
-  const cat = spec.category;
-  const len = spec.length ?? "midi";
-  const sil = spec.silhouette ?? "a_line";
-  const neck = spec.neckline ?? "crew";
-  const sleeves = spec.sleeves ?? (cat === "top" ? "short" : "none");
-  const look = FABRIC_LOOK[spec.fabric ?? "cotton"];
-  const f = spec.features ?? [];
-  return {
-    hem: HEM_Y[len],
-    wF: sil === "fitted" ? 1 : 0, wA: sil === "a_line" ? 1 : 0, wW: sil === "wrap" ? 1 : 0, wFl: sil === "flowy" ? 1 : 0,
-    nCrew: neck === "crew" ? 1 : 0, nV: neck === "v" ? 1 : 0, nSq: neck === "square" ? 1 : 0, nH: neck === "halter" ? 1 : 0,
-    sleeveL: { none: 0, cap: 0.085, short: 0.21, long: 0.62 }[sleeves],
-    sleeveR: sleeves === "cap" ? 0.078 : 0.062,
-    bodiceBottom: cat === "top" ? 0.86 : WAIST_Y - 0.02,
-    ...look,
-    pockets: f.includes("phone_pockets") && cat !== "top" ? 1 : 0,
-    seam: f.includes("converts_to_skirt") && cat === "dress" ? 1 : 0,
-  };
-}
-
-/** Neckline height around the body; theta = 0 is the front. Weights blend so necklines morph. */
-function topY(th: number, a: Targets) {
-  const ath = Math.abs(th);
-  const crew = 1.555 - 0.035 * Math.max(0, Math.cos(th)) ** 4;
-  const v = 1.555 - 0.21 * Math.max(0, 1 - ath / 0.55);
-  const sq = 1.555 - 0.13 * (1 - smooth(0.55, 0.75, ath));
-  const halter = ath < 0.32 ? 1.575 : 1.575 - 0.2 * smooth(0.32, 0.7, ath) - 0.1 * smooth(1.8, 2.6, ath);
-  const sum = a.nCrew + a.nV + a.nSq + a.nH || 1;
-  return (crew * a.nCrew + v * a.nV + sq * a.nSq + halter * a.nH) / sum;
-}
-
-function skirtPoint(y: number, th: number, a: Targets, sway: number, out: number[]) {
-  const rHip = 0.235 + a.wFl * 0.015 + a.wA * 0.005;
-  let r: number;
-  let zs: number;
-  if (y > HIP_Y) {
-    r = 0.168 + (rHip - 0.168) * smooth(WAIST_Y, HIP_Y, y);
-    zs = TORSO_ZS + 0.04;
-  } else {
-    const dy = HIP_Y - y;
-    const slope = a.wF * -0.05 + a.wA * 0.3 + a.wW * 0.26 + a.wFl * 0.56;
-    r = rHip + dy * slope;
-    const depth = Math.min(1, dy / 0.45);
-    r += (a.wFl * 0.042 + a.wA * 0.006 + a.wW * 0.01) * depth * Math.sin(th * 9 + sway * (0.4 + a.wFl));
-    r += a.wW * 0.014 * Math.max(0, Math.sin(th + 0.5));
-    zs = TORSO_ZS + 0.04 + 0.16 * Math.min(1, dy / 0.5);
-  }
-  out[0] = r;
-  out[1] = y;
-  out[2] = 1;
-  out[3] = zs;
-}
 
 /** Clothing on a stylized dress form. Every spec change morphs over ~400 ms instead of popping. */
 export function Garment({ spec, flash }: { spec: ProductSpec; flash: MutableRefObject<number> }) {
@@ -83,6 +20,14 @@ export function Garment({ spec, flash }: { spec: ProductSpec; flash: MutableRefO
   const dirty = useRef(true);
   const color = useMemo(() => new THREE.Color(), []);
   color.set(spec.color ?? DEFAULT_COLOR);
+  // Per-part scale and visibility, eased like everything else (1 = default, 0 = hidden).
+  const specRef = useRef(spec);
+  specRef.current = spec;
+  const partTarget = (name: string) => {
+    const p = specRef.current.parts?.[name];
+    return p?.hidden ? 0 : p?.scale ?? 1;
+  };
+  const ps = useRef<Record<string, number>>({ skirt: 1, bodice: 1, sleeves: 1, pockets: 1, seam: 1 });
 
   const skirtGeo = useMemo(() => makeWrapGrid(SK_ROWS, SK_COLS), []);
   const bodiceGeo = useMemo(() => makeWrapGrid(BD_ROWS, BD_COLS), []);
@@ -98,13 +43,12 @@ export function Garment({ spec, flash }: { spec: ProductSpec; flash: MutableRefO
   );
   const pocketMat = useMemo(() => new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, roughness: 0.8 }), []);
   const seamMat = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color(2.4, 1.8, 0.7), toneMapped: false, transparent: true }), []);
-
-  useEffect(() => {
-    mat.map = spec.pattern && spec.pattern !== "solid" ? patternTexture(spec.pattern) : null;
-    mat.needsUpdate = true;
-  }, [spec.pattern, mat]);
+  usePattern(mat, spec.pattern);
+  const part = usePartMaterials(spec);
 
   const bodiceGroup = useRef<THREE.Group>(null);
+  const skirtMesh = useRef<THREE.Mesh>(null);
+  const bodiceMesh = useRef<THREE.Mesh>(null);
   const sleeves = [useRef<THREE.Group>(null), useRef<THREE.Group>(null)];
   const pockets = [useRef<THREE.Group>(null), useRef<THREE.Group>(null)];
   const seam = useRef<THREE.Mesh>(null);
@@ -123,13 +67,22 @@ export function Garment({ spec, flash }: { spec: ProductSpec; flash: MutableRefO
         moving = true;
       } else cur[key] = tgt[key];
     }
+    const P = ps.current;
+    for (const name of Object.keys(P)) {
+      const d = partTarget(name) - P[name];
+      if (Math.abs(d) > 1e-4) {
+        P[name] += d * k;
+        if (name === "skirt") moving = true;
+      } else P[name] = partTarget(name);
+    }
     mat.color.lerp(color, k);
     mat.roughness = cur.roughness;
+    mat.metalness = cur.metalness;
     mat.sheen = cur.sheen;
     mat.sheenRoughness = cur.sheenRoughness;
     mat.clearcoat = cur.clearcoat;
     mat.emissive.copy(mat.color);
-    mat.emissiveIntensity = 0.04 + flash.current * 0.9;
+    mat.emissiveIntensity = 0.04 + cur.glow + flash.current * 0.9;
     pocketMat.color.copy(mat.color).multiplyScalar(0.62);
     pocketMat.emissive.copy(mat.color);
     pocketMat.emissiveIntensity = mat.emissiveIntensity;
@@ -137,6 +90,8 @@ export function Garment({ spec, flash }: { spec: ProductSpec; flash: MutableRefO
     const time = state.clock.elapsedTime;
     const sway = Math.sin(time * 0.9) * 0.8;
     if (cur.wFl > 0.01 || cur.wA > 0.01) moving = true; // the hem sways gently
+    // A bigger skirt is a fuller one: it flares more below the hips while the waist stays put.
+    const fuller = (y: number) => 1 + (Math.max(0.3, P.skirt) - 1) * smooth(WAIST_Y, HIP_Y - 0.2, y);
 
     if (moving) {
       dirty.current = false;
@@ -146,6 +101,7 @@ export function Garment({ spec, flash }: { spec: ProductSpec; flash: MutableRefO
           const hem = cur.hem + cur.wW * 0.07 * Math.sin(th - 0.9);
           const y = WAIST_Y + (hem - WAIST_Y) * s;
           skirtPoint(y, th, cur, sway, out);
+          out[0] *= fuller(y);
         });
       }
       if (showBodice) {
@@ -153,21 +109,25 @@ export function Garment({ spec, flash }: { spec: ProductSpec; flash: MutableRefO
           const s = i / BD_ROWS;
           const y = cur.bodiceBottom + (topY(th, cur) - cur.bodiceBottom) * s;
           const flare = spec.category === "top" ? 0.03 * (1 - s) ** 2 : 0;
-          out[0] = torsoR(y) + 0.011 + flare;
+          out[0] = torsoR(y) + 0.011 + flare + 0.008 * smooth(1.56, 1.62, y);
           out[1] = y;
           out[2] = torsoXS(y);
           out[3] = TORSO_ZS + 0.02;
         });
       }
     }
+    if (skirtMesh.current) skirtMesh.current.visible = P.skirt > 0.02;
+    if (bodiceMesh.current) bodiceMesh.current.visible = P.bodice > 0.02;
 
-    // Sleeves hang from the shoulders and grow or shrink with the spec.
+    // Sleeves hang from the shoulders and grow or shrink with the spec. Off-shoulder drops them a little.
     sleeves.forEach((ref, n) => {
       const g = ref.current;
       if (!g) return;
-      g.visible = showBodice && cur.sleeveL > 0.006;
-      g.scale.set(cur.sleeveR, Math.max(0.001, cur.sleeveL), cur.sleeveR * 0.92);
-      g.rotation.z = (n === 0 ? -1 : 1) * (0.3 - cur.sleeveL * 0.12);
+      g.visible = showBodice && cur.sleeveL > 0.006 && P.sleeves > 0.02;
+      const r = cur.sleeveR * Math.max(0.0001, P.sleeves);
+      g.scale.set(r, Math.max(0.001, cur.sleeveL), r * 0.92);
+      g.rotation.z = (n === 0 ? -1 : 1) * (0.3 - cur.sleeveL * 0.12 + cur.nOff * 0.25);
+      g.position.y = -cur.nOff * 0.04;
     });
 
     // Pockets sit on the skirt surface, tilted with its flare. One has a phone peeking out.
@@ -175,13 +135,13 @@ export function Garment({ spec, flash }: { spec: ProductSpec; flash: MutableRefO
     pockets.forEach((ref, n) => {
       const g = ref.current;
       if (!g) return;
-      g.visible = showSkirt && cur.pockets > 0.01;
+      g.visible = showSkirt && cur.pockets > 0.01 && P.pockets > 0.02;
       const th = n === 0 ? -0.95 : 0.95;
       skirtPoint(py, th, cur, sway, tmp);
-      const r = tmp[0] + 0.004;
+      const r = (tmp[0] + 0.004) * fuller(py);
       g.position.set(Math.sin(th) * r, py, Math.cos(th) * r * tmp[3]);
       g.rotation.set(-Math.atan(0.3 * cur.wA + 0.56 * cur.wFl + 0.26 * cur.wW - 0.05 * cur.wF) * 0.8, th, 0, "YXZ");
-      g.scale.setScalar(cur.pockets);
+      g.scale.setScalar(Math.max(0.0001, cur.pockets * P.pockets));
     });
 
     // Convertible seam: a glowing line at the waist that periodically opens.
@@ -189,30 +149,33 @@ export function Garment({ spec, flash }: { spec: ProductSpec; flash: MutableRefO
     const apart = Math.pow(Math.sin(phase * Math.PI), 6) * cur.seam;
     if (bodiceGroup.current) bodiceGroup.current.position.y = apart * 0.06;
     if (seam.current) {
-      seam.current.visible = cur.seam > 0.01;
-      seam.current.scale.set(1, 1, 1).multiplyScalar(0.98 + cur.seam * 0.02);
+      seam.current.visible = cur.seam > 0.01 && P.seam > 0.02;
+      seam.current.scale.set(1, 1, Math.max(0.2, P.seam)).multiplyScalar(0.98 + cur.seam * 0.02);
       seam.current.position.y = WAIST_Y + apart * 0.03;
       seamMat.opacity = cur.seam * (0.65 + apart * 0.35);
+      const seamColor = specRef.current.parts?.seam?.color;
+      if (seamColor) seamMat.color.set(seamColor).multiplyScalar(2);
+      else seamMat.color.setRGB(2.4, 1.8, 0.7);
     }
     flash.current = Math.max(0, flash.current - dt * 1.8);
   });
 
   return (
     <group>
-      {showSkirt && <mesh geometry={skirtGeo} material={mat} castShadow />}
+      {showSkirt && <mesh ref={skirtMesh} geometry={skirtGeo} material={part("skirt", mat)} castShadow />}
       <group ref={bodiceGroup}>
-        {showBodice && <mesh geometry={bodiceGeo} material={mat} castShadow />}
+        {showBodice && <mesh ref={bodiceMesh} geometry={bodiceGeo} material={part("bodice", mat)} castShadow />}
         {[0, 1].map((n) => (
           <group key={n} position={[n === 0 ? -0.18 : 0.18, 1.47, 0]}>
             <group ref={sleeves[n]}>
-              <mesh geometry={sleeveGeo} material={mat} />
+              <mesh geometry={sleeveGeo} material={part("sleeves", mat)} />
             </group>
           </group>
         ))}
       </group>
       {[0, 1].map((n) => (
         <group key={n} ref={pockets[n]}>
-          <mesh material={pocketMat}>
+          <mesh material={part("pockets", pocketMat)}>
             <planeGeometry args={[0.12, 0.13]} />
           </mesh>
           {n === 0 && (

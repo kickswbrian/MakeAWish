@@ -80,13 +80,87 @@ export function fillWrapGrid(
 // ---------- Procedural fabric patterns (greyscale, tinted by material.color) ----------
 
 const textures = new Map<string, THREE.Texture>();
-export function patternTexture(kind: "floral" | "stripe"): THREE.Texture {
+export type PatternKind = "floral" | "stripe" | "polka_dot" | "plaid" | "checkered" | "camo" | "leopard" | "chevron";
+const REPEAT: Partial<Record<PatternKind, [number, number]>> = { stripe: [1, 5], polka_dot: [4, 4], plaid: [2, 2], checkered: [3, 3], camo: [2, 2], leopard: [3, 3], chevron: [2, 4] };
+export function patternTexture(kind: PatternKind): THREE.Texture {
   const hit = textures.get(kind);
   if (hit) return hit;
   const c = document.createElement("canvas");
   c.width = c.height = 512;
   const g = c.getContext("2d")!;
-  if (kind === "stripe") {
+  let seed = 11;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  /** Draw at (x, y) and at the wrapped copies so the tile repeats seamlessly. */
+  const tiled = (x: number, y: number, draw: (x: number, y: number) => void) => {
+    for (const dx of [-512, 0, 512]) for (const dy of [-512, 0, 512]) draw(x + dx, y + dy);
+  };
+  if (kind === "polka_dot") {
+    g.fillStyle = "#ffffff";
+    g.fillRect(0, 0, 512, 512);
+    g.fillStyle = "#5c5c66";
+    for (const [x, y] of [[64, 64], [192, 64], [320, 64], [448, 64], [0, 192], [128, 192], [256, 192], [384, 192], [64, 320], [192, 320], [320, 320], [448, 320], [0, 448], [128, 448], [256, 448], [384, 448]])
+      tiled(x, y, (px, py) => { g.beginPath(); g.arc(px, py, 26, 0, Math.PI * 2); g.fill(); });
+  } else if (kind === "plaid") {
+    g.fillStyle = "#e6e6ea";
+    g.fillRect(0, 0, 512, 512);
+    g.globalAlpha = 0.45;
+    g.fillStyle = "#55555f";
+    for (const o of [0, 256]) {
+      g.fillRect(o + 40, 0, 90, 512);
+      g.fillRect(0, o + 40, 512, 90);
+    }
+    g.globalAlpha = 0.7;
+    g.fillStyle = "#2c2c33";
+    for (const o of [0, 256]) {
+      g.fillRect(o + 170, 0, 14, 512);
+      g.fillRect(0, o + 170, 512, 14);
+    }
+    g.globalAlpha = 1;
+  } else if (kind === "checkered") {
+    for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
+      g.fillStyle = (i + j) % 2 ? "#ffffff" : "#55555f";
+      g.fillRect(i * 128, j * 128, 128, 128);
+    }
+  } else if (kind === "camo" || kind === "leopard") {
+    g.fillStyle = kind === "camo" ? "#c9c9cc" : "#e8e2d2";
+    g.fillRect(0, 0, 512, 512);
+    const tones = kind === "camo" ? ["#8f8f95", "#5d5d63", "#35353a"] : ["#8a7a50"];
+    for (let n = 0; n < (kind === "camo" ? 46 : 40); n++) {
+      const x = rnd() * 512, y = rnd() * 512, r = (kind === "camo" ? 34 : 16) + rnd() * (kind === "camo" ? 40 : 12);
+      const tone = tones[n % tones.length];
+      const pts = Array.from({ length: 9 }, (_, k) => {
+        const a = (k / 9) * Math.PI * 2;
+        const rr = r * (0.6 + rnd() * 0.6);
+        return [Math.cos(a) * rr, Math.sin(a) * rr * (kind === "camo" ? 0.7 : 0.85)];
+      });
+      tiled(x, y, (px, py) => {
+        g.beginPath();
+        pts.forEach(([dx, dy], k) => (k ? g.lineTo(px + dx, py + dy) : g.moveTo(px + dx, py + dy)));
+        g.closePath();
+        if (kind === "camo") {
+          g.fillStyle = tone;
+          g.fill();
+        } else {
+          g.lineWidth = 9;
+          g.strokeStyle = "#1e1a14";
+          g.stroke();
+          g.fillStyle = "#b39a62";
+          g.fill();
+        }
+      });
+    }
+  } else if (kind === "chevron") {
+    g.fillStyle = "#ffffff";
+    g.fillRect(0, 0, 512, 512);
+    g.strokeStyle = "#55555f";
+    g.lineWidth = 40;
+    g.lineJoin = "miter";
+    for (let y = -128; y < 640; y += 128) {
+      g.beginPath();
+      for (let x = 0; x <= 512; x += 128) g.lineTo(x, y + ((x / 128) % 2 ? 64 : 0));
+      g.stroke();
+    }
+  } else if (kind === "stripe") {
     for (let y = 0; y < 512; y += 64) {
       g.fillStyle = "#ffffff";
       g.fillRect(0, y, 512, 32);
@@ -121,20 +195,38 @@ export function patternTexture(kind: "floral" | "stripe"): THREE.Texture {
   }
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(kind === "stripe" ? 1 : 3, kind === "stripe" ? 5 : 3);
+  const [rx, ry] = REPEAT[kind] ?? [3, 3];
+  t.repeat.set(rx, ry);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
   textures.set(kind, t);
   return t;
 }
 
-export interface FabricLook { roughness: number; sheen: number; sheenRoughness: number; clearcoat: number }
+export interface FabricLook { roughness: number; sheen: number; sheenRoughness: number; clearcoat: number; metalness?: number; glow?: number }
 export const FABRIC_LOOK: Record<string, FabricLook> = {
   cotton: { roughness: 0.82, sheen: 0.35, sheenRoughness: 0.8, clearcoat: 0 },
   linen: { roughness: 0.96, sheen: 0.2, sheenRoughness: 0.9, clearcoat: 0 },
   satin: { roughness: 0.26, sheen: 1, sheenRoughness: 0.25, clearcoat: 0.35 },
   knit: { roughness: 0.92, sheen: 1, sheenRoughness: 0.55, clearcoat: 0 },
+  denim: { roughness: 0.9, sheen: 0.25, sheenRoughness: 0.9, clearcoat: 0 },
+  leather: { roughness: 0.42, sheen: 0, sheenRoughness: 0.5, clearcoat: 0.45 },
+  velvet: { roughness: 0.95, sheen: 1, sheenRoughness: 0.3, clearcoat: 0 },
+  sequin: { roughness: 0.22, sheen: 0.4, sheenRoughness: 0.3, clearcoat: 0.6, metalness: 0.65 },
 };
+/** Finish overrides the fabric's surface. */
+export const FINISH_LOOK: Record<string, Partial<FabricLook>> = {
+  matte: { roughness: 0.95, clearcoat: 0, metalness: 0 },
+  glossy: { roughness: 0.14, clearcoat: 1, sheen: 0.2 },
+  metallic: { roughness: 0.28, metalness: 0.9, clearcoat: 0.4, sheen: 0 },
+  glow: { glow: 0.75 },
+};
+
+/** Fabric + finish for one spec, as plain numbers a material can ease toward. */
+export function lookFor(spec: { fabric?: string; finish?: string }): Required<FabricLook> {
+  const l = { ...FABRIC_LOOK[spec.fabric ?? "cotton"], ...(spec.finish ? FINISH_LOOK[spec.finish] : {}) };
+  return { metalness: 0, glow: 0, ...l } as Required<FabricLook>;
+}
 
 /** Exponential smoothing factor: ~95% of the way in 400 ms. */
 export const morphK = (dt: number) => 1 - Math.exp(-Math.min(dt, 0.1) * 7.5);
