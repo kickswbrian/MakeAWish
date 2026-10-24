@@ -6,8 +6,8 @@ import { orbSignal } from "./signals.ts";
 /**
  * UI variation 2's bubble as a real 3D object, drawn over the product canvas: a glass shell with a
  * soap-film sheen, a particle vortex and light ribbons inside that react to the voice (swirl while
- * listening, pulse while the genie speaks, spin hard while it thinks), and clouds + sparkles that
- * spin in when the bubble first forms. The canvas is 1.7x the bubble so the clouds can orbit it.
+ * listening, pulse while the genie speaks, spin hard while it thinks), and clouds that spin in
+ * when the bubble first forms. The canvas is 1.7x the bubble so the clouds can orbit it.
  */
 
 export const BUBBLE3D_OVERSCAN = 1.7;
@@ -79,23 +79,6 @@ const pointFrag = /* glsl */ `
     #include <colorspace_fragment>
   }`;
 
-// ---------- Sparkle burst (when the bubble forms) ----------
-
-const burstVert = /* glsl */ `
-  uniform float uT; uniform float uSize;
-  attribute vec4 aDir; attribute vec3 aColor;
-  varying vec3 vColor; varying float vA;
-  void main() {
-    float t = clamp(uT, 0.0, 1.0);
-    float e = 1.0 - pow(1.0 - t, 3.0);
-    vec3 p = aDir.xyz * (1.0 + e * (0.6 + aDir.w * 1.1));
-    vec4 mv = modelViewMatrix * vec4(p, 1.0);
-    gl_PointSize = uSize * (0.6 + aDir.w) * (1.0 - t * 0.6) / -mv.z;
-    gl_Position = projectionMatrix * mv;
-    vColor = aColor;
-    vA = (1.0 - t) * step(0.0001, uT);
-  }`;
-
 // ---------- Ribbons ----------
 
 const ribbonVert = /* glsl */ `
@@ -141,7 +124,7 @@ function targetsFor(state: string, level: number, dim: boolean): Targets {
     state === "thinking" ? { spin: 2.4, pulse: 0.15, tight: 0.55, ribbons: 0.85, fade: 0.9 }
       : state === "speaking" ? { spin: 0.8, pulse: 0.25 + amp * 1.5, tight: 0.05, ribbons: 0.45 + amp * 0.6, fade: 0.85 }
       : state === "listening" ? { spin: 0.55 + amp * 1.4, pulse: amp * 1.1, tight: 0.12, ribbons: 0.3 + amp * 0.7, fade: 0.8 }
-      : { spin: 0.3, pulse: 0, tight: 0, ribbons: 0.3, fade: 0.42 };
+      : { spin: 0.3, pulse: 0, tight: 0, ribbons: 0, fade: 0 };
   if (dim && state !== "thinking") {
     t.fade *= 0.18;
     t.ribbons *= 0.3;
@@ -192,28 +175,6 @@ function Scene({ revealed, burstKey, dim }: { revealed: boolean; burstKey: numbe
     return { g, m };
   }, []);
 
-  const burst = useMemo(() => {
-    const n = 140;
-    const dir = new Float32Array(n * 4), color = new Float32Array(n * 3), pos = new Float32Array(n * 3);
-    const c = new THREE.Color(), v = new THREE.Vector3();
-    for (let i = 0; i < n; i++) {
-      v.randomDirection();
-      dir.set([v.x, v.y, v.z, Math.random()], i * 4);
-      c.set(PALETTE[(i * 3) % PALETTE.length]);
-      color.set([c.r, c.g, c.b], i * 3);
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    g.setAttribute("aDir", new THREE.BufferAttribute(dir, 4));
-    g.setAttribute("aColor", new THREE.BufferAttribute(color, 3));
-    g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 3);
-    const m = new THREE.ShaderMaterial({
-      vertexShader: burstVert, fragmentShader: pointFrag, transparent: true, depthWrite: false,
-      uniforms: { uT: { value: 0 }, uSize: { value: 40 } },
-    });
-    return { g, m };
-  }, []);
-
   const ribbons = useMemo(() => [0, 1, 2].map((i) => {
     const pts: THREE.Vector3[] = [];
     for (let s = 0; s < 64; s++) {
@@ -244,10 +205,10 @@ function Scene({ revealed, burstKey, dim }: { revealed: boolean; burstKey: numbe
     if (burstKey > 0) burstAt.current = -2; // armed: starts on the next frame's clock
   }, [burstKey]);
   useEffect(() => () => {
-    front.dispose(); back.dispose(); vortex.g.dispose(); vortex.m.dispose(); burst.g.dispose(); burst.m.dispose(); cloudTex.dispose();
+    front.dispose(); back.dispose(); vortex.g.dispose(); vortex.m.dispose(); cloudTex.dispose();
     ribbons.forEach((r) => { r.g.dispose(); r.m.dispose(); });
     clouds.forEach((c) => c.mat.dispose());
-  }, [front, back, vortex, burst, ribbons, clouds, cloudTex]);
+  }, [front, back, vortex, ribbons, clouds, cloudTex]);
 
   useFrame((state, rawDt) => {
     const dt = Math.min(rawDt, 0.05);
@@ -279,12 +240,10 @@ function Scene({ revealed, burstKey, dim }: { revealed: boolean; burstKey: numbe
       inner.current.rotation.x = Math.sin(t * 0.21) * 0.25;
     }
 
-    // Burst: sparkles fly out and clouds spin in, then settle into a faint drift.
+    // When the bubble forms the clouds spin in around it, then fade away.
     if (burstAt.current === -2) burstAt.current = t;
     const since = burstAt.current >= 0 ? t - burstAt.current : 99;
-    burst.m.uniforms.uT.value = since < 1.8 ? since / 1.8 : 0;
-    burst.m.uniforms.uSize.value = 90 * px;
-    const rest = dim ? 0.12 : 0.4;
+    const rest = 0;
     const cloudGoal = since < 0.5 ? since / 0.5 : since < 3.2 ? 1 : Math.max(rest, 1 - (since - 3.2) / 2.2);
     cloudLevel.current += (cloudGoal * r - cloudLevel.current) * (1 - Math.exp(-dt * 3));
     const swirl = since < 3.2 ? 2.6 - since * 0.6 : 0.35;
@@ -315,7 +274,6 @@ function Scene({ revealed, burstKey, dim }: { revealed: boolean; burstKey: numbe
       <mesh material={front} renderOrder={2}>
         <sphereGeometry args={[1, 96, 64]} />
       </mesh>
-      <points geometry={burst.g} material={burst.m} frustumCulled={false} renderOrder={3} />
       {clouds.map((cl, i) => (
         <sprite key={i} ref={(s) => { cloudRefs.current[i] = s; }} material={cl.mat} renderOrder={4} />
       ))}
@@ -326,7 +284,7 @@ function Scene({ revealed, burstKey, dim }: { revealed: boolean; burstKey: numbe
 export interface Bubble3DProps {
   /** Show the sphere (springs in when this turns true). */
   revealed: boolean;
-  /** Bump to spin the clouds and sparkles in. */
+  /** Bump to spin the clouds in. */
   burstKey: number;
   /** A product is showing inside: keep the vortex quiet so it doesn't cover it. */
   dim?: boolean;

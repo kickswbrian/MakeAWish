@@ -729,11 +729,10 @@ p { margin: 0; }
 .v2-w2 {
   background: linear-gradient(100deg, #DDAE45 0%, #EC85B3 35%, #6FA894 65%, #DDAE45 100%); background-size: 200% 100%;
   -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: .08em;
-  animation: v2wordIn .8s var(--spring) .85s both, v2sheen 2.6s linear .85s infinite;
+  animation: v2wordIn .8s var(--spring) .85s both;
 }
 .v2-intro.swipe .v2-words { animation: v2swipe .55s cubic-bezier(.7, 0, .84, 0) both; }
 @keyframes v2wordIn { from { opacity: 0; transform: translateY(42px) scale(.9); filter: blur(12px); } to { opacity: 1; transform: none; filter: none; } }
-@keyframes v2sheen { to { background-position: -200% 0; } }
 @keyframes v2swipe { 0% { transform: none; } 30% { transform: scale(1.3); opacity: 1; filter: none; } 100% { transform: translateX(-140vw) scale(2.8); opacity: 0; filter: blur(14px); } }
 
 .v2-ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 5; }
@@ -759,10 +758,6 @@ p { margin: 0; }
 .v2-phase-done > .v2-captions, .v2-phase-done > .dock, .v2-phase-done > .wavebox { transition: opacity .6s ease, visibility .6s; }
 .v2 .bwrap { transition: opacity .5s ease, transform .9s var(--spring); }
 .v2-phase-wait .bwrap, .v2-phase-words .bwrap, .v2-phase-swipe .bwrap, .v2-phase-ring .bwrap { opacity: 0; transform: scale(.35); }
-.v2-phase-bubble .orb-slot::after {
-  content: ""; position: absolute; inset: 15%; border-radius: 50%; pointer-events: none; z-index: 7;
-  background: radial-gradient(closest-side, #fff, rgba(242, 216, 138, .7), transparent); animation: landflash .9s ease-out both;
-}
 
 /* The 3D glass shell replaces the CSS one (Bubble3D draws rim, film, highlights and the voice). */
 .bubble3d { position: absolute; inset: -35%; pointer-events: none; z-index: 4; }
