@@ -3,7 +3,7 @@ import {
   CATEGORIES, FABRICS, LENGTHS, NECKLINES, PATTERNS, SILHOUETTES, SLEEVES, KNOWN_FEATURES, FINISHES, PLACEMENTS,
   DECAL_KINDS, DECAL_SHAPES, ADDON_SHAPES, BODY_SHAPES, PARTS,
   shortName, guessPatch, interpret, isAffirmativeLock, isUndo, applyPatch, answerQuestion, matchStarter, isQuestion, defaultSpec,
-  interpretEdits, productDetails, COLOR_NAMES, type Starter,
+  interpretEdits, productDetails, COLOR_NAMES, colorFamily, type Starter,
   type ProductSpec, type SpecPatch,
 } from "@wishit/shared";
 import { z } from "zod";
@@ -217,7 +217,7 @@ export function clampSay(s: string) {
 /** Offline brain: keyword patch + a scripted follow-up. Keeps the demo alive with no LLM. */
 export function ruleBrain(spec: ProductSpec, transcript: TranscriptTurn[], text: string): BrainResult {
   const offered = transcript.some((t) => t.role === "genie" && /make your wish real/i.test(t.text));
-  if ((offered && isAffirmativeLock(text)) || /\b(lock it|make it real)\b/i.test(text) || (/\bwish it\b/i.test(text) && !isQuestion(text))) {
+  if ((offered && isAffirmativeLock(text)) || /\b(lock it|make it real)\b/i.test(text) || (/\bwish it\b/i.test(text) && (!isQuestion(text) || /\b(can|could|would|will) you\s+(?:please\s+)?wish it\b/i.test(text)))) {
     return { say: "Your wish is sealed. Let's see if anyone has made it already.", patch: {}, lock: true, brain: "rules" };
   }
   const { patch, did, undo } = interpret(text, spec);
@@ -265,9 +265,11 @@ const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
 export function starterTurn(spec: ProductSpec, transcript: TranscriptTurn[], text: string, brain: BrainResult["brain"]): BrainResult | null {
   if (transcript.length || spec.category !== "generic" || spec.body || spec.name) return null;
   // Questions and negations ("a helmet without headphones") need the brain, not a canned answer.
-  if (isQuestion(text) || /\b(no|not|without|never|instead|nor|minus)\b|n['’]t\b/i.test(text)) return null;
+  if (isQuestion(text)) return null;
   const s = matchStarter(text);
   if (!s) return null;
+  const rest = s.match.flat().reduce((t, w) => t.split(w).join(" "), text.toLowerCase());
+  if (/\b(no|not|without|never|instead|nor|minus)\b|n['’]t\b/i.test(rest)) return null;
   // Claude handles anything richer than the starter itself ("a matte helmet with big headphones for
   // $80"): in LLM mode the starter only answers lines made of its own words, filler and a color.
   if (brain === "llm" && extraWords(text, s).length) return null;
@@ -278,7 +280,7 @@ export function starterTurn(spec: ProductSpec, transcript: TranscriptTurn[], tex
   const own = new Set((s.spec.addons ?? []).map((a) => a.name));
   const addons = edits.addons?.filter((a) => own.has(a.name) || !words.some((w) => a.name.toLowerCase().includes(w) || w.includes(a.name.toLowerCase())));
   // Part colors equal to the product color were the product's ("a red helmet with headphones").
-  const parts = Object.fromEntries(Object.entries(edits.parts ?? {}).filter(([, p]) => !(p?.color && p.color === details.color && !p.scale && !p.hidden)));
+  const parts = Object.fromEntries(Object.entries(edits.parts ?? {}).filter(([, p]) => !(p?.color && details.color && colorFamily(p.color) === colorFamily(details.color) && !p.scale && !p.hidden)));
   const features = [...new Set([...(s.spec.features ?? []), ...(edits.features ?? [])])];
   const patch: SpecPatch = {
     ...s.spec, ...details,
@@ -298,8 +300,13 @@ const STARTER_FILLER = new Set(("a an the i i'd id want would like love need wis
 
 /** Words in the line that neither the starter, filler nor a color explain. */
 function extraWords(text: string, s: Starter): string[] {
-  const known = new Set(s.match.flat().flatMap((w) => w.toLowerCase().split(/\s+/)));
-  return text.toLowerCase().replace(/[^a-z0-9' -]+/g, " ").split(/[\s-]+/).filter((w) => w && !known.has(w) && !STARTER_FILLER.has(w) && !COLOR_NAMES[w]
+  // The starter's own words, and what its spec already says ("a midi dress that turns into a skirt").
+  const own = [...s.match.flat(), s.spec.name ?? "", s.spec.length ?? "", s.spec.fabric ?? "", s.spec.silhouette ?? "", s.spec.finish ?? ""];
+  const known = new Set(own.flatMap((w) => w.toLowerCase().replace(/_/g, " ").split(/[\s-]+/)));
+  const words = text.toLowerCase().replace(/[^a-z0-9' -]+/g, " ").split(/[\s-]+/);
+  const withAt = words.indexOf("with");
+  // A color after "with" may belong to a part ("with black headphones"): Claude sorts that out.
+  return words.filter((w, i) => w && !known.has(w) && !STARTER_FILLER.has(w) && !(COLOR_NAMES[w] && (withAt < 0 || i < withAt))
     && !(w.endsWith("s") && known.has(w.slice(0, -1))));
 }
 
