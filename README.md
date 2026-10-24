@@ -27,9 +27,11 @@ Each key you leave empty falls back, so the full flow runs offline:
 Other commands:
 
 ```bash
-npm test                 # shared spec tests
+npm test                 # shared spec tests + 3D render coverage
 npm run typecheck        # shared + server + web
 npm run brain:test       # 5 scripted genie turns (step B2's check)
+npm run judge            # judge-request corpus through the rule brain (see "Judge edits")
+npm run judge -- --brain=cli --cases=../shared/judge/heldout2.json   # same, through Claude via the claude CLI
 npm run demo:reset -- --planter-deadline=120   # demo starting state (needs the server running)
 npm run demo:reset -- --remote=https://your.deploy --planter-deadline=180
 npm run build && npm start   # production: one process serves API + web

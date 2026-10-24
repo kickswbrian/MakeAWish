@@ -422,7 +422,7 @@ If the Sat 3pm gate slips, everything after it shrinks; Phase 1 is where the hou
 | P1 | UI polish: studio look, transitions, empty states, mobile pledge page. | A | Teammates who didn't build it can do the flow without help |
 | P2 | Demo seeding script: pre-warm Apify cache, pre-generate GLB, create the planter campaign with 2 backers and a configurable deadline. | C | One command resets the demo to its starting state |
 | P3 | Implement every row of the error-handling table. | B | Each failure is forced once and handled |
-| P4 | Stretch, only if P1 to P3 are done: Apify `findMakers`, sketch or photo input. | Whoever is free | Works in the demo, or is cut |
+| P4 | Stretch, only if P1 to P3 are done: Apify `findMakers`, sketch or photo input, focus mode (zoom into a part, exploded view, direct handles; nice to have). | Whoever is free | Works in the demo, or is cut |
 
 **Feature freeze Sat 10:00pm.** After this, only bug fixes.
 
