@@ -31,7 +31,7 @@ const PLANTER: ProductSpec = {
 };
 
 /** Place a real (test-mode) held pledge without a browser: server-side confirm with a test card. */
-export async function heldPledge(campaignId: string, priceCents: number, email: string): Promise<string> {
+export async function heldPledge(campaignId: string, priceCents: number, email: string, description = `Wish it pledge ${campaignId} (demo seed)`): Promise<string> {
   if (paymentMode === "stripe") {
     const pledgeId = newId();
     db.prepare("INSERT INTO pledges (id, campaign_id, email, status, created_at) VALUES (?, ?, ?, 'created', ?)").run(pledgeId, campaignId, email, Date.now());
@@ -43,7 +43,7 @@ export async function heldPledge(campaignId: string, priceCents: number, email: 
       confirm: true,
       automatic_payment_methods: { enabled: true, allow_redirects: "never" },
       metadata: { campaignId, pledgeId },
-      description: `Wish it pledge ${campaignId} (demo seed)`,
+      description,
     });
     db.prepare("UPDATE pledges SET payment_intent_id = ? WHERE id = ?").run(pi.id, pledgeId);
     if (pi.status === "requires_capture") _internal.onHeld(pi.id);

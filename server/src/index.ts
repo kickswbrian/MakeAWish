@@ -22,6 +22,7 @@ import { startMeshy } from "./meshy.ts";
 import { handleStripeEvent, mockConfirm, stripe } from "./payments.ts";
 import { agentAttack, agentPledge, handleAgentPledge, type Attack } from "./agent.ts";
 import { lookupKey } from "./tap.ts";
+import { isInternal } from "./internal.ts";
 import { appendTranscript, createWish, getWish, patchWish, undoWish, setWishStatus, toWishDTO } from "./wishes.ts";
 import { AppError, assertFound, badRequest, errorHandler, notFound, notFoundApi, requestId, unavailable, wrap } from "./http.ts";
 import { limits, requireAdmin, securityHeaders, socketOrigins, spend } from "./security.ts";
@@ -76,8 +77,9 @@ app.get("/api/health", (_req, res) => res.json({ ok: true }));
 app.use("/api", limits.api);
 // Agent checkout, merchant side (Visa Trusted Agent Protocol). Raw body: the signature covers its digest.
 app.post("/api/agent/campaigns/:id/pledges", limits.agent, express.raw({ type: "application/json", limit: "20kb" }), wrap(async (req, res) => {
-  const rawBody = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : "";
-  const r = await handleAgentPledge(req.params.id, { host: req.headers.host ?? "", path: req.originalUrl, headers: req.headers, rawBody });
+  const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+  // RFC 9421 @path is the path without the query string.
+  const r = await handleAgentPledge(req.params.id, { host: req.headers.host ?? "", path: req.originalUrl.split("?")[0], headers: req.headers, rawBody, internal: isInternal(req) });
   res.status(r.status).json(r.body);
 }));
 
@@ -199,7 +201,8 @@ app.post("/api/campaigns/:id/agent-attack", limits.agent, wrap(async (req, res) 
   const kind = String(req.body?.kind ?? "") as Attack;
   if (!["unsigned", "replay", "tampered", "expired", "over_limit"].includes(kind)) throw badRequest("Unknown attack");
   const r = await agentAttack(c.id, kind);
-  res.json(r.body);
+  // A refused attack is the expected result (200); anything else (e.g. rate limited) passes through.
+  res.status(r.status === 403 ? 200 : r.status).json(r.body);
 }));
 
 /** Public key registry for agent signatures (in production: Visa's key directory). */

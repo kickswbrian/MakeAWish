@@ -54,7 +54,7 @@ export function lookupKey(kid: string): Jwk | null {
 
 // ---------- Agent side: signing ----------
 
-const digestOf = (body: string) => `sha-256=:${crypto.createHash("sha256").update(body).digest("base64")}:`;
+const digestOf = (body: string | Buffer) => `sha-256=:${crypto.createHash("sha256").update(body).digest("base64")}:`;
 
 function signatureBase(authority: string, reqPath: string, contentDigest: string | null, components: string[], params: string): string {
   const lines: string[] = [];
@@ -101,14 +101,20 @@ export function signObject<T extends Record<string, unknown>>(o: T): T & { signa
 export interface TapCheck { name: string; ok: boolean; detail: string }
 export interface TapResult { ok: boolean; checks: TapCheck[]; keyid?: string; nonce?: string; tag?: string }
 
-/** Nonces seen in the last 8 minutes (spec: block a repeated nonce). */
+/**
+ * Nonces used by verified requests, each kept until its signature expires (spec: block a repeated
+ * nonce within the 8-minute window). Only verified requests are recorded, so junk can't fill it.
+ */
 const seen = new Map<string, number>();
-function nonceFresh(nonce: string): boolean {
+const MAX_NONCES = 20_000;
+const nonceSeen = (nonce: string) => {
   const now = Date.now();
-  for (const [n, at] of seen) if (now - at > WINDOW_S * 1000) seen.delete(n);
-  if (seen.has(nonce)) return false;
-  seen.set(nonce, now);
-  return true;
+  for (const [n, until] of seen) if (until < now) seen.delete(n);
+  return seen.has(nonce);
+};
+function recordNonce(nonce: string, expiresS: number) {
+  if (seen.size >= MAX_NONCES) seen.delete(seen.keys().next().value!);
+  seen.set(nonce, Math.max(expiresS * 1000, Date.now()) + 5_000);
 }
 
 interface Parsed { label: string; components: string[]; params: Record<string, string>; raw: string }
@@ -131,7 +137,7 @@ export function parseSignatureInput(header: string): Parsed | null {
  * fields, timestamps within 8 minutes, nonce not replayed, key from the registry, body digest,
  * signature over the reconstructed base. Every step is reported, for the live trust log.
  */
-export function verifyRequest(req: { authority: string; path: string; headers: Record<string, string | string[] | undefined>; rawBody: string }): TapResult {
+export function verifyRequest(req: { authority: string; path: string; headers: Record<string, string | string[] | undefined>; rawBody: string | Buffer }): TapResult {
   const checks: TapCheck[] = [];
   const fail = (name: string, detail: string): TapResult => ({ ok: false, checks: [...checks, { name, ok: false, detail }] });
   const pass = (name: string, detail: string) => checks.push({ name, ok: true, detail });
@@ -150,7 +156,9 @@ export function verifyRequest(req: { authority: string; path: string; headers: R
 
   const missing = ["created", "expires", "keyid", "alg", "nonce", "tag"].filter((k) => !params[k]);
   if (missing.length) return fail("Required fields", `Missing ${missing.join(", ")}`);
-  if (!["@authority", "@path"].every((c) => parsed.components.includes(c))) return fail("Required fields", "Signature must cover @authority and @path");
+  // A payment must also sign the body's digest, so the amount can't change.
+  if (!["@authority", "@path", "content-digest"].every((c) => parsed.components.includes(c))) return fail("Required fields", "A checkout signature must cover @authority, @path and content-digest");
+  if (params.nonce.length > 256) return fail("Required fields", "Nonce too long");
   pass("Required fields", `covers ${parsed.components.join(", ")}`);
 
   const now = Math.floor(Date.now() / 1000);
@@ -160,7 +168,7 @@ export function verifyRequest(req: { authority: string; path: string; headers: R
   }
   pass("Fresh timestamps", `expires in ${expires - now}s`);
 
-  if (!nonceFresh(params.nonce)) return fail("Nonce not replayed", "This nonce was already used in the last 8 minutes: replay blocked.");
+  if (nonceSeen(params.nonce)) return fail("Nonce not replayed", "This nonce was already used in the last 8 minutes: replay blocked.");
   pass("Nonce not replayed", `${params.nonce.slice(0, 12)}…`);
 
   const jwk = lookupKey(keyid);
@@ -181,6 +189,7 @@ export function verifyRequest(req: { authority: string; path: string; headers: R
   const key = crypto.createPublicKey({ key: jwk, format: "jwk" });
   if (!crypto.verify(null, Buffer.from(base), key, Buffer.from(sig, "base64"))) return fail("Signature valid", "Ed25519 signature doesn't match the request.");
   pass("Signature valid", "Ed25519 over @authority, @path, content-digest");
+  recordNonce(params.nonce, expires);
   return { ok: true, checks, keyid, nonce: params.nonce, tag: params.tag };
 }
 

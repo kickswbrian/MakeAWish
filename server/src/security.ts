@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { isInternal } from "./internal.ts";
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
@@ -60,6 +61,8 @@ function limiter(name: string, windowMs: number, limit: number, message: string,
     standardHeaders: "draft-7",
     legacyHeaders: false,
     skipSuccessfulRequests: opts.skipSuccessfulRequests,
+    // The genie's own loopback calls to the merchant endpoint (see internal.ts) aren't public traffic.
+    skip: (req) => isInternal(req),
     // Separate counters per tier, so a busy poller doesn't eat the turn budget.
     keyGenerator: (req) => `${name}:${req.ip}`,
     handler: (req, res, _next, options) => {

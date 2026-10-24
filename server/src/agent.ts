@@ -7,6 +7,7 @@ import { getCampaign } from "./campaigns.ts";
 import { heldPledge } from "./demo.ts";
 import { agentKey, signObject, signRequest, verifyContainer, verifyRequest } from "./tap.ts";
 import { newId } from "./util.ts";
+import { INTERNAL_HEADER, INTERNAL_SECRET } from "./internal.ts";
 
 /**
  * Agent checkout: the genie backs a wish for the shopper as a Visa Trusted Agent Protocol agent.
@@ -43,7 +44,7 @@ export type Attack = Exclude<TapLogEntry["kind"], "pledge">;
 interface SendResult { status: number; body: { ok: boolean; checks: TapCheck[]; outcome: string; pledgeId?: string } }
 
 async function send(path: string, body: string, headers: Record<string, string>): Promise<SendResult> {
-  const res = await fetch(`http://${SELF()}${path}`, { method: "POST", headers: { "content-type": "application/json", ...headers }, body });
+  const res = await fetch(`http://${SELF()}${path}`, { method: "POST", headers: { "content-type": "application/json", [INTERNAL_HEADER]: INTERNAL_SECRET, ...headers }, body });
   return { status: res.status, body: (await res.json()) as SendResult["body"] };
 }
 
@@ -92,7 +93,7 @@ export async function agentAttack(campaignId: string, kind: Attack): Promise<Sen
   const { headers } = signRequest(SELF(), path, body, "agent-payer-auth", { nonce });
   if (kind === "tampered") {
     // Signed for one amount, then edited in flight to pay less.
-    const edited = body.replace(`"amountCents":${c.priceCents}`, `"amountCents":${Math.max(50, Math.round(c.priceCents / 10))}`);
+    const edited = body.replace(`"amountCents":${c.priceCents}`, `"amountCents":${c.priceCents - 1}`);
     return send(path, edited, { ...headers, "x-tap-demo": kind });
   }
   // replay: the same signed request sent twice; the second one is what's shown.
@@ -106,9 +107,12 @@ export async function agentAttack(campaignId: string, kind: Attack): Promise<Sen
  * Handle a request to /api/agent/campaigns/:id/pledges. Every check is logged to the campaign's
  * trust log (socket event tap:log) so the demo shows exactly why a request was accepted or refused.
  */
-export async function handleAgentPledge(campaignId: string, req: { host: string; path: string; headers: Record<string, string | string[] | undefined>; rawBody: string }) {
-  const demo = req.headers["x-tap-demo"];
-  const kind = (typeof demo === "string" && demo !== "replay-first" ? demo : "pledge") as TapLogEntry["kind"];
+const KINDS = new Set(["unsigned", "replay", "tampered", "expired", "over_limit"]);
+
+export async function handleAgentPledge(campaignId: string, req: { host: string; path: string; headers: Record<string, string | string[] | undefined>; rawBody: Buffer; internal: boolean }) {
+  // Only the genie's own demo calls may label the trust log (an outside caller can't fake entries).
+  const demo = req.internal ? req.headers["x-tap-demo"] : undefined;
+  const kind = (typeof demo === "string" && KINDS.has(demo) ? demo : "pledge") as TapLogEntry["kind"];
   const quiet = demo === "replay-first";
   const finish = (ok: boolean, checks: TapCheck[], outcome: string, extra: Record<string, unknown> = {}) => {
     if (!quiet) {
@@ -125,7 +129,7 @@ export async function handleAgentPledge(campaignId: string, req: { host: string;
 
   let body: { email?: string; amountCents?: number; agenticPaymentContainer?: Record<string, unknown> };
   try {
-    body = JSON.parse(req.rawBody);
+    body = JSON.parse(req.rawBody.toString("utf8"));
   } catch {
     return finish(false, checks, "Body isn't JSON");
   }
@@ -140,6 +144,7 @@ export async function handleAgentPledge(campaignId: string, req: { host: string;
   const amount = Number(pc.amountCents);
   const problem =
     !c ? "Campaign not found"
+      : c.status !== "funding" || c.deadlineAt <= Date.now() ? "This wish isn't taking pledges any more"
       : !m ? "No mandate from the shopper"
       : m.status !== "active" ? "Mandate already used"
       : m.campaign_id !== campaignId || pc.campaignId !== campaignId ? "Mandate is for a different wish"
@@ -150,11 +155,14 @@ export async function handleAgentPledge(campaignId: string, req: { host: string;
   checks.push({ name: "Within the shopper's mandate", ok: !problem, detail: problem ?? `$${(amount / 100).toFixed(2)} of $${(m!.max_cents / 100).toFixed(2)}, until the deadline` });
   if (problem) return finish(false, checks, problem);
 
-  db.prepare("UPDATE mandates SET status = 'used' WHERE id = ?").run(m!.id);
+  // Claimed before the await (no other request can use it meanwhile), released if the hold fails.
+  db.prepare("UPDATE mandates SET status = 'pending' WHERE id = ?").run(m!.id);
   let pledgeId: string;
   try {
-    pledgeId = await heldPledge(campaignId, amount, m!.email);
+    pledgeId = await heldPledge(campaignId, amount, m!.email, `Wish it pledge ${campaignId} (placed by the genie, TAP-verified)`);
+    db.prepare("UPDATE mandates SET status = 'used' WHERE id = ?").run(m!.id);
   } catch (err) {
+    db.prepare("UPDATE mandates SET status = 'active' WHERE id = ?").run(m!.id);
     const msg = (err as Error).message;
     checks.push({ name: "Card hold placed", ok: false, detail: msg });
     return finish(false, checks, msg);

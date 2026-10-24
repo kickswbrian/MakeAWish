@@ -51,8 +51,10 @@ export function AgentCheckout({ c }: { c: Campaign }) {
     setBusy(null);
   };
   const attack = async (kind: string) => {
+    setError(null);
     setBusy(kind);
-    await post(`/api/campaigns/${c.id}/agent-attack`, { kind });
+    const r = await post<{ error?: { message?: string } }>(`/api/campaigns/${c.id}/agent-attack`, { kind });
+    if (r.status >= 400) setError(r.json.error?.message ?? "That demo request didn't go through.");
     setBusy(null);
   };
 
@@ -83,8 +85,8 @@ export function AgentCheckout({ c }: { c: Campaign }) {
       )}
       {error && <div className="msg bad">{error}</div>}
       <div className="fineprint">
-        The genie signs its checkout request (RFC 9421, Ed25519) and Wish it verifies it as the merchant before placing a {money(c.priceCents)} hold.
-        Your limit works like a Visa Intelligent Commerce payment instruction. Production agents are registered with Visa; this demo agent's key is served by Wish it.
+        The genie signs its checkout request (RFC 9421, Ed25519) and Wish it verifies it as the merchant before placing a {money(c.priceCents)} hold on a test card.
+        Your limit works like a Visa Intelligent Commerce payment instruction, checked by Wish it. Production agents are registered with Visa; this demo agent's key is in Wish it's own registry.
       </div>
       <div className="agent-attacks">
         <span className="fineprint">Try to fool the merchant:</span>

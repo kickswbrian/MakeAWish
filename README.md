@@ -83,7 +83,7 @@ On the campaign view, "Genie, back it for me" lets the genie pledge for the shop
 1. The shopper's limit becomes a mandate: a cap, an expiry at the campaign deadline, and this campaign only. It is modelled on Visa Intelligent Commerce payment instructions.
 2. The genie signs its checkout request with RFC 9421 HTTP Message Signatures: Ed25519, `tag="agent-payer-auth"`, covering `@authority`, `@path` and `content-digest`. The body carries an `agenticPaymentContainer` signed with the same key and nonce.
 3. Wish it, as the merchant, verifies the request before placing the hold. In order: trusted-agent tag, required fields, timestamps no more than 8 minutes apart, nonce not replayed, key from the registry, body digest, signature, payment container, and the mandate.
-4. Every check appears live in the trust log. The "Try to fool the merchant" buttons send an unsigned bot, a replayed request, an amount edited in flight, an expired signature, and an over-limit request. Each is refused at the step the spec names, and none places a hold.
+4. Every check appears live in the trust log. The "Try to fool the merchant" buttons send an unsigned bot, a replayed request, an amount edited in flight, an expired signature, and an over-limit request. Each is refused at the step that catches it (the first four by TAP's checks, the last by the mandate), and none places a hold.
 
 **Files:** `server/src/tap.ts` (protocol), `server/src/agent.ts` (genie and merchant), `web/src/ui/AgentCheckout.tsx` (panel).
 
@@ -95,7 +95,10 @@ On the campaign view, "Genie, back it for me" lets the genie pledge for the shop
 **What is real and what isn't:**
 
 - Real: the signatures and verification are real TAP.
-- Not real: Visa Intelligent Commerce (agentic tokens, payment instructions, the Visa key directory) is open to approved partners only. So the genie's public key is served by Wish it's own registry at `GET /api/tap/keys?keyID=`, and the mandate lives in Wish it.
+- Not real: Visa Intelligent Commerce (agentic tokens, payment instructions, the Visa key directory) is open to approved partners only. So:
+  - the merchant looks the genie's public key up in Wish it's own registry (the same key is served at `GET /api/tap/keys?keyID=`), not in Visa's directory;
+  - the mandate lives in Wish it, and the mandate check is Wish it's own step, not part of TAP.
+- Whose card: the shopper only gives an email. The hold goes on a server-side test card (Stripe's `pm_card_visa`, or 4242 in the simulator). The payment container carries the mandate reference and amount, not a card credential.
 - The holds themselves are Stripe test mode, or the simulated provider.
 
 ## Deploy
