@@ -5,10 +5,11 @@ import { env } from "./env.ts";
 import { hash, withTimeout } from "./util.ts";
 import { getWish } from "./wishes.ts";
 import { spend } from "./security.ts";
+import { searchStores, STORE_NAMES } from "./stores.ts";
 
 const CACHE_MS = 24 * 3600_000;
-// Etsy's scraper (Playwright) can't finish inside the Actor's per-store timeout, so it's left out.
-export const SOURCES = ["amazon", "google_shopping"];
+// Etsy's scraper (Playwright) can't finish inside a per-store timeout, so it's left out.
+export const SOURCES = STORE_NAMES;
 const MAX_PER_SOURCE = 5;
 /** Per-store run limit inside the Actor. Google Shopping takes ~30 s; the Actor default (25 s) cut it off every time. */
 const STORE_TIMEOUT_SECS = 40;
@@ -126,22 +127,39 @@ async function search(wishId: string, spec: Product) {
     console.log(`[apify] cache hit "${matchQuery(spec)}"`);
     return save(wishId, cached.matches, cached.searched, cached.total, false);
   }
-  if (!env.apifyToken || !env.apifyActor || env.demoMode || !spend("apifySearches")) {
-    console.log(`[apify] ${env.demoMode ? "DEMO_MODE cache miss" : env.apifyToken && env.apifyActor ? "daily search cap reached" : "no APIFY_TOKEN/APIFY_ACTOR"}, serving sample matches`);
+  if (!env.apifyToken || env.demoMode || !spend("apifySearches")) {
+    console.log(`[apify] ${env.demoMode ? "DEMO_MODE cache miss" : env.apifyToken ? "daily search cap reached" : "no APIFY_TOKEN"}, serving sample matches`);
     return save(wishId, sampleMatches(spec), SOURCES.length, SOURCES.length, true);
   }
 
   const started = Date.now();
+  const query = matchQuery(spec);
+  console.log(`[apify] searching ${SOURCES.join(" + ")} for "${query}" ${env.apifyActor ? `via ${env.apifyActor}` : "directly"}`);
+  // No deployed Actor: the server calls the store scrapers itself (same scrapers, one hop less).
+  if (!env.apifyActor) {
+    try {
+      const r = await searchStores(query, actorSpec(spec), MAX_PER_SOURCE, STORE_TIMEOUT_SECS + 20);
+      const matches = r.matches.sort((a, b) => b.score - a.score).slice(0, 6);
+      console.log(`[apify] ${matches.length} matches in ${Date.now() - started}ms, searched ${r.searched}/${r.total}`);
+      if (matches.length) writeCache(spec, matches, r.searched, r.total);
+      // Every store came back empty: clearly-labelled samples rather than an empty grid.
+      return matches.length ? save(wishId, matches, r.searched, r.total, false) : save(wishId, sampleMatches(spec), 0, r.total, true);
+    } catch (err) {
+      console.warn("[apify] failed, serving sample matches:", (err as Error).message);
+      return save(wishId, sampleMatches(spec), 0, SOURCES.length, true);
+    }
+  }
   try {
-    const url = `https://api.apify.com/v2/acts/${encodeURIComponent(env.apifyActor)}/run-sync-get-dataset-items?token=${env.apifyToken}&timeout=60`;
+    // The Actor runs the stores in parallel, each up to STORE_TIMEOUT_SECS, then scores: give it room.
+    const url = `https://api.apify.com/v2/acts/${encodeURIComponent(env.apifyActor)}/run-sync-get-dataset-items?timeout=${STORE_TIMEOUT_SECS + 45}`;
     const res = await withTimeout(
       fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${env.apifyToken}`, "Content-Type": "application/json" },
         // minScore 0: keep every listing so the grid shows real results even when scoring is keyword-only.
         body: JSON.stringify({ query: matchQuery(spec), spec: actorSpec(spec), sources: SOURCES, maxPerSource: MAX_PER_SOURCE, minScore: 0, timeoutSecs: STORE_TIMEOUT_SECS, sourceActors: sourceActors(matchQuery(spec)) }),
       }),
-      70_000,
+      (STORE_TIMEOUT_SECS + 55) * 1000,
       "apify",
     );
     if (!res.ok) throw new Error(`apify ${res.status}: ${(await res.text()).slice(0, 300)}`);
