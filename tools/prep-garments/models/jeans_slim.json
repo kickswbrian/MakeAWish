@@ -1,0 +1,507 @@
+{
+  "credit": "\"Jeans denim pants\" by Obridje (https://sketchfab.com/3d-models/jeans-denim-pants-8825d68eae214fa58a34742e5bfa0ab3), CC-BY-4.0",
+  "source": "jeans_slim_hd",
+  "height": 1.04,
+  "budget": 36000,
+  "fold": "jeans_slim_hd_fold",
+  "fold_size": 2048,
+  "fold_quality": 88,
+  "rules": [
+    {
+      "name": "_drop",
+      "when": "pcz < -0.06 and abs(pcy - 0.85) < 0.03 and 0.12 < ph < 0.2"
+    },
+    {
+      "name": "belt_loops",
+      "when": "ph < 0.07 and pcy > 0.97 and ptris < 60"
+    },
+    {
+      "name": "waistband",
+      "when": "ptris > 1000 and pcy > 0.95"
+    },
+    {
+      "name": "leg_l",
+      "when": "x < 0"
+    },
+    {
+      "name": "leg_r",
+      "when": "True"
+    }
+  ],
+  "zones": {
+    "waistband": {
+      "kind": "ring",
+      "center": [
+        0,
+        0.996,
+        0
+      ],
+      "axis": [
+        0,
+        -0.995,
+        -0.1
+      ],
+      "radius": 0.35,
+      "samples": 48,
+      "label": "waistband",
+      "part": "waistband"
+    },
+    "waistband_top": {
+      "kind": "ring",
+      "center": [
+        0,
+        1.02,
+        0
+      ],
+      "axis": [
+        0,
+        -0.995,
+        -0.1
+      ],
+      "radius": 0.35,
+      "samples": 48,
+      "label": "waistband top edge",
+      "part": "waistband"
+    },
+    "belt_loops": {
+      "kind": "ring",
+      "center": [
+        0,
+        0.996,
+        0
+      ],
+      "axis": [
+        0,
+        -0.995,
+        -0.1
+      ],
+      "radius": 0.35,
+      "samples": 48,
+      "label": "belt loop line",
+      "part": "waistband"
+    },
+    "fly": {
+      "kind": "line",
+      "from": [
+        0.022,
+        0.956,
+        0.4
+      ],
+      "to": [
+        0.022,
+        0.8,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "samples": 12,
+      "label": "front fly"
+    },
+    "pocket_front_left": {
+      "from": [
+        -0.118,
+        0.93,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.11,
+        0.08
+      ],
+      "bend": 0.15,
+      "label": "left front pocket"
+    },
+    "pocket_front_right": {
+      "from": [
+        0.125,
+        0.93,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.11,
+        0.08
+      ],
+      "bend": 0.15,
+      "label": "right front pocket"
+    },
+    "coin_pocket": {
+      "near": [
+        -0.15,
+        0.942,
+        0.06
+      ],
+      "room": [
+        0.05,
+        0.05
+      ],
+      "bend": 0.12,
+      "label": "coin pocket"
+    },
+    "pocket_back_left": {
+      "from": [
+        -0.107,
+        0.85,
+        -0.4
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.14,
+        0.17
+      ],
+      "bend": 0.11,
+      "label": "left back pocket"
+    },
+    "pocket_back_right": {
+      "from": [
+        0.107,
+        0.85,
+        -0.4
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.14,
+        0.17
+      ],
+      "bend": 0.11,
+      "label": "right back pocket"
+    },
+    "back_patch": {
+      "from": [
+        -0.075,
+        0.997,
+        -0.4
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.08,
+        0.04
+      ],
+      "bend": 0.3,
+      "label": "back waistband patch",
+      "part": "waistband"
+    },
+    "outseam_left": {
+      "kind": "line",
+      "from": [
+        -0.4,
+        0.965,
+        -0.015
+      ],
+      "to": [
+        -0.4,
+        0.04,
+        -0.035
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "samples": 28,
+      "label": "left outseam",
+      "part": "leg_l"
+    },
+    "outseam_right": {
+      "kind": "line",
+      "from": [
+        0.4,
+        0.04,
+        -0.035
+      ],
+      "to": [
+        0.4,
+        0.965,
+        -0.015
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "samples": 28,
+      "label": "right outseam",
+      "part": "leg_r"
+    },
+    "inseam_left": {
+      "kind": "line",
+      "from": [
+        0.0,
+        0.66,
+        -0.03
+      ],
+      "to": [
+        -0.1,
+        0.04,
+        -0.05
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "samples": 20,
+      "label": "left inseam",
+      "part": "leg_l"
+    },
+    "inseam_right": {
+      "kind": "line",
+      "from": [
+        0.1,
+        0.04,
+        -0.05
+      ],
+      "to": [
+        0.0,
+        0.66,
+        -0.03
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "samples": 20,
+      "label": "right inseam",
+      "part": "leg_r"
+    },
+    "hem_left": {
+      "kind": "ring",
+      "center": [
+        -0.19,
+        0.022,
+        -0.05
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "radius": 0.13,
+      "samples": 36,
+      "label": "left hem",
+      "part": "leg_l"
+    },
+    "hem_right": {
+      "kind": "ring",
+      "center": [
+        0.19,
+        0.022,
+        -0.05
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "radius": 0.13,
+      "samples": 36,
+      "label": "right hem",
+      "part": "leg_r"
+    },
+    "thigh_left": {
+      "from": [
+        -0.4,
+        0.52,
+        0.0
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "room": [
+        0.14,
+        0.2
+      ],
+      "bend": 0.1,
+      "label": "left thigh (side)",
+      "part": "leg_l"
+    },
+    "thigh_right": {
+      "from": [
+        0.4,
+        0.52,
+        0.0
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "room": [
+        0.14,
+        0.2
+      ],
+      "bend": 0.1,
+      "label": "right thigh (side)",
+      "part": "leg_r"
+    },
+    "knee_left": {
+      "from": [
+        -0.165,
+        0.33,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.08,
+        0.08
+      ],
+      "bend": 0.08,
+      "label": "left knee",
+      "part": "leg_l"
+    },
+    "knee_right": {
+      "from": [
+        0.165,
+        0.33,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.08,
+        0.08
+      ],
+      "bend": 0.08,
+      "label": "right knee",
+      "part": "leg_r"
+    },
+    "button_waist": {
+      "near": [
+        0.015,
+        0.98,
+        0.133
+      ],
+      "room": [
+        0.02,
+        0.02
+      ],
+      "label": "waistband button",
+      "part": "waistband"
+    },
+    "rivet_coin_left": {
+      "near": [
+        -0.163,
+        0.966,
+        0.015
+      ],
+      "room": [
+        0.01,
+        0.01
+      ],
+      "label": "coin pocket outer rivet"
+    },
+    "rivet_coin_right": {
+      "near": [
+        -0.13,
+        0.955,
+        0.079
+      ],
+      "room": [
+        0.01,
+        0.01
+      ],
+      "label": "coin pocket inner rivet"
+    },
+    "rivet_front_left_top": {
+      "from": [
+        -0.082,
+        0.972,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.01,
+        0.01
+      ],
+      "label": "left front pocket rivet (waist)"
+    },
+    "rivet_front_left_side": {
+      "from": [
+        -0.152,
+        0.893,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.01,
+        0.01
+      ],
+      "label": "left front pocket rivet (side)"
+    },
+    "rivet_front_right_top": {
+      "from": [
+        0.09,
+        0.972,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.01,
+        0.01
+      ],
+      "label": "right front pocket rivet (waist)"
+    },
+    "rivet_front_right_side": {
+      "from": [
+        0.16,
+        0.893,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.01,
+        0.01
+      ],
+      "label": "right front pocket rivet (side)"
+    }
+  }
+}

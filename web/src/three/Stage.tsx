@@ -9,6 +9,7 @@ import { Particles } from "./Particles.tsx";
 import { anchorSignal, fx, orbSignal, viewSignal } from "./signals.ts";
 import { ProductView, PartRegistry, type PartHit } from "./parts/ProductView.tsx";
 import { createMaterial, preloadMaterials } from "./parts/materials.ts";
+import { preloadMeshModels } from "./parts/mesh.ts";
 import { MATERIAL_PRESETS } from "@wishit/shared";
 
 export type Framing = "voice" | "product" | "top" | "side" | "mini" | "bubble" | "debug" | "edit";
@@ -340,7 +341,9 @@ function ShaderWarmup() {
       if (gl.getContext().isContextLost()) return;
       scene.add(group);
       try {
-        await gl.compileAsync(scene, camera);
+        // Only the warm-up group (with the scene's lights): product materials may recompile meanwhile,
+        // and three's async readiness check trips over a program released mid-compile.
+        await gl.compileAsync(group, camera, scene);
       } catch {
         /* warm-up is best effort */
       }
@@ -432,7 +435,10 @@ function StageCanvas({
   // The studio preloads every texture set; view-only stages (the phone pledge page) fetch just what they show.
   const warm = preload ?? interactive;
   useEffect(() => {
-    if (warm) void preloadMaterials();
+    if (!warm) return;
+    void preloadMaterials();
+    // Garment and bag base models load behind the first wish, so a fashion template shows at once.
+    void preloadMeshModels();
   }, [warm]);
   // Adaptive quality: drop resolution, then ambient occlusion, if the GPU can't hold the frame rate.
   const [dpr, setDpr] = useState(Math.min(2, window.devicePixelRatio || 1));

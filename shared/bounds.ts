@@ -1,4 +1,6 @@
-import { kitById } from "./kit.ts";
+import { isEnumParam, kitById } from "./kit.ts";
+import { displayBox } from "./modules/display.ts";
+import { MESH_MODELS } from "./meshes.ts";
 import { subtreeIds, type Part, type Product } from "./product.ts";
 import { toPartSpace, toProductSpace } from "./frames.ts";
 import type { Vec3 } from "./spec.ts";
@@ -13,14 +15,31 @@ export interface Box { min: Vec3; max: Vec3 }
 
 /** The part's own geometry in its local frame (before its transform). */
 export function localBox(part: Part): Box | null {
+  if (part.kind === "mesh") {
+    const [model, node] = (part.meshAsset ?? "").split("/");
+    const b = MESH_MODELS[model]?.bounds?.[node];
+    return b ? { min: [...b.min], max: [...b.max] } : null;
+  }
   if (part.kind === "kit") {
     const kit = part.kitAsset ? kitById(part.kitAsset) : undefined;
     if (!kit) return null;
+    if (part.kitPath?.length) {
+      // A path kit hugs its path: the path's box, padded by the kit's thickness.
+      const pad = Math.max(0.002, Math.min(kit.size[1], kit.size[2]) / 2);
+      const min: Vec3 = [Infinity, Infinity, Infinity], max: Vec3 = [-Infinity, -Infinity, -Infinity];
+      for (const q of part.kitPath) for (let i = 0; i < 3; i++) {
+        min[i] = Math.min(min[i], q[i] - pad);
+        max[i] = Math.max(max[i], q[i] + pad);
+      }
+      return { min, max };
+    }
+    const shown = kit.family === "display" ? displayBox(kit.id, part.kitParams) : null;
+    if (shown) return shown;
     const s: Vec3 = [...kit.size];
     // Size-like params stretch the catalog box: length along X, height along Y, radius everywhere.
     for (const [name, spec] of Object.entries(kit.params ?? {})) {
       const v = part.kitParams?.[name];
-      if (typeof v !== "number" || !spec.default) continue;
+      if (typeof v !== "number" || isEnumParam(spec) || !spec.default) continue;
       const k = v / spec.default;
       if (name === "length") s[0] *= k;
       else if (name === "height") s[1] *= k;

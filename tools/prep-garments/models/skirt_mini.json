@@ -1,0 +1,203 @@
+{
+  "credit": "\"Wide-Shoulder Blazer and Skirt Ensemble\" by Style3D CG (https://sketchfab.com/3d-models/wide-shoulder-blazer-and-skirt-ensemble-5fb3cf3e06dc4f13bec0e3b4060c43ff), CC-BY-4.0",
+  "source": "blazer_oversized",
+  "height": 0.56,
+  "keep": [
+    "uniform_1002"
+  ],
+  "budget": 30000,
+  "fold": "uniform_1002",
+  "rules": [
+    {
+      "name": "waistband",
+      "when": "pcy > 0.5 and ph < 0.05 and ptris > 300"
+    },
+    {
+      "name": "body",
+      "when": "True"
+    }
+  ],
+  "zones": {
+    "waistband": {
+      "kind": "ring",
+      "center": [
+        0,
+        0.543,
+        0.01
+      ],
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "radius": 0.5,
+      "samples": 48,
+      "label": "waistband (center line; W points down into the skirt)",
+      "part": "waistband"
+    },
+    "hem": {
+      "kind": "ring",
+      "center": [
+        0,
+        0.012,
+        0
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "radius": 0.5,
+      "samples": 46,
+      "label": "hem",
+      "part": "body"
+    },
+    "front_center": {
+      "from": [
+        0,
+        0.45,
+        0.5
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.07,
+        0.05
+      ],
+      "bend": 0.2,
+      "label": "center front below the waistband"
+    },
+    "back_center": {
+      "kind": "line",
+      "from": [
+        0,
+        0.37,
+        -0.5
+      ],
+      "to": [
+        0,
+        0.556,
+        -0.5
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "samples": 10,
+      "label": "center back zip seam (bottom first, top at the last point)"
+    },
+    "slit_top": {
+      "from": [
+        0,
+        0.215,
+        0.5
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.02,
+        0.01
+      ],
+      "label": "top of the front slit"
+    },
+    "dart_back_left": {
+      "from": [
+        -0.065,
+        0.527,
+        -0.5
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.01,
+        0.1
+      ],
+      "label": "left back dart (from under the waistband)"
+    },
+    "dart_back_right": {
+      "from": [
+        0.065,
+        0.527,
+        -0.5
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.01,
+        0.1
+      ],
+      "label": "right back dart (from under the waistband)"
+    },
+    "waistband_label": {
+      "from": [
+        0,
+        0.54,
+        0.01
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.04,
+        0.02
+      ],
+      "label": "inside back waistband",
+      "part": "waistband"
+    },
+    "side_seam_left": {
+      "kind": "line",
+      "from": [
+        -0.5,
+        0.52,
+        0.0
+      ],
+      "to": [
+        -0.5,
+        0.03,
+        0.0
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "samples": 16,
+      "label": "left side seam"
+    },
+    "side_seam_right": {
+      "kind": "line",
+      "from": [
+        0.5,
+        0.52,
+        0.0
+      ],
+      "to": [
+        0.5,
+        0.03,
+        0.0
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "samples": 16,
+      "label": "right side seam"
+    }
+  }
+}

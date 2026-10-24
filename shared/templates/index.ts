@@ -14,12 +14,23 @@ export interface Template {
   description: string;
   targetPriceUsd: number;
   parts: Part[];
+  /** Built from this fashion template (see shared/fashion): controls, zones and detail modules apply. */
+  fashion?: string;
 }
 
 export const TEMPLATES: Template[] = [...ALL_TEMPLATES];
 
 export function registerTemplates(list: Template[]) {
-  for (const t of list) if (!TEMPLATES.some((x) => x.id === t.id)) TEMPLATES.push(t);
+  for (const t of list) {
+    const i = TEMPLATES.findIndex((x) => x.id === t.id);
+    // Fashion templates replace a hand-built one with the same id; their keywords win too.
+    if (i >= 0) TEMPLATES.splice(i, 1);
+    if (t.fashion) {
+      const words = new Set(t.keywords);
+      for (const x of TEMPLATES) if (!x.fashion) x.keywords = x.keywords.filter((k) => !words.has(k));
+      TEMPLATES.unshift(t);
+    } else TEMPLATES.push(t);
+  }
 }
 
 export const templateById = (id: string) => TEMPLATES.find((t) => t.id === id);
@@ -27,7 +38,15 @@ export const templateById = (id: string) => TEMPLATES.find((t) => t.id === id);
 /** Build a product from a template (validated through the normal patch path). */
 export function templateProduct(t: Template, id = "draft"): Product {
   const base = { ...emptyProduct(id), title: t.name, category: t.category, description: t.description, targetPriceUsd: t.targetPriceUsd };
-  return applyPatches(base, t.parts.map((part) => ({ op: "add", part }))).product;
+  const product = applyPatches(base, t.parts.map((part) => ({ op: "add", part }))).product;
+  if (t.fashion) product.fashion = { template: t.fashion, controls: fashionDefaults(t.fashion) };
+  return product;
+}
+
+/** Default control values of a fashion template (set by shared/fashion at load). */
+let fashionDefaults: (id: string) => Record<string, string> = () => ({});
+export function setFashionDefaults(fn: (id: string) => Record<string, string>): void {
+  fashionDefaults = fn;
 }
 
 /** Words that may follow the product noun without making it a modifier ("a backpack made of cork", "a mug now"). */

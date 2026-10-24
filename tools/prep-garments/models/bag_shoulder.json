@@ -1,0 +1,249 @@
+{
+ "credit": "\"women black leather handbag standoil\" by innsvx (https://sketchfab.com/3d-models/women-black-leather-handbag-standoil-f2b37b2023434c9ba1ff1bb95bd1fd4d), CC-BY-4.0",
+ "height": 0.41,
+ "rotate": [
+  0,
+  -90,
+  0
+ ],
+ "budget": 20000,
+ "rules": [
+  {
+   "name": "panel_front",
+   "when": "src.startswith('Cube_BAG') and icz > 0"
+  },
+  {
+   "name": "panel_back",
+   "when": "src.startswith('Cube_BAG')"
+  },
+  {
+   "name": "gusset",
+   "when": "src.startswith('NurbsPath_')"
+  },
+  {
+   "name": "base",
+   "when": "src.startswith('NurbsPath.001')"
+  },
+  {
+   "name": "strap_front",
+   "when": "icz > 0"
+  },
+  {
+   "name": "strap_back",
+   "when": "True"
+  }
+ ],
+ "drop": [
+  "^Cube_0_",
+  "^Cube\\.003",
+  "^cuff",
+  "^Path 0",
+  "^bag strap 2"
+ ],
+ "fold": "BAG_BASE",
+ "fold_size": 1024,
+ "zones": {
+  "front_center": {
+   "from": [
+    0,
+    0.075,
+    0.3
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.1,
+    0.05
+   ],
+   "bend": 0.5,
+   "label": "front center",
+   "part": "panel_front"
+  },
+  "front_panel": {
+   "from": [
+    0,
+    0.07,
+    0.3
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.2,
+    0.1
+   ],
+   "bend": 0.5,
+   "label": "front panel",
+   "part": "panel_front"
+  },
+  "back_panel": {
+   "from": [
+    0,
+    0.07,
+    -0.3
+   ],
+   "dir": [
+    0,
+    0,
+    1
+   ],
+   "room": [
+    0.2,
+    0.1
+   ],
+   "bend": 0.5,
+   "label": "back panel",
+   "part": "panel_back"
+  },
+  "logo_front": {
+   "from": [
+    0,
+    0.024,
+    0.3
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.05,
+    0.012
+   ],
+   "label": "logo spot, front bottom",
+   "part": "panel_front"
+  },
+  "zip_top": {
+   "kind": "line",
+   "from": [
+    0.115,
+    0.3,
+    0
+   ],
+   "to": [
+    -0.115,
+    0.3,
+    0
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "samples": 24,
+   "label": "top zip",
+   "part": "gusset"
+  },
+  "edge_front": {
+   "kind": "line",
+   "from": [
+    0.13,
+    0.131,
+    0.3
+   ],
+   "to": [
+    -0.13,
+    0.131,
+    0.3
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "samples": 24,
+   "label": "front panel top edge",
+   "part": "panel_front"
+  },
+  "edge_back": {
+   "kind": "line",
+   "from": [
+    -0.13,
+    0.131,
+    -0.3
+   ],
+   "to": [
+    0.13,
+    0.131,
+    -0.3
+   ],
+   "dir": [
+    0,
+    0,
+    1
+   ],
+   "samples": 24,
+   "label": "back panel top edge",
+   "part": "panel_back"
+  },
+  "side_left": {
+   "from": [
+    -0.3,
+    0.07,
+    0
+   ],
+   "dir": [
+    1,
+    0,
+    0
+   ],
+   "room": [
+    0.05,
+    0.08
+   ],
+   "label": "left end",
+   "part": "gusset"
+  },
+  "side_right": {
+   "from": [
+    0.3,
+    0.07,
+    0
+   ],
+   "dir": [
+    -1,
+    0,
+    0
+   ],
+   "room": [
+    0.05,
+    0.08
+   ],
+   "label": "right end",
+   "part": "gusset"
+  },
+  "strap_anchor_left": {
+   "from": [
+    -0.3,
+    0.115,
+    0
+   ],
+   "dir": [
+    1,
+    0,
+    0
+   ],
+   "label": "left end, top",
+   "part": "gusset"
+  },
+  "strap_anchor_right": {
+   "from": [
+    0.3,
+    0.115,
+    0
+   ],
+   "dir": [
+    -1,
+    0,
+    0
+   ],
+   "label": "right end, top",
+   "part": "gusset"
+  }
+ }
+}
