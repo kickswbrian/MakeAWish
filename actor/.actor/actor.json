@@ -1,0 +1,33 @@
+{
+  "actorSpecification": 1,
+  "name": "wish-matcher",
+  "title": "Wish Matcher: does this product already exist?",
+  "description": "Give it a product idea. It searches Amazon, Etsy and Google Shopping in parallel, then scores every listing 0-100 against your spec and says what each one is missing.",
+  "version": "0.1",
+  "buildTag": "latest",
+  "input": "./input_schema.json",
+  "dockerfile": "./Dockerfile",
+  "storages": {
+    "dataset": {
+      "actorSpecification": 1,
+      "views": {
+        "overview": {
+          "title": "Scored matches",
+          "transformation": { "fields": ["score", "title", "source", "price", "missing", "url", "image"] },
+          "display": {
+            "component": "table",
+            "properties": {
+              "score": { "label": "Match score", "format": "number" },
+              "title": { "label": "Listing", "format": "text" },
+              "source": { "label": "Store", "format": "text" },
+              "price": { "label": "Price (USD)", "format": "number" },
+              "missing": { "label": "Missing", "format": "array" },
+              "url": { "label": "Link", "format": "link" },
+              "image": { "label": "Image", "format": "image" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

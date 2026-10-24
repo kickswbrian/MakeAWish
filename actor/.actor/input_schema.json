@@ -1,0 +1,59 @@
+{
+  "title": "Wish Matcher input",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "query": {
+      "title": "Search query",
+      "type": "string",
+      "description": "Plain-language product description, e.g. \"emerald satin midi dress that converts to a skirt with phone pockets\".",
+      "editor": "textfield",
+      "prefill": "backpack with a built-in laptop stand"
+    },
+    "spec": {
+      "title": "Product spec",
+      "type": "object",
+      "description": "Optional structured spec (category, color, features, target_price_usd, ...). Scoring uses it to name what each listing is missing.",
+      "editor": "json",
+      "prefill": { "category": "backpack", "features": ["laptop_stand"] }
+    },
+    "sources": {
+      "title": "Stores",
+      "type": "array",
+      "description": "Which stores to search, in parallel.",
+      "editor": "stringList",
+      "default": ["amazon", "etsy", "google_shopping"]
+    },
+    "maxPerSource": {
+      "title": "Results per store",
+      "type": "integer",
+      "description": "Keep this small to save credits.",
+      "default": 5,
+      "minimum": 1,
+      "maximum": 20
+    },
+    "timeoutSecs": {
+      "title": "Timeout per store (seconds)",
+      "type": "integer",
+      "description": "A store that doesn't answer in time is skipped, not fatal.",
+      "default": 25,
+      "minimum": 5,
+      "maximum": 120
+    },
+    "minScore": {
+      "title": "Minimum score to keep",
+      "type": "integer",
+      "description": "80+ means it exists, 50-79 is close, under 50 is dropped by default.",
+      "default": 50,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "sourceActors": {
+      "title": "Store actor overrides (advanced)",
+      "type": "object",
+      "description": "Swap the Store actor used for a source: { \"etsy\": { \"actorId\": \"user/actor\", \"input\": { \"search\": \"{{query}}\", \"maxItems\": \"{{max}}\" } } }. {{query}}, {{max}} and {{queryEncoded}} are substituted.",
+      "editor": "json"
+    }
+  },
+  "required": ["query"]
+}

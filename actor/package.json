@@ -1,0 +1,17 @@
+{
+  "name": "wish-matcher",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Does this product already exist? Searches Amazon, Etsy and Google Shopping in parallel and scores every listing against a product spec with Claude.",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "node src/main.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0",
+    "apify": "^3.2.6",
+    "zod": "^3.25.76"
+  },
+  "engines": { "node": ">=20" }
+}

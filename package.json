@@ -1,0 +1,32 @@
+{
+  "name": "wish-it",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n server,web -c magenta,cyan \"npm run dev -w server\" \"npm run dev -w web\"",
+    "build": "npm run build -w web",
+    "start": "npm start -w server",
+    "typecheck": "tsc -p shared && tsc -p server && tsc -p web",
+    "test": "npm test -w shared",
+    "brain:test": "npm run brain:test -w server",
+    "demo:reset": "npm run demo:reset -w server --"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "concurrently": "^9.2.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "@types/three": "0.169.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "overrides": {
+    "@types/three": "$@types/three"
+  }
+}
