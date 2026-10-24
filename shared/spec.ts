@@ -303,7 +303,21 @@ export interface PublicPledge {
   status: PledgeStatus;
   failReason: string | null;
   createdAt: number;
+  /** Placed by the genie as a Visa Trusted Agent Protocol agent, verified by Wish it. */
+  agent?: { keyid: string } | null;
 }
+
+/** One verification step of a Trusted Agent Protocol request, for the live trust log. */
+export interface TapCheck { name: string; ok: boolean; detail: string }
+export interface TapLogEntry {
+  at: number;
+  /** "pledge" for the genie backing it; otherwise which bad request was tried. */
+  kind: "pledge" | "unsigned" | "replay" | "tampered" | "expired" | "over_limit";
+  ok: boolean;
+  checks: TapCheck[];
+  outcome: string;
+}
+export interface TapLogPayload { campaignId: string; entry: TapLogEntry }
 
 export interface Campaign {
   id: string;
@@ -363,6 +377,7 @@ export const EVENTS = {
   meshyReady: "meshy:ready",
   matchesReady: "matches:ready",
   campaignUpdated: "campaign:updated",
+  tapLog: "tap:log",
   join: "join", // client -> server: { room }
 } as const;
 

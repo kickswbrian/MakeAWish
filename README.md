@@ -74,6 +74,30 @@ A pledge creates a PaymentIntent with `capture_method: "manual"`. It only counts
 
 Test cards: `4242 4242 4242 4242` (works), `4000 0000 0000 0002` (declined), `4000 0000 0000 9995` (insufficient funds).
 
+### Agent checkout: the genie pays as a Visa Trusted Agent Protocol agent
+
+On the campaign view, "Genie, back it for me" lets the genie pledge for the shopper within a spending limit they set. This follows [Visa's Trusted Agent Protocol](https://developer.visa.com/docs/trusted-agent-protocol/trusted-agent-protocol-specifications) (TAP).
+
+**How it works:**
+
+1. The shopper's limit becomes a mandate: a cap, an expiry at the campaign deadline, and this campaign only. It is modelled on Visa Intelligent Commerce payment instructions.
+2. The genie signs its checkout request with RFC 9421 HTTP Message Signatures: Ed25519, `tag="agent-payer-auth"`, covering `@authority`, `@path` and `content-digest`. The body carries an `agenticPaymentContainer` signed with the same key and nonce.
+3. Wish it, as the merchant, verifies the request before placing the hold. In order: trusted-agent tag, required fields, timestamps no more than 8 minutes apart, nonce not replayed, key from the registry, body digest, signature, payment container, and the mandate.
+4. Every check appears live in the trust log. The "Try to fool the merchant" buttons send an unsigned bot, a replayed request, an amount edited in flight, an expired signature, and an over-limit request. Each is refused at the step the spec names, and none places a hold.
+
+**Files:** `server/src/tap.ts` (protocol), `server/src/agent.ts` (genie and merchant), `web/src/ui/AgentCheckout.tsx` (panel).
+
+**Tests:**
+
+- `npm test -w server` runs the protocol tests.
+- `npm run tap:demo -- --base=http://localhost:3000` checks it against a running server.
+
+**What is real and what isn't:**
+
+- Real: the signatures and verification are real TAP.
+- Not real: Visa Intelligent Commerce (agentic tokens, payment instructions, the Visa key directory) is open to approved partners only. So the genie's public key is served by Wish it's own registry at `GET /api/tap/keys?keyID=`, and the mandate lives in Wish it.
+- The holds themselves are Stripe test mode, or the simulated provider.
+
 ## Deploy
 
 `render.yaml` defines one Render web service with a persistent disk for SQLite and models. Set `PUBLIC_URL` to the HTTPS URL (the mic needs HTTPS, and phones need a reachable QR link), add the keys, and register `https://<host>/api/stripe/webhook` in the Stripe dashboard for the four `payment_intent.*` events.

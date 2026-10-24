@@ -77,3 +77,17 @@ CREATE TABLE IF NOT EXISTS meshy_cache (
 // Added after launch: older databases get the column on boot.
 const wishCols = (db.prepare("PRAGMA table_info(wishes)").all() as { name: string }[]).map((c) => c.name);
 if (!wishCols.includes("history_json")) db.exec("ALTER TABLE wishes ADD COLUMN history_json TEXT");
+
+// Agent checkout (Visa Trusted Agent Protocol): which pledges the genie placed, and the shopper's
+// spending mandates (modelled on Visa Intelligent Commerce payment instructions).
+const pledgeCols = (db.prepare("PRAGMA table_info(pledges)").all() as { name: string }[]).map((c) => c.name);
+if (!pledgeCols.includes("agent_keyid")) db.exec("ALTER TABLE pledges ADD COLUMN agent_keyid TEXT");
+db.exec(`CREATE TABLE IF NOT EXISTS mandates (
+  id TEXT PRIMARY KEY,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  email TEXT NOT NULL,
+  max_cents INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at INTEGER NOT NULL
+)`);
