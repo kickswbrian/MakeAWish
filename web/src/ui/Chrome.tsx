@@ -1,36 +1,45 @@
 import { Link } from "react-router-dom";
 import type { Caption } from "../voice/useVoice.ts";
+import { HeartIcon, Sparkle } from "./Icons.tsx";
 
-export function TopBar({ right }: { right?: React.ReactNode }) {
+/** The three soft background glows every screen sits on. */
+export function Glows() {
   return (
-    <div className="topbar">
-      <Link to="/" className="logo" reloadDocument>
-        <span className="star">✦</span> Wish it
-      </Link>
-      <div style={{ display: "flex", gap: 10 }}>{right}</div>
+    <div className="glows" aria-hidden="true">
+      <div className="glow g1" />
+      <div className="glow g2" />
+      <div className="glow g3" />
     </div>
   );
 }
 
-export function Captions({ captions, interim }: { captions: Caption[]; interim: string }) {
-  const now = Date.now();
-  const shown = captions.slice(-2);
+export function Wordmark() {
   return (
-    <div className="captions" aria-live="polite">
-      {shown.map((c) => (
-        <div key={c.id} className={`caption ${c.who} ${now - c.at > 7000 ? "fading" : ""}`}>
-          {c.text}
-        </div>
+    <Link to="/" className="wordmark" reloadDocument>
+      <Sparkle size={18} color="#C5D8CF" /> Wish it
+    </Link>
+  );
+}
+
+/** The newest line of the conversation, revealed word by word. Live captions show as they arrive. */
+export function SpeechLine({ captions, interim }: { captions: Caption[]; interim: string }) {
+  if (interim) return <p className="line interim" aria-live="polite">{interim}</p>;
+  const c = captions[captions.length - 1];
+  if (!c || Date.now() - c.at > 15000) return null;
+  const words = c.text.split(/\s+/).filter(Boolean);
+  return (
+    <p key={c.id} className={`line ${c.who} ${c.text.length > 90 ? "long" : ""}`} aria-live="polite">
+      {words.map((w, i) => (
+        <span key={i} className="w" style={{ ["--i" as string]: Math.min(i, 24) }}>{w}</span>
       ))}
-      {interim && <div className="caption you interim">{interim}</div>}
-    </div>
+    </p>
   );
 }
 
 export function Heart({ on, onClick }: { on: boolean; onClick: () => void }) {
   return (
-    <button className={`icon-btn ${on ? "on" : ""}`} onClick={onClick} aria-label={on ? "Remove from wishlist" : "Save to wishlist"} title="Save to wishlist">
-      {on ? "♥" : "♡"}
+    <button className={`cbtn ${on ? "on" : ""}`} onClick={onClick} aria-pressed={on} aria-label={on ? "Remove from wishlist" : "Save to wishlist"}>
+      <HeartIcon filled={on} />
     </button>
   );
 }

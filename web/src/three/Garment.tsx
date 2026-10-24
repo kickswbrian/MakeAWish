@@ -18,7 +18,7 @@ interface Targets {
   pockets: number; seam: number;
 }
 
-export const DEFAULT_COLOR = "#B9A3F0";
+export const DEFAULT_COLOR = "#DCC7A2";
 
 function targetsFor(spec: ProductSpec): Targets {
   const cat = spec.category;
@@ -250,7 +250,7 @@ export function Mannequin() {
     });
     return g;
   }, []);
-  const mat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#ebe5f8", roughness: 0.55, sheen: 0.4, emissive: "#b9a3f0", emissiveIntensity: 0.05 }), []);
+  const mat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#F4F1EA", roughness: 0.55, sheen: 0.4, emissive: "#C5D8CF", emissiveIntensity: 0.05 }), []);
   return (
     <group>
       <mesh geometry={geo} material={mat} />

@@ -30,7 +30,7 @@ void main() {
   float a = smoothstep(0.5, 0.0, d);
   float core = smoothstep(0.18, 0.0, d);
   if (a * vAlpha < 0.002) discard;
-  gl_FragColor = vec4(vColor * (0.7 + core * 2.2), a * vAlpha);
+  gl_FragColor = vec4(mix(vColor, vec3(1.0), core * 0.6), a * vAlpha);
 }`;
 
 const ease = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -51,7 +51,7 @@ export function Particles() {
       uniforms: { uPixel: { value: 300 } },
       transparent: true,
       depthWrite: false,
-      blending: THREE.AdditiveBlending,
+      blending: THREE.NormalBlending,
     });
     const st = {
       vel: new Float32Array(N * 3),
