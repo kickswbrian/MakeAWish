@@ -750,6 +750,7 @@ p { margin: 0; }
 
 /* Everything but the intro waits until the bubble has formed. */
 /* Hidden, not just transparent: out of the tab order and the accessibility tree until it shows. */
+.v2-phase-wait > :not(.v2-intro):not(.glows),
 .v2-phase-words > :not(.v2-intro):not(.glows),
 .v2-phase-swipe > :not(.v2-intro):not(.glows),
 .v2-phase-ring > :not(.orb-slot):not(.glows),
@@ -757,7 +758,7 @@ p { margin: 0; }
 .v2-phase-done > .hdr, .v2-phase-done > .title-xl, .v2-phase-done > .title-product, .v2-phase-done > .speech,
 .v2-phase-done > .v2-captions, .v2-phase-done > .dock, .v2-phase-done > .wavebox { transition: opacity .6s ease, visibility .6s; }
 .v2 .bwrap { transition: opacity .5s ease, transform .9s var(--spring); }
-.v2-phase-words .bwrap, .v2-phase-swipe .bwrap, .v2-phase-ring .bwrap { opacity: 0; transform: scale(.35); }
+.v2-phase-wait .bwrap, .v2-phase-words .bwrap, .v2-phase-swipe .bwrap, .v2-phase-ring .bwrap { opacity: 0; transform: scale(.35); }
 .v2-phase-bubble .orb-slot::after {
   content: ""; position: absolute; inset: 15%; border-radius: 50%; pointer-events: none; z-index: 7;
   background: radial-gradient(closest-side, #fff, rgba(242, 216, 138, .7), transparent); animation: landflash .9s ease-out both;
@@ -772,18 +773,26 @@ p { margin: 0; }
 /* The wish screen: only the (much bigger) bubble, the showroom swapping inside it, and captions. */
 /* clip, not hidden: the clouds' canvas overhangs the page, and hidden still lets it scroll sideways. */
 .app.v2 { overflow: clip; }
-.app.v2-landing { max-width: none; }
+/* One centered stack: the bubble, the voice waves under it, then the captions. */
+.app.v2-landing {
+  max-width: none;
+  --bubble: clamp(240px, min(84vw, calc(100dvh - 250px)), 720px);
+  --stack-top: max(20px, calc((100dvh - var(--bubble) - 168px) / 2));
+}
 .v2-landing .orb-slot {
-  --bubble: clamp(260px, min(84vw, calc(100dvh - 190px)), 760px);
-  top: calc(50% - 36px); transform: translate(-50%, -50%); animation: v2float 6s ease-in-out infinite;
+  top: calc(var(--stack-top) + var(--bubble) / 2); transform: translate(-50%, -50%); animation: v2float 6s ease-in-out infinite;
 }
 @keyframes v2float { 50% { translate: 0 -12px; } }
-.v2-landing .hdr, .v2-landing .title-xl, .v2-landing .orb-space, .v2-landing .wavebox, .v2-landing .speech, .v2-landing .dock { display: none; }
+.v2-landing .hdr, .v2-landing .title-xl, .v2-landing .orb-space, .v2-landing .speech, .v2-landing .dock { display: none; }
+.v2-landing .wavebox {
+  position: absolute; left: 50%; top: calc(var(--stack-top) + var(--bubble) + 14px); transform: translateX(-50%);
+  width: min(calc(100% - 32px), calc(var(--bubble) * 1.25)); height: 64px; margin: 0; z-index: 4;
+}
 .v2-tap { position: absolute; inset: 0; border-radius: 50%; z-index: 6; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .v2-tap:focus-visible { outline-offset: 8px; }
 .v2-captions {
-  position: absolute; left: 16px; right: 16px; bottom: max(40px, calc(env(safe-area-inset-bottom) + 24px)); z-index: 5;
-  min-height: 72px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 10px;
+  position: absolute; left: 16px; right: 16px; top: calc(var(--stack-top) + var(--bubble) + 86px); z-index: 5;
+  min-height: 72px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px;
   text-align: center; pointer-events: none; animation: fadeOnly .8s ease both;
 }
 .v2-captions .line { max-width: 680px; }
@@ -793,4 +802,3 @@ p { margin: 0; }
   position: absolute; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); transform: translateX(-50%);
   width: min(560px, calc(100% - 32px)); margin: 0; z-index: 7; animation: fadeIn .35s ease both;
 }
-.v2-landing:has(.typebox) .v2-captions { bottom: 100px; }
