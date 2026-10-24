@@ -18,10 +18,12 @@ let delayMs = 20;
 let title = "Convertible Midi Dress";
 let scoredBy = "llm";
 let failNext = false;
+let gate: Promise<void> | null = null; // when set, every actor run waits for it (runs return together)
 globalThis.fetch = (async () => {
   runs++;
-  const [wait, t, by, fail] = [delayMs, title, scoredBy, failNext];
-  await new Promise((r) => setTimeout(r, wait));
+  const [wait, t, by, fail, g] = [delayMs, title, scoredBy, failNext, gate];
+  if (g) await g;
+  else await new Promise((r) => setTimeout(r, wait));
   if (fail) return new Response(JSON.stringify({ error: { type: "run-failed", message: "boom" } }), { status: 400 });
   const items = [
     { source: "etsy", title: t, url: "https://www.etsy.com/listing/1", price: 74, image: null, score: 62, missing: [] },
@@ -32,7 +34,8 @@ globalThis.fetch = (async () => {
 const log = console.log;
 console.log = () => {};
 
-const { findMatches, getMatches, resumePendingMatches, searchQuery, shouldCache } = await import("./apify.ts");
+const { findMatches, getMatches, lastOutcome, resumePendingMatches, searchQuery, shouldCache } = await import("./apify.ts");
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const { createWish, patchWish } = await import("./wishes.ts");
 const { db } = await import("./db.ts");
 const runRow = (id: string) => db.prepare("SELECT pending, started_at, resumed FROM match_runs WHERE wish_id = ?").get(id) as { pending: number; started_at: number | null; resumed: number };
@@ -163,6 +166,67 @@ test("spec A -> B -> A with re-locks keeps the A result whichever search finishe
   }
 });
 
+test("the latest lock's search wins even if a turn then changes the spec (P1)", async () => {
+  const w = createWish({ category: "skirt", color: "#D7263D", features: ["race_p1"] } as any);
+  delayMs = 400;
+  title = "A result";
+  const a = findMatches(w.id);
+  await sleep(10);
+  patchWish(w.id, { color: "#3A6FD8" });
+  delayMs = 100;
+  title = "B result";
+  const b = findMatches(w.id); // re-lock B
+  await sleep(10);
+  patchWish(w.id, { color: "#F2D21B" }); // turn moves the spec to C, no re-lock
+  await b;
+  assert.equal(getMatches(w.id).matches[0]?.title, "B result");
+  assert.equal(getMatches(w.id).pending, false);
+  await a; // A, two locks back, must not replace B
+  assert.equal(getMatches(w.id).matches[0]?.title, "B result");
+  assert.equal(lastOutcome(w.id)?.startsWith("searched"), true, "outcome recorded for the saved search");
+  assert.equal(lastOutcome(w.id), undefined, "read once");
+  delayMs = 20;
+  title = "Convertible Midi Dress";
+});
+
+test("two searches for one wish returning together still close the row (P2)", async () => {
+  const w = createWish({ category: "skirt", color: "#D7263D", features: ["race_p2"] } as any);
+  let open!: () => void;
+  gate = new Promise<void>((r) => (open = r));
+  const a = findMatches(w.id);
+  patchWish(w.id, { color: "#3A6FD8" });
+  const b = findMatches(w.id);
+  patchWish(w.id, { color: "#F2D21B" });
+  await sleep(10);
+  open();
+  await Promise.all([a, b]);
+  gate = null;
+  assert.equal(getMatches(w.id).pending, false);
+  assert.equal(getMatches(w.id).matches.length, 1);
+});
+
+test("re-locking onto a running search shows it as searching, not the other spec's result (P3)", async () => {
+  const w = createWish({ category: "skirt", color: "#D7263D", features: ["race_p3"] } as any);
+  delayMs = 400;
+  title = "A result";
+  const a = findMatches(w.id);
+  await sleep(10);
+  patchWish(w.id, { color: "#3A6FD8" });
+  delayMs = 50;
+  title = "B result";
+  await findMatches(w.id); // B finishes and is shown
+  patchWish(w.id, { color: "#D7263D" });
+  await findMatches(w.id); // re-lock A: joins the A search still running
+  const mid = getMatches(w.id);
+  assert.equal(mid.pending, true);
+  assert.equal(mid.matches.length, 0);
+  await a;
+  assert.equal(getMatches(w.id).matches[0]?.title, "A result");
+  assert.equal(getMatches(w.id).pending, false);
+  delayMs = 20;
+  title = "Convertible Midi Dress";
+});
+
 test("demo reset says whether the demo wish was actually cached", async () => {
   const { resetDemo } = await import("./demo.ts");
   scoredBy = "keywords";
@@ -172,6 +236,12 @@ test("demo reset says whether the demo wish was actually cached", async () => {
   const live = await resetDemo(120);
   assert.equal(live.apifyCache, "warmed live");
   assert.equal((await resetDemo(120)).apifyCache, "hit");
+  // Daily search cap already used up: say so instead of "not cached".
+  db.prepare("DELETE FROM apify_cache").run();
+  const today = new Date().toISOString().slice(0, 10);
+  db.prepare("INSERT OR REPLACE INTO usage (day, kind, n) VALUES (?, 'apifySearches', 100000)").run(today);
+  assert.match((await resetDemo(120)).apifyCache, /daily Apify search cap reached/);
+  db.prepare("DELETE FROM usage WHERE day = ? AND kind = 'apifySearches'").run(today);
 });
 
 test.after(() => {

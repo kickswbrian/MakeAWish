@@ -128,33 +128,53 @@ export function writeCache(spec: ProductSpec, matches: Match[], searched: number
     .run(keyFor(spec), matchQuery(spec), JSON.stringify(matches), searched, total, Date.now());
 }
 
-// Searches in progress in this process, by wish and product: a double-tapped "See matches" (or a boot
-// resume racing a lock) shouldn't pay for the same search twice.
-const inflight = new Set<string>();
+// Searches in progress in this process, by wish and product, with their generation number: a
+// double-tapped "See matches" (or a boot resume racing a lock) joins the running search instead of
+// paying for it twice.
+const inflight = new Map<string, number>();
+// Per wish, the generation of the search started (or joined) by the most recent lock. Its result is
+// the one to show, even if a later chat turn changed the spec without a re-lock.
+const latest = new Map<string, number>();
+let seq = 0;
 
 /**
  * Kick off a match search for a locked wish. Never throws (callers fire and forget it).
  * `resumeOf` is the original start time when re-running a search a restart interrupted.
  */
 export async function findMatches(wishId: string, resumeOf?: number): Promise<void> {
-  let flight: string | null = null;
+  let key: string | null = null;
+  let gen = 0;
   try {
     const wish = getWish(wishId);
     if (!wish) return;
-    const key = `${wishId}:${keyFor(wish.spec)}`;
-    if (inflight.has(key)) return;
-    inflight.add((flight = key));
-    await searchAndSave(wishId, wish.spec, resumeOf);
+    key = `${wishId}:${keyFor(wish.spec)}`;
+    const running = inflight.get(key);
+    if (running !== undefined) {
+      // Re-lock onto a search that's already running: make it the one to show, and if a different
+      // product's result is on screen meanwhile, put the panel back into "searching".
+      latest.set(wishId, running);
+      key = null; // not ours to clean up
+      db.transaction(() => {
+        const changed = db.prepare("UPDATE match_runs SET pending = 1 WHERE wish_id = ? AND pending = 0").run(wishId).changes;
+        if (changed) db.prepare("DELETE FROM matches WHERE wish_id = ?").run(wishId);
+      })();
+      return;
+    }
+    gen = ++seq;
+    inflight.set(key, gen);
+    latest.set(wishId, gen);
+    await searchAndSave(wishId, wish.spec, gen, resumeOf);
   } catch (err) {
     console.error(`[apify] match search for ${wishId} crashed:`, err);
     try {
       const wish = getWish(wishId);
-      if (wish) save(wishId, sampleMatches(wish.spec), 0, SOURCES.length, true);
+      if (wish && (!gen || latest.get(wishId) === gen)) save(wishId, sampleMatches(wish.spec), 0, SOURCES.length, true);
     } catch (e) {
       console.error("[apify] could not save fallback matches:", e);
     }
   } finally {
-    if (flight) inflight.delete(flight);
+    if (key && inflight.get(key) === gen) inflight.delete(key);
+    if (gen && latest.get(wishId) === gen) latest.delete(wishId);
   }
 }
 
@@ -187,29 +207,34 @@ export function resumePendingMatches(now = Date.now()): void {
 }
 
 /**
- * Whether this search's result should be saved for the wish. Yes when the wish still describes the
- * same product. If the spec changed meanwhile, drop the result only when something else will close
- * the row: another search for this wish is still running (a re-lock), or a newer one already saved.
- * A spec edit without a re-lock (a "make it blue" turn landing after See matches) starts no search,
- * so this result has to close the row, or the UI would wait forever.
+ * Whether this search's result should be saved for the wish: yes when the wish still describes the
+ * same product, or when this is the search the most recent lock started or joined. That covers a spec
+ * edit without a re-lock (a "make it blue" turn landing after See matches starts no search, so this
+ * result must close the row) and drops an older search's result once a re-lock has superseded it.
  */
-function shouldSave(wishId: string, spec: ProductSpec): boolean {
+function shouldSave(wishId: string, spec: ProductSpec, gen: number): boolean {
   const now = getWish(wishId);
   if (!now) return false;
-  if (keyFor(now.spec) === keyFor(spec)) return true;
-  const mine = `${wishId}:${keyFor(spec)}`;
-  const otherRunning = [...inflight].some((k) => k.startsWith(`${wishId}:`) && k !== mine);
-  const row = db.prepare("SELECT pending FROM match_runs WHERE wish_id = ?").get(wishId) as { pending: number } | undefined;
-  if (row?.pending && !otherRunning) return true;
+  if (keyFor(now.spec) === keyFor(spec) || latest.get(wishId) === gen) return true;
   console.log(`[apify] wish ${wishId} was re-locked with a different product while searching; dropping the older result`);
   return false;
 }
 
-// How each wish's latest search ended, in words (for the demo reset report).
+// How each wish's latest saved search ended, in words (for the demo reset report). Read once; kept
+// small since nothing else reads it.
 const outcomes = new Map<string, string>();
-export const lastOutcome = (wishId: string) => outcomes.get(wishId);
+export function lastOutcome(wishId: string): string | undefined {
+  const o = outcomes.get(wishId);
+  outcomes.delete(wishId);
+  return o;
+}
+function recordOutcome(wishId: string, outcome: string) {
+  outcomes.delete(wishId);
+  outcomes.set(wishId, outcome);
+  if (outcomes.size > 200) outcomes.delete(outcomes.keys().next().value!);
+}
 
-async function searchAndSave(wishId: string, spec: ProductSpec, resumeOf?: number): Promise<void> {
+async function searchAndSave(wishId: string, spec: ProductSpec, gen: number, resumeOf?: number): Promise<void> {
   db.prepare("INSERT OR REPLACE INTO match_runs (wish_id, searched, total, pending, sample, started_at, resumed) VALUES (?, 0, ?, 1, 0, ?, ?)")
     .run(wishId, SOURCES.length, resumeOf ?? Date.now(), resumeOf != null ? 1 : 0);
   db.prepare("DELETE FROM matches WHERE wish_id = ?").run(wishId);
@@ -217,13 +242,13 @@ async function searchAndSave(wishId: string, spec: ProductSpec, resumeOf?: numbe
   const cached = readCache(spec);
   if (cached) {
     console.log(`[apify] cache hit "${matchQuery(spec)}"`);
-    outcomes.set(wishId, "cache hit");
+    recordOutcome(wishId, "cache hit");
     return save(wishId, cached.matches, cached.searched, cached.total, false);
   }
   if (!env.apifyToken || !env.apifyActor || env.demoMode || !spend("apifySearches")) {
     const why = env.demoMode ? "DEMO_MODE cache miss" : env.apifyToken && env.apifyActor ? "daily search cap reached" : "no APIFY_TOKEN/APIFY_ACTOR";
     console.log(`[apify] ${why}, serving sample matches`);
-    outcomes.set(wishId, why);
+    recordOutcome(wishId, why);
     return save(wishId, sampleMatches(spec), SOURCES.length, SOURCES.length, true);
   }
 
@@ -234,19 +259,23 @@ async function searchAndSave(wishId: string, spec: ProductSpec, resumeOf?: numbe
     // No store answered: that's an outage, not "nothing like it exists", so don't present it as a result.
     if (searched === 0) throw new Error(`no store answered (0 of ${total})`);
     // The result is right for this spec either way, so cache it even if the wish has moved on.
-    if (shouldCache(matches.length, listings, scoredBy, searched, total)) {
-      writeCache(spec, matches, searched, total);
-      outcomes.set(wishId, "searched and cached");
-    } else {
+    let outcome = "searched and cached";
+    if (shouldCache(matches.length, listings, scoredBy, searched, total)) writeCache(spec, matches, searched, total);
+    else {
       const why = scoredBy !== "llm" ? `scored by ${scoredBy ?? "unknown"}, not Claude` : searched < total ? `only ${searched} of ${total} stores answered` : "no listings to judge";
       console.log(`[apify] not cached: ${why}`);
-      outcomes.set(wishId, `searched but not cached: ${why}`);
+      outcome = `searched but not cached: ${why}`;
     }
-    if (shouldSave(wishId, spec)) save(wishId, matches, searched, total, false);
+    if (shouldSave(wishId, spec, gen)) {
+      save(wishId, matches, searched, total, false);
+      recordOutcome(wishId, outcome);
+    }
   } catch (err) {
     console.warn("[apify] failed, serving sample matches:", (err as Error).message);
-    outcomes.set(wishId, `search failed: ${(err as Error).message}`);
-    if (shouldSave(wishId, spec)) save(wishId, sampleMatches(spec), 0, SOURCES.length, true);
+    if (shouldSave(wishId, spec, gen)) {
+      save(wishId, sampleMatches(spec), 0, SOURCES.length, true);
+      recordOutcome(wishId, `search failed: ${(err as Error).message}`);
+    }
   }
 }
 

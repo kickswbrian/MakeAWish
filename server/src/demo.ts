@@ -76,6 +76,7 @@ export async function resetDemo(planterDeadlineSecs = 120) {
   await findMatches(demo.id);
   // Only a complete, Claude-scored search is cached; anything else would show "Sample matches" on stage.
   const warmed = !hadCache && !!readCache(DEMO_WISH);
+  const outcome = lastOutcome(demo.id);
   void startMeshy(demo.id);
 
   // The planter: 2 of 4 real held pledges, deadline N seconds out, for the "nobody paid" beat.
@@ -97,9 +98,9 @@ export async function resetDemo(planterDeadlineSecs = 120) {
         ? "sample matches (no live Apify)"
         : warmed
           ? "warmed live"
-          : lastOutcome(demo.id) === "daily search cap reached"
+          : outcome === "daily search cap reached"
             ? "NOT warmed: daily Apify search cap reached (DAILY_APIFY_SEARCHES); the demo wish will show sample matches"
-            : `NOT warmed, the demo wish will show sample matches (${lastOutcome(demo.id) ?? "see server log"}); re-run reset`,
+            : `NOT warmed, the demo wish will show sample matches (${outcome ?? "see server log"}); re-run reset`,
     demoWishId: demo.id,
     planterCampaignId: campaign.id,
     planterDeadlineAt: campaign.deadlineAt,
