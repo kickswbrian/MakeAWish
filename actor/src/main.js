@@ -30,12 +30,18 @@ function secondsLeft() {
   return Math.max(0, (end - Date.now()) / 1000);
 }
 
+// Aborts of store runs we gave up on; awaited (briefly) before the results are pushed, so the actor
+// doesn't exit while they're still in flight.
+const pendingAborts = [];
+const abortRun = (runId) => pendingAborts.push(quickClient().run(runId).abort().catch(() => {}));
+
 /**
  * Hard bound per store: whatever the Apify API does (retries, slow responses), a store that hasn't
- * handed back its listings by timeoutSecs + STORE_SLACK_SECS is skipped, and its run aborted.
+ * handed back its listings by timeoutSecs + STORE_SLACK_SECS is skipped, and its run aborted. If the
+ * start request itself is still pending at that point, the run is aborted as soon as it gets an id.
  */
 async function searchSourceBounded(source, cfg, vars, timeoutSecs) {
-  const state = { runId: null };
+  const state = { runId: null, cancelled: false };
   let timer;
   const deadline = new Promise((_, rej) => {
     timer = setTimeout(() => rej(new Error(`no answer within ${timeoutSecs + STORE_SLACK_SECS}s`)), (timeoutSecs + STORE_SLACK_SECS) * 1000);
@@ -43,7 +49,8 @@ async function searchSourceBounded(source, cfg, vars, timeoutSecs) {
   try {
     return await Promise.race([searchSource(source, cfg, vars, timeoutSecs, state), deadline]);
   } catch (err) {
-    if (state.runId) void quickClient().run(state.runId).abort().catch(() => {});
+    state.cancelled = true;
+    if (state.runId) abortRun(state.runId);
     throw err;
   } finally {
     clearTimeout(timer);
@@ -60,6 +67,11 @@ async function searchSource(source, cfg, vars, timeoutSecs, state) {
   // abort it and still read whatever it already pushed. The run's own timeout is only a backstop.
   const startedRun = await quickClient().actor(cfg.actorId).start(input, { timeout: timeoutSecs + 15, memory: cfg.memory ?? 1024, maxItems: vars.max, maxTotalChargeUsd });
   state.runId = startedRun.id;
+  if (state.cancelled) {
+    // The deadline fired while start() was in flight: don't let a run nobody waits for keep billing.
+    abortRun(startedRun.id);
+    throw new Error("started after the deadline");
+  }
   const waitSecs = Math.max(1, Math.round(timeoutSecs - (Date.now() - started) / 1000));
   let run = await Actor.apifyClient.run(startedRun.id).waitForFinish({ waitSecs });
   if (!run || run.status === "READY" || run.status === "RUNNING") {
@@ -165,6 +177,8 @@ await Actor.main(async () => {
     .filter((m) => m.score >= minScore)
     .sort((a, b) => b.score - a.score)
     .slice(0, 6);
+  // Let aborts of abandoned store runs go out before we finish (capped, the push matters more).
+  if (pendingAborts.length) await Promise.race([Promise.allSettled(pendingAborts), new Promise((r) => setTimeout(r, 3000))]);
   await Actor.pushData(scored);
   // Run metadata for the caller (Wish it's server reads this row to show "Searched 2 of 3 stores", and
   // only caches an empty result when listings existed and Claude, not keyword overlap, rejected them).

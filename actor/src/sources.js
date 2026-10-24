@@ -63,9 +63,11 @@ export function fill(template, vars) {
 export const first = (...vals) => vals.find((v) => v !== undefined && v !== null && v !== "");
 
 // Prices are shown as USD, so a listing priced in another currency gets no price rather than a wrong one.
-const FOREIGN_CURRENCY = /[€£¥₹₨₩₽₺₫₪]|\bRs\b|\b(?:EUR|GBP|JPY|INR|CAD|AUD|NZD|CHF|SEK|NOK|DKK|PLN|MXN|BRL|KRW|CNY|RMB|HKD|SGD|ZAR|TRY|RUB)\b|\b(?:CA|AU|A|C|NZ|HK|S|R|MX)\$/i;
-// US number formats only: "1,299.99", "1299", ".99". "1.299,00" and "45,00" are another locale's.
+const FOREIGN_CURRENCY = /[€£¥₹₨₩₽₺₫₪]|\bRs\.?(?=\s|\d|$)|\b(?:EUR|GBP|JPY|INR|CAD|AUD|NZD|CHF|SEK|NOK|DKK|PLN|MXN|BRL|KRW|CNY|RMB|HKD|SGD|ZAR|TRY|RUB)\b|\b(?:CA|AU|A|C|NZ|HK|S|R|MX)\$/i;
+// US number formats only: "1,299.99", "1299", ".99". "1.299,00" and "45,00" are another locale's, and
+// so is "1.299" (a dot before exactly three digits reads as a thousands separator, not cents).
 const US_NUMBER = /^(?:\d{1,3}(?:,\d{3})+|\d+)?(?:\.\d+)?$/;
+const DOT_THOUSANDS = /^\d{1,3}(?:\.\d{3})+$/;
 
 /**
  * USD amount from numbers, { value, currency }, or strings like "$1,299.99", "$49.00+", "From $24.99",
@@ -85,7 +87,7 @@ export function toPrice(v) {
   // Prefer the amount right after "$"; with no "$" (e.g. "USD 15", "24.99") take the first number.
   const m = s.includes("$") ? s.match(/\$\s*(\.?\d[\d.,]*)/) : s.match(/(\.?\d[\d.,]*)/);
   const token = m?.[1].replace(/[.,]+$/, "");
-  if (!token || !US_NUMBER.test(token)) return null;
+  if (!token || !US_NUMBER.test(token) || DOT_THOUSANDS.test(token)) return null;
   const n = Number(token.replace(/,/g, ""));
   return Number.isFinite(n) && n > 0 ? n : null;
 }

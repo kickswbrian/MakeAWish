@@ -74,6 +74,8 @@ CREATE TABLE IF NOT EXISTS meshy_cache (
 );
 `);
 
-// Additive migration: when a match search started, so a restart can tell a live search from a stale one.
+// Additive migrations: when a match search started, and whether it's already been resumed after a
+// restart, so a restart can tell a live search from a stale one and never pays for it more than twice.
 const matchRunCols = db.prepare("SELECT name FROM pragma_table_info('match_runs')").all() as { name: string }[];
 if (!matchRunCols.some((c) => c.name === "started_at")) db.exec("ALTER TABLE match_runs ADD COLUMN started_at INTEGER");
+if (!matchRunCols.some((c) => c.name === "resumed")) db.exec("ALTER TABLE match_runs ADD COLUMN resumed INTEGER NOT NULL DEFAULT 0");

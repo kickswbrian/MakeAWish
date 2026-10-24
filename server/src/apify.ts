@@ -132,8 +132,11 @@ export function writeCache(spec: ProductSpec, matches: Match[], searched: number
 // resume racing a lock) shouldn't pay for the same search twice.
 const inflight = new Set<string>();
 
-/** Kick off a match search for a locked wish. Never throws (callers fire and forget it). */
-export async function findMatches(wishId: string): Promise<void> {
+/**
+ * Kick off a match search for a locked wish. Never throws (callers fire and forget it).
+ * `resumeOf` is the original start time when re-running a search a restart interrupted.
+ */
+export async function findMatches(wishId: string, resumeOf?: number): Promise<void> {
   let flight: string | null = null;
   try {
     const wish = getWish(wishId);
@@ -141,7 +144,7 @@ export async function findMatches(wishId: string): Promise<void> {
     const key = `${wishId}:${keyFor(wish.spec)}`;
     if (inflight.has(key)) return;
     inflight.add((flight = key));
-    await searchAndSave(wishId, wish.spec);
+    await searchAndSave(wishId, wish.spec, resumeOf);
   } catch (err) {
     console.error(`[apify] match search for ${wishId} crashed:`, err);
     try {
@@ -159,16 +162,18 @@ const RESUME_MAX_AGE_MS = 10 * 60_000;
 
 /**
  * A server restart mid-search leaves match_runs.pending = 1 with nothing running, and the UI would
- * wait forever. Re-run searches started in the last 10 minutes (a cache hit when the earlier run got
- * that far); older ones, or rows from before started_at existed, get labelled samples instead of
- * another paid search (tsx watch restarts on every save).
+ * wait forever. Each interrupted search is re-run at most once, and only if it started in the last
+ * 10 minutes (the resume keeps the original start time, so repeated restarts can't keep it young).
+ * Everything else (already resumed once, older, or from before started_at existed) gets labelled
+ * samples instead of another paid search: tsx watch restarts on every save, and the abandoned actor
+ * run keeps billing to its end anyway.
  */
 export function resumePendingMatches(now = Date.now()): void {
-  const rows = db.prepare("SELECT wish_id, started_at FROM match_runs WHERE pending = 1").all() as { wish_id: string; started_at: number | null }[];
+  const rows = db.prepare("SELECT wish_id, started_at, resumed FROM match_runs WHERE pending = 1").all() as { wish_id: string; started_at: number | null; resumed: number }[];
   if (rows.length) console.log(`[apify] ${rows.length} match search(es) interrupted by a restart`);
   for (const r of rows) {
-    if (r.started_at != null && now - r.started_at < RESUME_MAX_AGE_MS) {
-      void findMatches(r.wish_id);
+    if (!r.resumed && r.started_at != null && now - r.started_at < RESUME_MAX_AGE_MS) {
+      void findMatches(r.wish_id, r.started_at);
       continue;
     }
     try {
@@ -181,8 +186,17 @@ export function resumePendingMatches(now = Date.now()): void {
   }
 }
 
-async function searchAndSave(wishId: string, spec: ProductSpec): Promise<void> {
-  db.prepare("INSERT OR REPLACE INTO match_runs (wish_id, searched, total, pending, sample, started_at) VALUES (?, 0, ?, 1, 0, ?)").run(wishId, SOURCES.length, Date.now());
+/** False when the wish has been re-locked with a different product since this search started. */
+function stillCurrent(wishId: string, spec: ProductSpec): boolean {
+  const now = getWish(wishId);
+  if (now && keyFor(now.spec) === keyFor(spec)) return true;
+  console.log(`[apify] wish ${wishId} changed while searching; dropping the older result`);
+  return false;
+}
+
+async function searchAndSave(wishId: string, spec: ProductSpec, resumeOf?: number): Promise<void> {
+  db.prepare("INSERT OR REPLACE INTO match_runs (wish_id, searched, total, pending, sample, started_at, resumed) VALUES (?, 0, ?, 1, 0, ?, ?)")
+    .run(wishId, SOURCES.length, resumeOf ?? Date.now(), resumeOf != null ? 1 : 0);
   db.prepare("DELETE FROM matches WHERE wish_id = ?").run(wishId);
 
   const cached = readCache(spec);
@@ -201,11 +215,13 @@ async function searchAndSave(wishId: string, spec: ProductSpec): Promise<void> {
     console.log(`[apify] ${matches.length} matches from ${listings ?? "?"} listings (scored by ${scoredBy ?? "?"}) in ${Date.now() - started}ms, searched ${searched}/${total}, cost ~$${costUsd ?? "?"}`);
     // No store answered: that's an outage, not "nothing like it exists", so don't present it as a result.
     if (searched === 0) throw new Error(`no store answered (0 of ${total})`);
+    // The result is right for this spec either way, so cache it even if the wish has moved on.
     if (shouldCache(matches.length, listings, scoredBy, searched, total)) writeCache(spec, matches, searched, total);
-    save(wishId, matches, searched, total, false);
+    else console.log(`[apify] not cached: ${scoredBy !== "llm" ? `scored by ${scoredBy ?? "unknown"}, not Claude` : searched < total ? `only ${searched} of ${total} stores answered` : "no listings to judge"}`);
+    if (stillCurrent(wishId, spec)) save(wishId, matches, searched, total, false);
   } catch (err) {
     console.warn("[apify] failed, serving sample matches:", (err as Error).message);
-    save(wishId, sampleMatches(spec), 0, SOURCES.length, true);
+    if (stillCurrent(wishId, spec)) save(wishId, sampleMatches(spec), 0, SOURCES.length, true);
   }
 }
 

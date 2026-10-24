@@ -28,7 +28,7 @@ test("toPrice reads USD prices", () => {
 });
 
 test("toPrice returns null for other currencies, other number formats and non-prices", () => {
-  for (const v of ["€45,00", "£12.00", "45,00 €", "CA$30", "A$ 20", "EUR 10", "¥1200", "Rs. 500", "₨500", "$1.299,00", "45,00", "$45,00", "Free", "", 0, -3]) {
+  for (const v of ["€45,00", "£12.00", "45,00 €", "CA$30", "A$ 20", "EUR 10", "¥1200", "Rs. 500", "Rs500", "₨500", "$1.299,00", "$1.299", "$12.500", "45,00", "$45,00", "Free", "", 0, -3]) {
     assert.equal(toPrice(v), null, JSON.stringify(v));
   }
   assert.equal(toPrice({ value: 45, currency: "EUR" }), null);
