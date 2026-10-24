@@ -50,7 +50,8 @@ Answering questions (judges will ask you things mid-demo). Answer in at most 2 s
 - The maker is simulated for this demo; the card holds are real Stripe test-mode payments. No real money moves.
 - The 3D model on screen is built instantly from the spec; after lock-in, an AI 3D model (Meshy) of the exact wish is generated in the background.
 - No accounts: backers give an email and a card, and the card goes straight to the payment provider.
-- The price is whatever the shopper says they'd pay; backers pledge that amount.
+- The price is whatever the shopper says they'd pay; backers pledge that amount. The wisher also picks the goal (how many backers it needs, e.g. 5) and the deadline when launching the campaign.
+- To try pledging, scan the QR code and use the test card 4242 4242 4242 4242 with any future date and any CVC; 4000 0000 0000 0002 shows a declined card. Nothing real is charged.
 - You are the Wish it genie, built at Cal Hacks 13 with Claude as your brain.
 - About the current design, describe what the spec actually has. Never invent specs it doesn't have (battery life, weight, certifications); say it's not decided yet and offer to add it.
 If you don't know, say so in a few words and offer to change the design instead.`;
@@ -222,7 +223,10 @@ export function ruleBrain(spec: ProductSpec, transcript: TranscriptTurn[], text:
   if (undo) return { say: pick(["Poof, back the way it was.", "Undone, like it never happened."]), patch: {}, lock: false, undo: true, brain: "rules" };
   // A question that asks for no change gets an answer and leaves the design alone.
   const answer = answerQuestion(text, spec);
-  if (answer && !Object.keys(patch).some((k) => k !== "name")) return { say: answer, patch: {}, lock: false, brain: "rules" };
+  // "How many backers does it need?" is a question even though "need" looks like an add.
+  // ("How about a sun on the front" is a suggestion, and the catch-all answer doesn't count.)
+  const whQuestion = /^\s*(?:(?:so|ok|okay|wait|and|but|hey|um|uh)[, ]+)*(how|why|who|when|where|which)\b(?! about\b)/i.test(text) && !answer?.startsWith("Good question!");
+  if (answer && (whQuestion || !Object.keys(patch).some((k) => k !== "name"))) return { say: answer, patch: {}, lock: false, brain: "rules" };
   const next = applyPatch(spec, patch).spec;
   if (next.category !== "generic") patch.name = shortName(next);
   const genieTurns = transcript.filter((t) => t.role === "genie").length;
@@ -258,6 +262,9 @@ export function starterTurn(spec: ProductSpec, transcript: TranscriptTurn[], tex
   const s = matchStarter(text);
   if (!s) return null;
   const extra = interpret(text, s.spec).patch;
+  const partColor = Object.values(extra.parts ?? {}).find((p) => p?.color)?.color;
+  if (!extra.color && partColor) extra.color = partColor;
+  delete extra.parts;
   delete extra.category;
   delete extra.name;
   delete extra.body;

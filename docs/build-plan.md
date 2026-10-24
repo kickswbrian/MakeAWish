@@ -349,7 +349,7 @@ The pitch is built around one moment: a judge pledges from their own phone and t
 | 1:05 to 1:25 | Live | "Lock it in." Apify cards appear: "Closest match scores 62: a convertible dress, but no phone-sized pockets." Hero Meshy model swaps in. | Functionality, Apify |
 | 1:25 to 2:15 | Live, judge's phone | Launch: $89, target 3 backers. Show QR. Teammate pledges with the decline card: clear error, bar doesn't move. Teammate pledges with 4242: bar at 2/3. Hand the QR to a judge: their pledge hits 3/3, holds capture, purchase order to a maker appears. | Functionality, Visa |
 | 2:15 to 2:40 | Speaker 1 | Switch to the planter campaign as its deadline passes: "Missed the goal, every hold released, nobody paid." "Card holds turn a payment feature into a commitment primitive: real demand, zero risk to backers." | Visa, Application |
-| 2:40 to 3:00 | Speaker 1 | "Kickstarter starts from the maker. Wish it starts from the shopper's imagination. Built on Visa holds, Apify, and Cartesia." | Close |
+| 2:40 to 3:00 | Speaker 1 | "Kickstarter starts from the maker. Wish it starts from the shopper's imagination. Built on card holds, Apify, and Cartesia." | Close |
 
 ### Judge Q&A prep
 

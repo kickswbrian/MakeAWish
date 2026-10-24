@@ -49,8 +49,9 @@ async function runCase(c: JudgeCase) {
     say = r.say;
     patch = r.undo ? "undo" : r.patch;
   }
-  // Undo cases compare against the spec before the earlier turns; everything else against the turn's own start.
-  const fails = check(spec, c.before?.length ? start : before, c.expect, say);
+  // Relative checks (unchanged, grew, shrank) compare with the spec just before the judged turn.
+  // Undo cases assert absolute values (equals the start), so they don't depend on this.
+  const fails = check(spec, before, c.expect, say);
   return { c, fails, say, patch, spec };
 }
 

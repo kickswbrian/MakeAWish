@@ -24,6 +24,14 @@ const TOPICS: Topic[] = [
     answer: () => "A team at Cal Hacks 13 built me, and Claude is the brain that turns what you say into the design.",
   },
   {
+    re: /\b(test card|which card|what card|card number|card should i use|card do i use|try (?:it|pledging|a pledge)|pledge from my phone|how do i (?:pledge|back))\b/,
+    answer: () => "Scan the QR code and use the test card 4242 4242 4242 4242 with any future date and CVC; 4000 0000 0000 0002 shows what a declined card looks like. Nothing real is charged.",
+  },
+  {
+    re: /\b(how many (?:backers|people|pledges)|backers (?:does it|do you) need|what'?s the goal|the target|goal is)\b/,
+    answer: () => "You choose the goal when you launch the campaign, say five backers. When that many holds are in, every hold is captured and it goes to a maker.",
+  },
+  {
     re: /\b(charge|charged|pay|paying|payment|card|credit|hold|holds|money|refund|refunded|cost me|billed|bill me|stripe|visa)\b/,
     answer: () => "Backing a wish only places a hold on your card, it isn't a charge. If enough people commit before the deadline every hold is captured; if not, every hold is released and nobody pays.",
   },

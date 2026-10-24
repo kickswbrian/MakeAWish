@@ -1,0 +1,3227 @@
+[
+  {
+    "id": "h3-qa-01-payments",
+    "start": {
+      "category": "dress",
+      "name": "Convertible Pocket Midi",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#1F8A5B",
+      "fabric": "satin",
+      "pattern": "solid",
+      "features": [
+        "phone_pockets",
+        "converts_to_skirt"
+      ],
+      "target_price_usd": 79
+    },
+    "say": "Wait, how does paying for this actually work?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "silhouette",
+          "sleeves",
+          "neckline",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "hold",
+          "authoriz",
+          "pending",
+          "only if",
+          "only pay",
+          "only charged",
+          "not charged"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "payments"
+    ]
+  },
+  {
+    "id": "h3-qa-02-payments",
+    "start": {
+      "category": "dress",
+      "name": "Convertible Pocket Midi",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#1F8A5B",
+      "fabric": "satin",
+      "pattern": "solid",
+      "features": [
+        "phone_pockets",
+        "converts_to_skirt"
+      ],
+      "target_price_usd": 79
+    },
+    "say": "If I back this right now, do I get charged?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "silhouette",
+          "sleeves",
+          "neckline",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "hold",
+          "not charged",
+          "only if",
+          "won't be charged",
+          "released",
+          "only when",
+          "not yet"
+        ]
+      },
+      {
+        "sayNot": [
+          "charged right away",
+          "charged immediately",
+          "charged now",
+          "charged upfront",
+          "charged up front"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "payments"
+    ]
+  },
+  {
+    "id": "h3-qa-03-payments",
+    "start": {
+      "category": "generic",
+      "name": "Glow Skateboard",
+      "color": "#7B4FC9",
+      "body": {
+        "shape": "box",
+        "width": 0.9,
+        "height": 0.05,
+        "depth": 0.25
+      },
+      "addons": [
+        {
+          "name": "LED wheels",
+          "shape": "cylinder",
+          "placement": "bottom",
+          "count": 4,
+          "glow": true,
+          "color": "#30C5C2",
+          "size": 0.4
+        }
+      ],
+      "target_price_usd": 140
+    },
+    "say": "So is money coming out of my account today or what?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "finish",
+          "features",
+          "body",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "hold",
+          "not charged",
+          "only if",
+          "won't be charged",
+          "pending",
+          "nothing is captured",
+          "not yet"
+        ]
+      },
+      {
+        "sayNot": [
+          "charged right away",
+          "charged immediately",
+          "charged now",
+          "charged upfront",
+          "charged up front"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "payments"
+    ]
+  },
+  {
+    "id": "h3-qa-04-payments",
+    "start": {
+      "category": "helmet",
+      "name": "Headphone Helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "features": [
+        "headphones"
+      ],
+      "target_price_usd": 150
+    },
+    "say": "What's a card hold? Like a pre-authorization?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "hold",
+          "authoriz",
+          "pending",
+          "reserve",
+          "set aside"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "payments"
+    ]
+  },
+  {
+    "id": "h3-qa-05-payments",
+    "start": {
+      "category": "backpack",
+      "name": "Stand-up Backpack",
+      "color": "#1F2A55",
+      "fabric": "denim",
+      "pattern": "solid",
+      "features": [
+        "laptop_stand"
+      ],
+      "target_price_usd": 120
+    },
+    "say": "When does my card actually get charged?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "goal",
+          "target",
+          "enough",
+          "funded",
+          "captured",
+          "backers"
+        ]
+      },
+      {
+        "sayNot": [
+          "charged right away",
+          "charged immediately",
+          "charged now",
+          "charged upfront",
+          "charged up front"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "payments"
+    ]
+  },
+  {
+    "id": "h3-qa-06-payments",
+    "say": "Is this real money or a test thing?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "body",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "test",
+          "not real",
+          "no real money",
+          "stripe"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "payments"
+    ]
+  },
+  {
+    "id": "h3-qa-07-payments",
+    "start": {
+      "category": "generic",
+      "name": "Self-watering desk planter",
+      "color": "#C9643B",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.5,
+        "height": 0.5
+      },
+      "addons": [
+        {
+          "name": "water reservoir",
+          "shape": "box",
+          "placement": "bottom",
+          "size": 0.6,
+          "color": "#7EC8F2"
+        }
+      ]
+    },
+    "say": "Which test card should I use to try pledging?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "finish",
+          "features",
+          "body",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "4242"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "payments"
+    ]
+  },
+  {
+    "id": "h3-qa-08-payments",
+    "start": {
+      "category": "dress",
+      "name": "Convertible Pocket Midi",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#1F8A5B",
+      "fabric": "satin",
+      "pattern": "solid",
+      "features": [
+        "phone_pockets",
+        "converts_to_skirt"
+      ],
+      "target_price_usd": 79
+    },
+    "say": "What happens if my card gets declined?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "silhouette",
+          "sleeves",
+          "neckline",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "declin",
+          "doesn't count",
+          "does not count",
+          "won't count",
+          "not count",
+          "error"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "payments"
+    ]
+  },
+  {
+    "id": "h3-qa-09-payments",
+    "start": {
+      "category": "helmet",
+      "name": "Headphone Helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "features": [
+        "headphones"
+      ],
+      "target_price_usd": 150
+    },
+    "say": "Why use card holds instead of just letting people upvote it?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "free",
+          "commit",
+          "prove",
+          "real demand",
+          "actually pay",
+          "would pay",
+          "costs nothing"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "payments"
+    ]
+  },
+  {
+    "id": "h3-qa-10-deadline",
+    "start": {
+      "category": "dress",
+      "name": "Convertible Pocket Midi",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#1F8A5B",
+      "fabric": "satin",
+      "pattern": "solid",
+      "features": [
+        "phone_pockets",
+        "converts_to_skirt"
+      ],
+      "target_price_usd": 79
+    },
+    "say": "What happens if not enough people back it before the deadline?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "silhouette",
+          "sleeves",
+          "neckline",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "released",
+          "nobody pays",
+          "no one pays",
+          "not charged",
+          "cancel",
+          "never charged",
+          "nobody is charged",
+          "no one is charged"
+        ]
+      },
+      {
+        "sayNot": [
+          "still charged",
+          "charged anyway"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "deadline"
+    ]
+  },
+  {
+    "id": "h3-qa-11-deadline",
+    "start": {
+      "category": "generic",
+      "name": "Self-watering desk planter",
+      "color": "#C9643B",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.5,
+        "height": 0.5
+      },
+      "addons": [
+        {
+          "name": "water reservoir",
+          "shape": "box",
+          "placement": "bottom",
+          "size": 0.6,
+          "color": "#7EC8F2"
+        }
+      ]
+    },
+    "say": "And if the timer runs out, do the people who pledged lose their money?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "finish",
+          "features",
+          "body",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "released",
+          "not charged",
+          "nobody pays",
+          "no one pays",
+          "cancel",
+          "keep",
+          "never charged"
+        ]
+      },
+      {
+        "sayNot": [
+          "lose their money",
+          "still charged",
+          "charged anyway"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "deadline"
+    ]
+  },
+  {
+    "id": "h3-qa-12-deadline",
+    "start": {
+      "category": "backpack",
+      "name": "Stand-up Backpack",
+      "color": "#1F2A55",
+      "fabric": "denim",
+      "pattern": "solid",
+      "features": [
+        "laptop_stand"
+      ],
+      "target_price_usd": 120
+    },
+    "say": "How long does a campaign run?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "6 days",
+          "six days",
+          "6-day",
+          "six-day",
+          "six",
+          "minutes"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "deadline"
+    ]
+  },
+  {
+    "id": "h3-qa-13-deadline",
+    "start": {
+      "category": "helmet",
+      "name": "Headphone Helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "features": [
+        "headphones"
+      ],
+      "target_price_usd": 150
+    },
+    "say": "Don't card holds expire after like seven days?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "6 days",
+          "six days",
+          "6-day",
+          "six-day",
+          "six"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "deadline"
+    ]
+  },
+  {
+    "id": "h3-qa-14-deadline",
+    "start": {
+      "category": "dress",
+      "name": "Convertible Pocket Midi",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#1F8A5B",
+      "fabric": "satin",
+      "pattern": "solid",
+      "features": [
+        "phone_pockets",
+        "converts_to_skirt"
+      ],
+      "target_price_usd": 79
+    },
+    "say": "What happens the moment you hit the goal?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "silhouette",
+          "sleeves",
+          "neckline",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "captured",
+          "capture",
+          "charged",
+          "maker",
+          "order"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "deadline"
+    ]
+  },
+  {
+    "id": "h3-qa-15-deadline",
+    "start": {
+      "category": "generic",
+      "name": "Glow Skateboard",
+      "color": "#7B4FC9",
+      "body": {
+        "shape": "box",
+        "width": 0.9,
+        "height": 0.05,
+        "depth": 0.25
+      },
+      "addons": [
+        {
+          "name": "LED wheels",
+          "shape": "cylinder",
+          "placement": "bottom",
+          "count": 4,
+          "glow": true,
+          "color": "#30C5C2",
+          "size": 0.4
+        }
+      ],
+      "target_price_usd": 140
+    },
+    "say": "How many backers does it need to get made?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "finish",
+          "features",
+          "body",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "target",
+          "goal",
+          "set",
+          "choose",
+          "pick",
+          "decide",
+          "launch"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "deadline"
+    ]
+  },
+  {
+    "id": "h3-qa-16-exists",
+    "start": {
+      "category": "dress",
+      "name": "Convertible Pocket Midi",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#1F8A5B",
+      "fabric": "satin",
+      "pattern": "solid",
+      "features": [
+        "phone_pockets",
+        "converts_to_skirt"
+      ],
+      "target_price_usd": 79
+    },
+    "say": "How do you know this doesn't already exist?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "silhouette",
+          "sleeves",
+          "neckline",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "amazon",
+          "etsy",
+          "google shopping",
+          "apify",
+          "search",
+          "online stores",
+          "marketplace"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "exists"
+    ]
+  },
+  {
+    "id": "h3-qa-17-exists",
+    "start": {
+      "category": "backpack",
+      "name": "Stand-up Backpack",
+      "color": "#1F2A55",
+      "fabric": "denim",
+      "pattern": "solid",
+      "features": [
+        "laptop_stand"
+      ],
+      "target_price_usd": 120
+    },
+    "say": "Which stores do you check?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "amazon",
+          "etsy",
+          "google"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "exists"
+    ]
+  },
+  {
+    "id": "h3-qa-18-exists",
+    "start": {
+      "category": "helmet",
+      "name": "Headphone Helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "features": [
+        "headphones"
+      ],
+      "target_price_usd": 150
+    },
+    "say": "What if somebody already sells this?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "link",
+          "buy",
+          "exists",
+          "here it is",
+          "already"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "exists"
+    ]
+  },
+  {
+    "id": "h3-qa-19-exists",
+    "start": {
+      "category": "generic",
+      "name": "Glow Skateboard",
+      "color": "#7B4FC9",
+      "body": {
+        "shape": "box",
+        "width": 0.9,
+        "height": 0.05,
+        "depth": 0.25
+      },
+      "addons": [
+        {
+          "name": "LED wheels",
+          "shape": "cylinder",
+          "placement": "bottom",
+          "count": 4,
+          "glow": true,
+          "color": "#30C5C2",
+          "size": 0.4
+        }
+      ],
+      "target_price_usd": 140
+    },
+    "say": "Do you search the internet every time I say something?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "finish",
+          "features",
+          "body",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "lock",
+          "when you lock",
+          "once",
+          "only"
+        ]
+      },
+      {
+        "sayNot": [
+          "every time you speak",
+          "every turn"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "exists"
+    ]
+  },
+  {
+    "id": "h3-qa-20-maker",
+    "start": {
+      "category": "dress",
+      "name": "Convertible Pocket Midi",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#1F8A5B",
+      "fabric": "satin",
+      "pattern": "solid",
+      "features": [
+        "phone_pockets",
+        "converts_to_skirt"
+      ],
+      "target_price_usd": 79
+    },
+    "say": "Who actually makes the thing once it's funded?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "silhouette",
+          "sleeves",
+          "neckline",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "maker",
+          "manufacturer",
+          "simulated",
+          "purchase order"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "maker"
+    ]
+  },
+  {
+    "id": "h3-qa-21-maker",
+    "start": {
+      "category": "generic",
+      "name": "Glow Skateboard",
+      "color": "#7B4FC9",
+      "body": {
+        "shape": "box",
+        "width": 0.9,
+        "height": 0.05,
+        "depth": 0.25
+      },
+      "addons": [
+        {
+          "name": "LED wheels",
+          "shape": "cylinder",
+          "placement": "bottom",
+          "count": 4,
+          "glow": true,
+          "color": "#30C5C2",
+          "size": 0.4
+        }
+      ],
+      "target_price_usd": 140
+    },
+    "say": "Is a real factory going to build this?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "finish",
+          "features",
+          "body",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "simulated",
+          "maker",
+          "demo",
+          "hackathon",
+          "not yet",
+          "purchase order"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "maker"
+    ]
+  },
+  {
+    "id": "h3-qa-22-shipping",
+    "start": {
+      "category": "backpack",
+      "name": "Stand-up Backpack",
+      "color": "#1F2A55",
+      "fabric": "denim",
+      "pattern": "solid",
+      "features": [
+        "laptop_stand"
+      ],
+      "target_price_usd": 120
+    },
+    "say": "How does shipping work, when would I get it?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "maker",
+          "simulated",
+          "demo",
+          "hackathon",
+          "not part",
+          "out of scope",
+          "doesn't ship",
+          "no shipping",
+          "isn't"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "shipping"
+    ]
+  },
+  {
+    "id": "h3-qa-23-refunds",
+    "start": {
+      "category": "helmet",
+      "name": "Headphone Helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "features": [
+        "headphones"
+      ],
+      "target_price_usd": 150
+    },
+    "say": "Can I get a refund if I change my mind?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "hold",
+          "released",
+          "not charged",
+          "never charged",
+          "only",
+          "nothing"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "refunds"
+    ]
+  },
+  {
+    "id": "h3-qa-24-refunds",
+    "start": {
+      "category": "dress",
+      "name": "Convertible Pocket Midi",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#1F8A5B",
+      "fabric": "satin",
+      "pattern": "solid",
+      "features": [
+        "phone_pockets",
+        "converts_to_skirt"
+      ],
+      "target_price_usd": 79
+    },
+    "say": "If the campaign fails do I have to ask for a refund?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "silhouette",
+          "sleeves",
+          "neckline",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "released",
+          "automatic",
+          "not charged",
+          "never charged",
+          "nothing to refund"
+        ]
+      },
+      {
+        "sayNot": [
+          "contact support",
+          "request a refund"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "refunds"
+    ]
+  },
+  {
+    "id": "h3-qa-25-model3d",
+    "start": {
+      "category": "dress",
+      "name": "Convertible Pocket Midi",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#1F8A5B",
+      "fabric": "satin",
+      "pattern": "solid",
+      "features": [
+        "phone_pockets",
+        "converts_to_skirt"
+      ],
+      "target_price_usd": 79
+    },
+    "say": "Is that a real 3D model? How are you making it so fast?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "silhouette",
+          "sleeves",
+          "neckline",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "parametric",
+          "spec",
+          "instant",
+          "built from",
+          "meshy",
+          "shapes"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "model3d"
+    ]
+  },
+  {
+    "id": "h3-qa-26-model3d",
+    "start": {
+      "category": "generic",
+      "name": "Glow Skateboard",
+      "color": "#7B4FC9",
+      "body": {
+        "shape": "box",
+        "width": 0.9,
+        "height": 0.05,
+        "depth": 0.25
+      },
+      "addons": [
+        {
+          "name": "LED wheels",
+          "shape": "cylinder",
+          "placement": "bottom",
+          "count": 4,
+          "glow": true,
+          "color": "#30C5C2",
+          "size": 0.4
+        }
+      ],
+      "target_price_usd": 140
+    },
+    "say": "What's the AI 3D model thing that swaps in?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "finish",
+          "features",
+          "body",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "meshy",
+          "text-to-3d",
+          "generat",
+          "ai model",
+          "ai mesh"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "model3d"
+    ]
+  },
+  {
+    "id": "h3-qa-27-model3d",
+    "start": {
+      "category": "generic",
+      "name": "Self-watering desk planter",
+      "color": "#C9643B",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.5,
+        "height": 0.5
+      },
+      "addons": [
+        {
+          "name": "water reservoir",
+          "shape": "box",
+          "placement": "bottom",
+          "size": 0.6,
+          "color": "#7EC8F2"
+        }
+      ]
+    },
+    "say": "How long does the fancy AI model take to show up?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "finish",
+          "features",
+          "body",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "minute",
+          "background",
+          "meshy"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "model3d"
+    ]
+  },
+  {
+    "id": "h3-qa-28-model3d",
+    "start": {
+      "category": "helmet",
+      "name": "Headphone Helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "features": [
+        "headphones"
+      ],
+      "target_price_usd": 150
+    },
+    "say": "Is this exactly what I'd get in the mail?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "visual",
+          "preview",
+          "rough",
+          "not exact",
+          "spec sheet",
+          "idea",
+          "concept",
+          "not a"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "model3d"
+    ]
+  },
+  {
+    "id": "h3-qa-29-privacy",
+    "start": {
+      "category": "dress",
+      "name": "Convertible Pocket Midi",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#1F8A5B",
+      "fabric": "satin",
+      "pattern": "solid",
+      "features": [
+        "phone_pockets",
+        "converts_to_skirt"
+      ],
+      "target_price_usd": 79
+    },
+    "say": "What info do you keep about me if I pledge?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "silhouette",
+          "sleeves",
+          "neckline",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "email",
+          "stripe",
+          "card",
+          "no account",
+          "account"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "privacy"
+    ]
+  },
+  {
+    "id": "h3-qa-30-privacy",
+    "say": "Do I need to make an account to back something?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "body",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "no account",
+          "no login",
+          "just",
+          "only",
+          "email",
+          "don't need",
+          "no need"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "privacy"
+    ]
+  },
+  {
+    "id": "h3-qa-31-price",
+    "start": {
+      "category": "dress",
+      "name": "Convertible Pocket Midi",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#1F8A5B",
+      "fabric": "satin",
+      "pattern": "solid",
+      "features": [
+        "phone_pockets",
+        "converts_to_skirt"
+      ],
+      "target_price_usd": 79
+    },
+    "say": "How much would this cost me?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "silhouette",
+          "sleeves",
+          "neckline",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "79"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "price"
+    ]
+  },
+  {
+    "id": "h3-qa-32-price",
+    "start": {
+      "category": "backpack",
+      "name": "Stand-up Backpack",
+      "color": "#1F2A55",
+      "fabric": "denim",
+      "pattern": "solid",
+      "features": [
+        "laptop_stand"
+      ],
+      "target_price_usd": 120
+    },
+    "say": "What's the price on this backpack?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "120"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "price"
+    ]
+  },
+  {
+    "id": "h3-qa-33-design",
+    "start": {
+      "category": "dress",
+      "name": "Convertible Pocket Midi",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#1F8A5B",
+      "fabric": "satin",
+      "pattern": "solid",
+      "features": [
+        "phone_pockets",
+        "converts_to_skirt"
+      ],
+      "target_price_usd": 79
+    },
+    "say": "What's this dress made of?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "silhouette",
+          "sleeves",
+          "neckline",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "satin"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "design"
+    ]
+  },
+  {
+    "id": "h3-qa-34-design",
+    "start": {
+      "category": "dress",
+      "name": "Convertible Pocket Midi",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#1F8A5B",
+      "fabric": "satin",
+      "pattern": "solid",
+      "features": [
+        "phone_pockets",
+        "converts_to_skirt"
+      ],
+      "target_price_usd": 79
+    },
+    "say": "How long is the skirt part on this?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "silhouette",
+          "sleeves",
+          "neckline",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "midi",
+          "mid-calf",
+          "calf"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "design"
+    ]
+  },
+  {
+    "id": "h3-qa-35-design",
+    "start": {
+      "category": "helmet",
+      "name": "Headphone Helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "features": [
+        "headphones"
+      ],
+      "target_price_usd": 150
+    },
+    "say": "Does this one have headphones built in?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "yes",
+          "built in",
+          "built-in",
+          "it does"
+        ]
+      },
+      {
+        "sayNot": [
+          "no headphones",
+          "doesn't have"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "design"
+    ]
+  },
+  {
+    "id": "h3-qa-36-design",
+    "start": {
+      "category": "generic",
+      "name": "Glow Skateboard",
+      "color": "#7B4FC9",
+      "body": {
+        "shape": "box",
+        "width": 0.9,
+        "height": 0.05,
+        "depth": 0.25
+      },
+      "addons": [
+        {
+          "name": "LED wheels",
+          "shape": "cylinder",
+          "placement": "bottom",
+          "count": 4,
+          "glow": true,
+          "color": "#30C5C2",
+          "size": 0.4
+        }
+      ],
+      "target_price_usd": 140
+    },
+    "say": "How many wheels is that?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "finish",
+          "features",
+          "body",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "4",
+          "four"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "design"
+    ]
+  },
+  {
+    "id": "h3-qa-37-design",
+    "start": {
+      "category": "generic",
+      "name": "Glow Skateboard",
+      "color": "#7B4FC9",
+      "body": {
+        "shape": "box",
+        "width": 0.9,
+        "height": 0.05,
+        "depth": 0.25
+      },
+      "addons": [
+        {
+          "name": "LED wheels",
+          "shape": "cylinder",
+          "placement": "bottom",
+          "count": 4,
+          "glow": true,
+          "color": "#30C5C2",
+          "size": 0.4
+        }
+      ],
+      "target_price_usd": 140
+    },
+    "say": "Do the wheels actually light up?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "finish",
+          "features",
+          "body",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "yes",
+          "glow",
+          "light",
+          "led"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "design"
+    ]
+  },
+  {
+    "id": "h3-qa-38-design",
+    "start": {
+      "category": "backpack",
+      "name": "Everyday Backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "features": []
+    },
+    "say": "Wait, does this one have a laptop stand?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "not yet",
+          "doesn't",
+          "does not",
+          "want me",
+          "add",
+          "could",
+          "no laptop",
+          "no stand",
+          "isn't",
+          "nope"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "design"
+    ]
+  },
+  {
+    "id": "h3-qa-39-design",
+    "start": {
+      "category": "generic",
+      "name": "Self-watering desk planter",
+      "color": "#C9643B",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.5,
+        "height": 0.5
+      },
+      "addons": [
+        {
+          "name": "water reservoir",
+          "shape": "box",
+          "placement": "bottom",
+          "size": 0.6,
+          "color": "#7EC8F2"
+        }
+      ]
+    },
+    "say": "What is this thing on the pedestal?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "finish",
+          "features",
+          "body",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "planter",
+          "plant",
+          "water"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "design"
+    ]
+  },
+  {
+    "id": "h3-qa-40-design",
+    "before": [
+      "a backpack in bright red"
+    ],
+    "say": "What color is it right now?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale",
+          "body"
+        ]
+      },
+      {
+        "say": [
+          "red"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "design"
+    ]
+  },
+  {
+    "id": "h3-qa-41-capability",
+    "say": "Can you only do clothes, or anything?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "body",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "anything",
+          "backpack",
+          "helmet",
+          "any product",
+          "all kinds",
+          "yes"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "capability"
+    ]
+  },
+  {
+    "id": "h3-qa-42-capability",
+    "start": {
+      "category": "dress",
+      "name": "Convertible Pocket Midi",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#1F8A5B",
+      "fabric": "satin",
+      "pattern": "solid",
+      "features": [
+        "phone_pockets",
+        "converts_to_skirt"
+      ],
+      "target_price_usd": 79
+    },
+    "say": "Can I just talk to you instead of typing?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "silhouette",
+          "sleeves",
+          "neckline",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "yes",
+          "voice",
+          "talk",
+          "speak",
+          "mic"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "capability"
+    ]
+  },
+  {
+    "id": "h3-qa-43-capability",
+    "start": {
+      "category": "helmet",
+      "name": "Headphone Helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "features": [
+        "headphones"
+      ],
+      "target_price_usd": 150
+    },
+    "say": "Can I change the color later on?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "yes",
+          "anytime",
+          "any time",
+          "just say",
+          "just tell",
+          "sure",
+          "of course"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "capability"
+    ]
+  },
+  {
+    "id": "h3-qa-44-genie",
+    "say": "Who are you supposed to be?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "body",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "genie",
+          "wish"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "genie"
+    ]
+  },
+  {
+    "id": "h3-qa-45-genie",
+    "start": {
+      "category": "dress",
+      "name": "Convertible Pocket Midi",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#1F8A5B",
+      "fabric": "satin",
+      "pattern": "solid",
+      "features": [
+        "phone_pockets",
+        "converts_to_skirt"
+      ],
+      "target_price_usd": 79
+    },
+    "say": "What's your favorite color?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "silhouette",
+          "sleeves",
+          "neckline",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "genie"
+    ]
+  },
+  {
+    "id": "h3-qa-46-genie",
+    "start": {
+      "category": "generic",
+      "name": "Glow Skateboard",
+      "color": "#7B4FC9",
+      "body": {
+        "shape": "box",
+        "width": 0.9,
+        "height": 0.05,
+        "depth": 0.25
+      },
+      "addons": [
+        {
+          "name": "LED wheels",
+          "shape": "cylinder",
+          "placement": "bottom",
+          "count": 4,
+          "glow": true,
+          "color": "#30C5C2",
+          "size": 0.4
+        }
+      ],
+      "target_price_usd": 140
+    },
+    "say": "Who built you?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "finish",
+          "features",
+          "body",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "cal hacks",
+          "hackathon",
+          "team"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "genie"
+    ]
+  },
+  {
+    "id": "h3-qa-47-genie",
+    "start": {
+      "category": "helmet",
+      "name": "Headphone Helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "features": [
+        "headphones"
+      ],
+      "target_price_usd": 150
+    },
+    "say": "Whose voice is that, is it a real person?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "pattern",
+          "fabric",
+          "finish",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "cartesia",
+          "sonic",
+          "not a real",
+          "generated",
+          "synthe",
+          "ai voice"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "genie"
+    ]
+  },
+  {
+    "id": "h3-qa-48-genie",
+    "say": "How does my voice change the model?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "body",
+          "features",
+          "parts",
+          "decals",
+          "addons",
+          "scale"
+        ]
+      },
+      {
+        "say": [
+          "spec",
+          "patch",
+          "json",
+          "live",
+          "instant",
+          "update"
+        ]
+      }
+    ],
+    "tags": [
+      "qa",
+      "genie"
+    ]
+  },
+  {
+    "id": "h3-start-01-dress",
+    "say": "I want a midi dress that turns into a skirt",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "dress"
+      },
+      {
+        "path": "features",
+        "includes": "converts_to_skirt"
+      },
+      {
+        "path": "length",
+        "equals": "midi"
+      }
+    ],
+    "tags": [
+      "start",
+      "dress"
+    ]
+  },
+  {
+    "id": "h3-start-02-dress",
+    "say": "Make me a red summer dress with pockets that actually fit my phone",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "dress"
+      },
+      {
+        "path": "color",
+        "family": "red"
+      },
+      {
+        "path": "features",
+        "includes": "phone_pockets"
+      }
+    ],
+    "tags": [
+      "start",
+      "dress"
+    ]
+  },
+  {
+    "id": "h3-start-03-dress",
+    "say": "Ooh okay, a long flowy purple maxi dress",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "dress"
+      },
+      {
+        "path": "length",
+        "equals": "maxi"
+      },
+      {
+        "path": "color",
+        "family": "purple"
+      }
+    ],
+    "tags": [
+      "start",
+      "dress"
+    ]
+  },
+  {
+    "id": "h3-start-04-dress",
+    "say": "Something like a little black dress, but the bottom zips off so it becomes a skirt",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "dress"
+      },
+      {
+        "path": "color",
+        "family": "black"
+      },
+      {
+        "path": "features",
+        "includes": "converts_to_skirt"
+      }
+    ],
+    "tags": [
+      "start",
+      "dress"
+    ]
+  },
+  {
+    "id": "h3-start-05-top",
+    "say": "Can you make me a black crop top?",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "top"
+      },
+      {
+        "path": "color",
+        "family": "black"
+      }
+    ],
+    "tags": [
+      "start",
+      "top"
+    ]
+  },
+  {
+    "id": "h3-start-06-top",
+    "say": "a satin blouse with long sleeves",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "top"
+      },
+      {
+        "path": "sleeves",
+        "equals": "long"
+      },
+      {
+        "path": "fabric",
+        "equals": "satin"
+      }
+    ],
+    "tags": [
+      "start",
+      "top"
+    ]
+  },
+  {
+    "id": "h3-start-07-skirt",
+    "say": "I've always wanted a plaid mini skirt",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "skirt"
+      },
+      {
+        "path": "pattern",
+        "equals": "plaid"
+      },
+      {
+        "path": "length",
+        "equals": "mini"
+      }
+    ],
+    "tags": [
+      "start",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h3-start-08-skirt",
+    "say": "denim skirt, knee length, with pockets for my phone",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "skirt"
+      },
+      {
+        "path": "fabric",
+        "equals": "denim"
+      },
+      {
+        "path": "length",
+        "equals": "knee"
+      },
+      {
+        "path": "features",
+        "includes": "phone_pockets"
+      }
+    ],
+    "tags": [
+      "start",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h3-start-09-skirt",
+    "say": "a leopard print skirt please",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "skirt"
+      },
+      {
+        "path": "pattern",
+        "equals": "leopard"
+      }
+    ],
+    "tags": [
+      "start",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h3-start-10-backpack",
+    "say": "a backpack with a built-in laptop stand",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "backpack"
+      },
+      {
+        "path": "features",
+        "includes": "laptop_stand"
+      }
+    ],
+    "tags": [
+      "start",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h3-start-11-backpack",
+    "say": "I need a school backpack where my laptop can prop up on it like a little desk",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "backpack"
+      },
+      {
+        "path": "features",
+        "includes": "laptop_stand"
+      }
+    ],
+    "tags": [
+      "start",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h3-start-12-backpack",
+    "say": "a navy backpack with pockets for my phone",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "backpack"
+      },
+      {
+        "path": "color",
+        "family": "blue"
+      },
+      {
+        "path": "features",
+        "includes": "phone_pockets"
+      }
+    ],
+    "tags": [
+      "start",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h3-start-13-backpack",
+    "say": "Just give me a backpack",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "backpack"
+      }
+    ],
+    "tags": [
+      "start",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h3-start-14-helmet",
+    "say": "a bike helmet with headphones built in",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "helmet"
+      },
+      {
+        "path": "features",
+        "includes": "headphones"
+      }
+    ],
+    "tags": [
+      "start",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h3-start-15-helmet",
+    "say": "a cycling helmet with speakers inside so I can hear music while I ride",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "helmet"
+      },
+      {
+        "path": "features",
+        "includes": "headphones"
+      }
+    ],
+    "tags": [
+      "start",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h3-start-16-helmet",
+    "say": "bike helmet that has earbuds built into it",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "helmet"
+      },
+      {
+        "path": "features",
+        "includes": "headphones"
+      }
+    ],
+    "tags": [
+      "start",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h3-start-17-helmet",
+    "say": "You know those helmets with headphones? I want one in white",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "helmet"
+      },
+      {
+        "path": "features",
+        "includes": "headphones"
+      },
+      {
+        "path": "color",
+        "family": "white"
+      }
+    ],
+    "tags": [
+      "start",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h3-start-18-helmet",
+    "say": "a bright yellow scooter helmet with bluetooth earphones",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "helmet"
+      },
+      {
+        "path": "features",
+        "includes": "headphones"
+      },
+      {
+        "path": "color",
+        "family": "yellow"
+      }
+    ],
+    "tags": [
+      "start",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h3-start-19-helmet",
+    "say": "a matte black helmet for riding my bike",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "helmet"
+      },
+      {
+        "path": "color",
+        "family": "black"
+      }
+    ],
+    "tags": [
+      "start",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h3-start-20-generic",
+    "say": "a skateboard with LED wheels",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "minAddons": 1
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-21-generic",
+    "say": "I wish someone made a smart water bottle that tells me when to drink",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "path": "body.shape",
+        "oneOf": [
+          "cylinder",
+          "capsule"
+        ]
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-22-generic",
+    "say": "a cat tree with three levels for my cats",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "minAddons": 1
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-23-generic",
+    "say": "a desk lamp that changes color",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "minAddons": 1
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-24-generic",
+    "say": "a robot vacuum that also mops",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "path": "body.shape",
+        "oneOf": [
+          "cylinder"
+        ]
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-25-generic",
+    "say": "a phone case with a built-in kickstand",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "minAddons": 1
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-26-generic",
+    "say": "an acoustic guitar with a built-in tuner",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "minAddons": 1
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-27-generic",
+    "say": "a desk organizer with slots for all my pens",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-28-generic",
+    "say": "a pair of light-up sneakers",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-29-generic",
+    "say": "a red baseball hat with a little solar fan on the brim",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "path": "color",
+        "family": "red"
+      },
+      {
+        "minAddons": 1
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-30-generic",
+    "say": "a two-person tent that sets up in ten seconds",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-31-generic",
+    "say": "a drone that follows me around and films",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "minAddons": 1
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-32-generic",
+    "say": "a coffee mug that keeps my coffee hot all day",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "minAddons": 1
+      },
+      {
+        "path": "body.shape",
+        "oneOf": [
+          "cylinder"
+        ]
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-33-generic",
+    "say": "a glass teapot with a built-in tea infuser",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "minAddons": 1
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-34-generic",
+    "say": "an umbrella that doesn't flip inside out in the wind",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "minAddons": 1
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-35-generic",
+    "say": "a heated pet bed for my old dog",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-36-generic",
+    "say": "a mechanical keyboard with a wrist rest attached",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-37-generic",
+    "say": "a soccer ball that tracks how hard I kick it",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "path": "body.shape",
+        "equals": "sphere"
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-38-generic",
+    "say": "a blue yoga mat that rolls itself up",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "path": "color",
+        "family": "blue"
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-39-generic",
+    "say": "a bluetooth speaker shaped like a cube",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "path": "body.shape",
+        "equals": "box"
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-40-generic",
+    "say": "headphones with cat ears that light up",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "minAddons": 1
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  },
+  {
+    "id": "h3-start-41-generic",
+    "say": "a rain jacket with a hood that folds into the collar",
+    "expect": [
+      {
+        "renders": true
+      },
+      {
+        "path": "category",
+        "oneOf": [
+          "top",
+          "generic"
+        ]
+      }
+    ],
+    "tags": [
+      "start",
+      "generic"
+    ]
+  }
+]
