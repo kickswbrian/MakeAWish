@@ -19,7 +19,7 @@ import { findMatches, getMatches } from "./apify.ts";
 import { resetDemo } from "./demo.ts";
 import { startMeshy } from "./meshy.ts";
 import { handleStripeEvent, mockConfirm, stripe } from "./payments.ts";
-import { appendTranscript, createWish, getWish, patchWish, setWishStatus, toWishDTO } from "./wishes.ts";
+import { appendTranscript, createWish, getWish, patchWish, undoWish, setWishStatus, toWishDTO } from "./wishes.ts";
 
 const app = express();
 const server = http.createServer(app);
@@ -91,7 +91,7 @@ app.post("/api/wish/:id/turn", wrap(async (req, res) => {
     const started = Date.now();
     const w = getWish(id)!;
     const result = await think(w.spec, w.transcript, text);
-    const { spec, changed, dropped } = patchWish(id, result.patch);
+    const { spec, changed, dropped } = result.undo ? { ...undoWish(id), dropped: [] as string[] } : patchWish(id, result.patch);
     if (dropped.length) console.log(`[brain] dropped invalid fields: ${dropped.join(", ")}`);
     // 3D updates now, before the client starts speaking the reply.
     emit(`wish:${id}`, EVENTS.specUpdated, { wishId: id, spec, changed });

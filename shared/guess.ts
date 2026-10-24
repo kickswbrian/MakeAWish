@@ -1,27 +1,123 @@
-import { COLOR_NAMES, LENGTHS, type ProductSpec, type SpecPatch } from "./spec.ts";
+import { COLOR_NAMES, LENGTHS, type Category, type ProductSpec, type SpecPatch } from "./spec.ts";
+import { GENERIC_WORDS, genericBody, interpretEdits, isUndo, shapeHint } from "./edits.ts";
 
 /**
  * Cheap keyword matcher. Runs on interim captions in the browser (instant guess, so particles
  * start forming before the LLM answers) and powers the rule-based brain when no LLM key is set.
  */
+export interface Interpretation {
+  patch: SpecPatch;
+  /** Short phrases describing the edits, for the spoken reply. */
+  did: string[];
+  undo: boolean;
+}
+
+/**
+ * Instant guess for live captions: everything the rule brain would do except new decals and
+ * add-ons, which shouldn't flash in from half a sentence ("draw a dra...").
+ */
 export function guessPatch(text: string, current?: ProductSpec): SpecPatch {
-  const t = " " + text.toLowerCase().replace(/[^a-z0-9$#\s.-]/g, " ") + " ";
+  const { patch } = interpret(text, current);
+  delete patch.decals;
+  delete patch.addons;
+  return patch;
+}
+
+/** Category words. Order matters: "a dress that turns into a skirt" is checked before "skirt". */
+const CATEGORY_WORDS: [Category, string][] = [
+  ["dress", "dress|gown|sundress|jumpsuit|romper"],
+  ["skirt", "skirt"],
+  ["top", "top|blouse|shirt|tee|t-shirt|t shirt|tshirt|sweater|cardigan|hoodie|sweatshirt|jacket|jumper|tank top|crop top|tank|polo|vest|camisole|cami"],
+  ["backpack", "backpack|rucksack|bag|daypack|bookbag|book bag|knapsack"],
+  ["helmet", "helmet"],
+];
+
+/** Which product the utterance names. Once a product exists, switching needs framing like "make it a ...". */
+function detectCategory(t: string, current: ProductSpec | undefined): { category?: Category; noun?: string } {
+  const fresh = !current || current.category === "generic";
+  const framed = (words: string) =>
+    new RegExp(`\\b(?:an?|make it(?: into)?(?: an?)?|turn it into(?: an?)?|change it (?:to|into)(?: an?)?|switch (?:it )?to(?: an?)?|want(?: an?)?|instead of)\\s+(?:[a-z-]+\\s+){0,3}(${words})s?\\b`).exec(t);
+  const loose = (words: string) => {
+    const m = new RegExp(`\\b(${words})s?\\b`).exec(t);
+    if (!m) return null;
+    // "on top", "the top of", "top half": a place, not a product.
+    if (m[1] === "top" && /\b(on|the|to the|at the|on the|from the)\s+top\b|\btop (of|half|part|side)\b/.test(t)) return null;
+    return m;
+  };
+  for (const [cat, words] of CATEGORY_WORDS) {
+    const m = fresh ? loose(words) : framed(words);
+    if (m) return { category: cat, noun: m[1] };
+  }
+  const body = genericBody(t);
+  if (body && (fresh || framed(GENERIC_WORDS))) return { category: "generic", noun: body.name };
+  if (fresh && /\b(lamp|planter|chair|desk|gadget|device|toy)\b/.test(t)) return { category: "generic" };
+  return {};
+}
+
+/** Rule-brain interpretation: targeted edits first (parts, decals, add-ons), keyword guess for the rest. */
+export function interpret(text: string, current?: ProductSpec): Interpretation {
+  if (isUndo(text)) return { patch: {}, did: [], undo: true };
+  const spec = current ?? { category: "generic" as const };
+  const full = " " + text.toLowerCase().replace(/[^a-z0-9$#\s.-]/g, " ") + " ";
+  const { category: newCat, noun } = detectCategory(full, current);
+  const category = newCat ?? spec.category;
+  const switching = !!newCat && newCat !== spec.category;
+  // A new product starts clean: its parts, decals and add-ons don't carry over.
+  const base: ProductSpec = switching ? { ...spec, category, parts: {}, decals: [], addons: [] } : spec;
+  const edits = interpretEdits(text, base, category);
+  const patch: SpecPatch = { ...guessRest(edits.rest, base, category, noun), ...edits.patch };
+  if (newCat && newCat !== spec.category) patch.category = newCat;
+  if (switching) {
+    if (!edits.patch.decals) patch.decals = [];
+    if (!edits.patch.addons) patch.addons = [];
+    if (!edits.patch.parts && spec.parts && Object.keys(spec.parts).length) patch.parts = Object.fromEntries(Object.keys(spec.parts).map((k) => [k, null])) as never;
+    if (spec.scale !== undefined) patch.scale = 1;
+  }
+  // Generic products get a body so they render instantly; their starter add-ons come along once.
+  if (category === "generic") {
+    const g = genericBody(full);
+    if (g && (switching || !spec.body || (current?.name ?? "") !== g.name)) {
+      patch.body = g.body;
+      patch.name = g.name;
+      if (g.addons) patch.addons = [...g.addons, ...(patch.addons ?? spec.addons ?? []).filter((a) => !g.addons!.some((b) => b.name === a.name))];
+    }
+    const hint = /\b(shaped like|in the shape of|make it|round|cube|boxy|cylinder|cone|pyramid|donut)\b/.test(full) ? shapeHint(full) : null;
+    if (hint) patch.body = { ...(patch.body ?? spec.body ?? { width: 0.5, height: 0.6 }), shape: hint };
+  }
+  // Features: the edit pass may have added or removed some; the keyword pass may have added more.
+  const restFeatures = guessFeatures(edits.rest + " " + (switching ? full : ""), category);
+  const fromEdits = edits.patch.features ?? (switching ? [] : spec.features ?? []);
+  const features = [...new Set([...fromEdits, ...restFeatures])];
+  if (/turns? into a skirt|converts? (in)?to a skirt|\bconvertible\b/.test(full) && category === "dress") features.push("converts_to_skirt");
+  const uniq = [...new Set(features)];
+  if (JSON.stringify(uniq) !== JSON.stringify(spec.features ?? [])) patch.features = uniq;
+  else delete patch.features;
+  return { patch, did: edits.did, undo: false };
+}
+
+function guessFeatures(text: string, category: Category): string[] {
+  const t = " " + text.toLowerCase() + " ";
+  const has = (...words: string[]) => words.some((w) => new RegExp(`\\b${w}\\b`).test(t));
+  const out: string[] = [];
+  if (has("pocket", "pockets") && !/\bno pockets?\b|\bwithout pockets?\b/.test(t)) out.push("phone_pockets");
+  if (has("laptop stand", "laptop-stand", "stand") && category === "backpack") out.push("laptop_stand");
+  if (has("headphones", "headphone", "speakers", "earphones", "audio") && category === "helmet") out.push("headphones");
+  return out;
+}
+
+/** Keyword guess for whatever the edit pass didn't claim: whole-product color, cut, fabric, price. */
+function guessRest(text: string, current: ProductSpec, category: Category, noun?: string): SpecPatch {
+  const t = " " + text.toLowerCase().replace(/[^a-z0-9$#\s.\/-]/g, " ") + " ";
   const has = (...words: string[]) => words.some((w) => new RegExp(`\\b${w}\\b`).test(t));
   const patch: SpecPatch = {};
-  const features = new Set(current?.features ?? []);
+  const clothing = category === "dress" || category === "top" || category === "skirt";
 
-  if (has("dress", "gown", "sundress")) patch.category = "dress";
-  else if (has("skirt")) patch.category = "skirt";
-  else if (has("top", "blouse", "shirt", "tee", "t-shirt", "sweater", "cardigan")) patch.category = "top";
-  else if (has("backpack", "rucksack", "bag", "daypack")) patch.category = "backpack";
-  else if (has("helmet")) patch.category = "helmet";
-  else if (!current || current.category === "generic") {
-    if (has("lamp", "planter", "mug", "bottle", "chair", "desk", "shoe", "shoes", "sneaker", "watch", "gadget")) patch.category = "generic";
-  }
-  // "a dress that turns into a skirt" is still a dress.
-  if (has("turns into a skirt", "converts", "convertible") || /turns? into a skirt|converts? (in)?to a skirt/.test(t)) {
-    if (patch.category === "skirt") patch.category = "dress";
-    features.add("converts_to_skirt");
+  // What the garment noun implies: a hoodie has long sleeves and a hood, a tank top has none.
+  if (noun && category === "top") {
+    if (/hoodie|sweatshirt|jacket|sweater|cardigan|jumper/.test(noun)) patch.sleeves = "long";
+    if (/tank|cami|vest/.test(noun)) patch.sleeves = "none";
+    if (/tee|t-shirt|t shirt|tshirt|polo/.test(noun)) patch.sleeves = "short";
+    if (/hoodie/.test(noun)) patch.addons = [{ name: "hood", shape: "dome", placement: "back" }];
   }
 
   // Colors: longest name first so "forest green" beats "green".
@@ -35,55 +131,77 @@ export function guessPatch(text: string, current?: ProductSpec): SpecPatch {
   const hex = t.match(/#[0-9a-f]{6}\b/);
   if (hex) patch.color = hex[0].toUpperCase();
 
-  // Length, including relative "shorter"/"longer".
-  if (has("mini")) patch.length = "mini";
-  else if (has("knee", "knee-length")) patch.length = "knee";
-  else if (has("midi")) patch.length = "midi";
-  else if (has("maxi", "floor-length", "full-length")) patch.length = "maxi";
-  else if (current && (has("shorter") || has("longer"))) {
+
+  // Length, including relative "shorter"/"longer" (only for clothing; "taller" etc. are edits).
+  if (has("mini", "micro")) patch.length = "mini";
+  else if (has("knee", "knee-length", "knee length")) patch.length = "knee";
+  else if (has("midi", "mid-length", "calf length", "tea length")) patch.length = "midi";
+  else if (has("maxi", "floor-length", "floor length", "full-length", "ankle length", "ankle-length")) patch.length = "maxi";
+  else if (clothing && category !== "top" && (has("shorter") || has("longer"))) {
     const i = LENGTHS.indexOf(current.length ?? "midi");
     const j = has("shorter") ? Math.max(0, i - 1) : Math.min(LENGTHS.length - 1, i + 1);
     patch.length = LENGTHS[j];
   }
 
-  if (has("fitted", "bodycon", "tight")) patch.silhouette = "fitted";
+  if (has("fitted", "bodycon", "tight", "form fitting", "slim fit")) patch.silhouette = "fitted";
   else if (has("a-line", "a line")) patch.silhouette = "a_line";
   else if (has("wrap")) patch.silhouette = "wrap";
-  else if (has("flowy", "loose", "billowy", "floaty")) patch.silhouette = "flowy";
+  else if (has("flowy", "loose", "billowy", "floaty", "flowing", "swishy")) patch.silhouette = "flowy";
 
-  if (has("sleeveless", "strapless", "no sleeves")) patch.sleeves = "none";
+  if (has("sleeveless", "strapless", "no sleeves", "without sleeves")) patch.sleeves = "none";
+  else if (has("three quarter", "three-quarter", "3/4", "elbow length", "elbow sleeves")) patch.sleeves = "three_quarter";
+  else if (has("puff sleeve", "puff sleeves", "puffy sleeves", "puffed sleeves", "balloon sleeves")) patch.sleeves = "puff";
   else if (has("cap sleeve", "cap sleeves")) patch.sleeves = "cap";
-  else if (has("short sleeve", "short sleeves", "short-sleeved")) patch.sleeves = "short";
-  else if (has("long sleeve", "long sleeves", "long-sleeved")) patch.sleeves = "long";
+  else if (has("short sleeve", "short sleeves", "short-sleeved", "short sleeved")) patch.sleeves = "short";
+  else if (has("long sleeve", "long sleeves", "long-sleeved", "long sleeved", "full sleeves")) patch.sleeves = "long";
 
-  if (has("v-neck", "v neck")) patch.neckline = "v";
+  if (has("v-neck", "v neck", "vneck", "v neckline")) patch.neckline = "v";
   else if (has("square neck", "square neckline")) patch.neckline = "square";
   else if (has("halter")) patch.neckline = "halter";
+  else if (has("turtleneck", "turtle neck", "mock neck", "high neck", "polo neck", "funnel neck")) patch.neckline = "turtleneck";
+  else if (has("off the shoulder", "off-the-shoulder", "off shoulder", "off-shoulder", "bardot")) patch.neckline = "off_shoulder";
+  else if (has("sweetheart")) patch.neckline = "sweetheart";
+  else if (has("scoop", "scoop neck", "scoop neckline", "u neck")) patch.neckline = "scoop";
   else if (has("crew neck", "crewneck", "round neck")) patch.neckline = "crew";
 
   if (has("satin", "silk", "silky")) patch.fabric = "satin";
+  else if (has("denim", "jean", "jeans", "chambray")) patch.fabric = "denim";
+  else if (has("leather", "pleather", "faux leather", "vegan leather", "suede")) patch.fabric = "leather";
+  else if (has("velvet", "velour", "crushed velvet")) patch.fabric = "velvet";
+  else if (has("sequin", "sequins", "sequined", "sequinned", "sparkly", "glitter", "glittery", "sparkles")) patch.fabric = "sequin";
   else if (has("linen")) patch.fabric = "linen";
-  else if (has("knit", "knitted", "wool", "jersey")) patch.fabric = "knit";
-  else if (has("cotton", "denim")) patch.fabric = "cotton";
+  else if (has("knit", "knitted", "wool", "woolen", "jersey", "cashmere", "crochet")) patch.fabric = "knit";
+  else if (has("cotton")) patch.fabric = "cotton";
 
-  if (has("floral", "flowers", "flowery")) patch.pattern = "floral";
-  else if (has("stripe", "stripes", "striped")) patch.pattern = "stripe";
-  else if (has("solid", "plain")) patch.pattern = "solid";
+  if (has("polka dot", "polka dots", "polka-dot", "polka dotted", "spotted", "dotted", "spots")) patch.pattern = "polka_dot";
+  else if (has("plaid", "tartan", "flannel")) patch.pattern = "plaid";
+  else if (has("checkered", "checkerboard", "checked", "gingham", "checks", "check pattern")) patch.pattern = "checkered";
+  else if (has("camo", "camouflage")) patch.pattern = "camo";
+  else if (has("leopard", "cheetah", "animal print", "jaguar")) patch.pattern = "leopard";
+  else if (has("chevron", "zigzag", "zig zag", "zig-zag")) patch.pattern = "chevron";
+  else if (has("floral", "flowers", "flowery", "flower print")) patch.pattern = "floral";
+  else if (has("stripe", "stripes", "striped", "pinstripe", "pinstripes")) patch.pattern = "stripe";
+  else if (has("solid", "plain", "no pattern")) patch.pattern = "solid";
 
-  if (has("pocket", "pockets")) features.add("phone_pockets");
-  if (has("laptop stand", "laptop-stand", "stand") && (patch.category === "backpack" || current?.category === "backpack")) features.add("laptop_stand");
-  if (has("headphones", "headphone", "speakers", "earphones", "audio") && (patch.category === "helmet" || current?.category === "helmet")) features.add("headphones");
-  if (features.size !== (current?.features?.length ?? 0)) patch.features = [...features];
+  if (has("metallic", "chrome", "metal", "brushed metal", "mirror finish", "foil")) patch.finish = "metallic";
+  else if (has("glow", "glowing", "glow in the dark", "glows", "luminous", "neon", "light up", "lights up", "luminescent")) patch.finish = "glow";
+  else if (has("glossy", "shiny", "gloss", "polished", "lacquered", "patent")) patch.finish = "glossy";
+  else if (has("matte", "matt", "flat finish")) patch.finish = "matte";
 
-  const size = t.match(/\bsize (xxs|xs|s|m|l|xl|xxl|small|medium|large|\d{1,2})\b/);
-  if (size) patch.size = size[1].toUpperCase();
-  else if (has("small", "medium", "large") && !has("pocket")) patch.size = has("small") ? "S" : has("medium") ? "M" : "L";
+  // Clothing sizes only; "a large star" or "small pockets" are about the model, not the fit.
+  const size = t.match(/\bsize (xxs|xs|s|m|l|xl|xxl|small|medium|large|\d{1,2})\b/) ?? t.match(/\b(?:in (?:an? )?|an? )(xxs|xs|xl|xxl|small|medium|large)(?: size)?\b(?!\s+[a-z]+)/);
+  if (clothing && size) {
+    const s = size[1];
+    patch.size = s === "small" ? "S" : s === "medium" ? "M" : s === "large" ? "L" : s.toUpperCase();
+  }
 
   const price = t.match(/\$\s?(\d{2,4})|\b(\d{2,4})\s?(dollars|bucks|usd)\b/);
   if (price) patch.target_price_usd = Number(price[1] ?? price[2]);
   else if (/\beighty\b/.test(t)) patch.target_price_usd = 80;
   else if (/\bfifty\b/.test(t)) patch.target_price_usd = 50;
   else if (/\bhundred\b/.test(t)) patch.target_price_usd = 100;
+  else if (/\bthirty\b/.test(t)) patch.target_price_usd = 30;
+  else if (/\btwenty\b/.test(t) && /\b(pay|cost|price|bucks|dollars)\b/.test(t)) patch.target_price_usd = 20;
 
   return patch;
 }

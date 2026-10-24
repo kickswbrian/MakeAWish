@@ -73,3 +73,7 @@ CREATE TABLE IF NOT EXISTS meshy_cache (
   created_at INTEGER NOT NULL
 );
 `);
+
+// Added after launch: older databases get the column on boot.
+const wishCols = (db.prepare("PRAGMA table_info(wishes)").all() as { name: string }[]).map((c) => c.name);
+if (!wishCols.includes("history_json")) db.exec("ALTER TABLE wishes ADD COLUMN history_json TEXT");

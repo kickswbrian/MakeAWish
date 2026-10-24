@@ -34,12 +34,36 @@ export function getWish(id: string): Wish | null {
   return r ? toWish(r) : null;
 }
 
+const HISTORY_MAX = 30;
+const readHistory = (id: string): ProductSpec[] => {
+  const r = db.prepare("SELECT history_json FROM wishes WHERE id = ?").get(id) as { history_json: string | null } | undefined;
+  return r?.history_json ? JSON.parse(r.history_json) : [];
+};
+
 export function patchWish(id: string, patch: unknown): { spec: ProductSpec; changed: SpecField[]; dropped: string[] } {
   const w = getWish(id);
   if (!w) throw new Error("wish not found");
   const res = applyPatch(w.spec, patch);
-  if (res.changed.length) db.prepare("UPDATE wishes SET spec_json = ? WHERE id = ?").run(JSON.stringify(res.spec), id);
+  if (res.changed.length) {
+    // Every change is undoable: keep the spec it replaced.
+    const history = [...readHistory(id), w.spec].slice(-HISTORY_MAX);
+    db.prepare("UPDATE wishes SET spec_json = ?, history_json = ? WHERE id = ?").run(JSON.stringify(res.spec), JSON.stringify(history), id);
+  }
   return res;
+}
+
+/** Restore the spec before the last change. Returns the fields that changed (empty if nothing to undo). */
+export function undoWish(id: string): { spec: ProductSpec; changed: SpecField[] } {
+  const w = getWish(id);
+  if (!w) throw new Error("wish not found");
+  const history = readHistory(id);
+  const prev = history.pop();
+  if (!prev) return { spec: w.spec, changed: [] };
+  const spec = ProductSpec.safeParse(prev).data ?? w.spec;
+  const keys = new Set([...Object.keys(w.spec), ...Object.keys(spec)]) as Set<SpecField>;
+  const changed = [...keys].filter((k) => JSON.stringify(w.spec[k]) !== JSON.stringify(spec[k]));
+  db.prepare("UPDATE wishes SET spec_json = ?, history_json = ? WHERE id = ?").run(JSON.stringify(spec), JSON.stringify(history), id);
+  return { spec, changed };
 }
 
 export function appendTranscript(id: string, turns: TranscriptTurn[]) {
