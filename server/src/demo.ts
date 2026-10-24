@@ -29,7 +29,7 @@ function planter(): Product {
 }
 
 /** Place a real (test-mode) held pledge without a browser: server-side confirm with a test card. */
-async function heldPledge(campaignId: string, priceCents: number, email: string) {
+export async function heldPledge(campaignId: string, priceCents: number, email: string, description = `Wish it pledge ${campaignId} (demo seed)`): Promise<string> {
   if (paymentMode === "stripe") {
     const pledgeId = newId();
     db.prepare("INSERT INTO pledges (id, campaign_id, email, status, created_at) VALUES (?, ?, ?, 'created', ?)").run(pledgeId, campaignId, email, Date.now());
@@ -41,15 +41,16 @@ async function heldPledge(campaignId: string, priceCents: number, email: string)
       confirm: true,
       automatic_payment_methods: { enabled: true, allow_redirects: "never" },
       metadata: { campaignId, pledgeId },
-      description: `Wish it pledge ${campaignId} (demo seed)`,
+      description,
     });
     db.prepare("UPDATE pledges SET payment_intent_id = ? WHERE id = ?").run(pi.id, pledgeId);
     if (pi.status === "requires_capture") _internal.onHeld(pi.id);
-    return;
+    return pledgeId;
   }
   const p = await createPledge(campaignId, email);
   mockConfirm(p.paymentIntentId, "4242424242424242");
   await sleep(400); // the simulated provider reports the hold asynchronously, like a webhook
+  return p.pledgeId;
 }
 
 /**

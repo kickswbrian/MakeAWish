@@ -3,6 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { childrenOf, colorName, describeProduct, MATERIAL_LABELS, type Campaign } from "@wishit/shared";
 import { api, getConfig, money } from "../lib/api.ts";
 import { chime } from "../lib/sound.ts";
+import { AgentCheckout } from "./AgentCheckout.tsx";
 import { Bubble } from "./Bubble.tsx";
 import { Sparkle } from "./Icons.tsx";
 
@@ -121,6 +122,7 @@ export function CampaignPanel({ c, snapshot }: { c: Campaign; snapshot?: string 
           </div>
         </div>
       )}
+      {c.status === "funding" && <AgentCheckout c={c} />}
       {(c.status === "expired" || c.status === "releasing") && (
         <div className="msg info">
           Missed the goal. {c.status === "expired" ? "Every hold was released" : "Releasing every hold"}, and nobody paid a cent.
@@ -130,7 +132,10 @@ export function CampaignPanel({ c, snapshot }: { c: Campaign; snapshot?: string 
         <div className="pledge-list">
           {c.pledges.slice().reverse().map((p) => (
             <div key={p.id} className="pledge-row">
-              <span>{p.email}</span>
+              <span>
+                {p.email}
+                {p.agent && <span className="agent-badge" title={`Signed by agent key ${p.agent.keyid}`}>Genie · TAP-verified</span>}
+              </span>
               <span title={p.failReason ?? ""}>
                 <span className={`status-pill ${p.status}`}>{p.status === "held" ? "hold placed" : p.status.replace("_", " ")}</span>
               </span>
@@ -210,7 +215,10 @@ export function PurchaseOrder({ c, snapshot }: { c: Campaign; snapshot?: string 
       <div className="pledge-list">
         {c.pledges.filter((p) => p.status === "captured" || p.status === "capture_failed").map((p) => (
           <div key={p.id} className="pledge-row">
-            <span>{p.email}</span>
+            <span>
+              {p.email}
+              {p.agent && <span className="agent-badge" title={`Signed by agent key ${p.agent.keyid}`}>Genie · TAP-verified</span>}
+            </span>
             <span className={`status-pill ${p.status}`}>{p.status.replace("_", " ")}</span>
           </div>
         ))}

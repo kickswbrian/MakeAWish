@@ -35,7 +35,7 @@ export const env = {
   cartesiaKey: s("CARTESIA_API_KEY"),
   cartesiaVersion: s("CARTESIA_VERSION") ?? "2026-08-14",
   apifyToken: s("APIFY_TOKEN"),
-  apifyActor: s("APIFY_ACTOR"), // e.g. "yourname~wish-matcher"
+  apifyActor: s("APIFY_ACTOR"), // optional, e.g. "yourname~wish-matcher"; without it the server calls the store scrapers directly
   stripeSecret: s("STRIPE_SECRET_KEY"),
   stripePublishable: s("STRIPE_PUBLISHABLE_KEY"),
   stripeWebhookSecret: s("STRIPE_WEBHOOK_SECRET"),
@@ -75,7 +75,7 @@ export function logConfig() {
       `[wish-it] ${env.publicUrl}  demoMode=${env.demoMode}  ${isProd ? "PRODUCTION" : "development"}`,
       `  brain    ${on(env.anthropicKey)} ${env.anthropicKey ? `design=${env.designModel} edit=${env.editModel}` : "(rule-based fallback)"}`,
       `  cartesia ${on(env.cartesiaKey)} ${env.cartesiaKey ? "" : "(browser speech fallback)"}`,
-      `  apify    ${on(env.apifyToken)} ${env.apifyToken ? env.apifyActor ?? "(stores direct)" : "(sample matches)"}`,
+      `  apify    ${on(env.apifyToken)} ${!env.apifyToken ? "(sample matches)" : env.apifyActor ? `via ${env.apifyActor}` : "Google Shopping + Amazon scrapers, called directly"}`,
       `  stripe   ${paymentMode === "stripe" ? "on  test mode" : "off (simulated payments)"}${paymentMode === "stripe" && !env.stripeWebhookSecret ? "  WARNING: no STRIPE_WEBHOOK_SECRET, relying on polling" : ""}`,
     ].join("\n"),
   );

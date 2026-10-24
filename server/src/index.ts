@@ -18,6 +18,9 @@ import { assertSafeConfig, env, isProd, logConfig, paymentMode, WEB_DIST } from 
 import { findMatches, getMatches } from "./apify.ts";
 import { resetDemo } from "./demo.ts";
 import { handleStripeEvent, mockConfirm, stripe } from "./payments.ts";
+import { agentAttack, agentPledge, handleAgentPledge, type Attack } from "./agent.ts";
+import { lookupKey } from "./tap.ts";
+import { isInternal } from "./internal.ts";
 import { appendTranscript, createWish, getWish, saveProduct, saveThumb, setWishStatus, toWishDTO } from "./wishes.ts";
 import { AppError, assertFound, badRequest, errorHandler, notFound, notFoundApi, requestId, unavailable, wrap } from "./http.ts";
 import { limits, requireAdmin, securityHeaders, socketOrigins, spend } from "./security.ts";
@@ -70,6 +73,14 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json", limit: "
 // Health checks (Render polls this) skip the rate limits.
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 app.use("/api", limits.api);
+// Agent checkout, merchant side (Visa Trusted Agent Protocol). Raw body: the signature covers its digest.
+app.post("/api/agent/campaigns/:id/pledges", limits.agent, express.raw({ type: "application/json", limit: "20kb" }), wrap(async (req, res) => {
+  const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+  // RFC 9421 @path is the path without the query string.
+  const r = await handleAgentPledge(req.params.id, { host: req.headers.host ?? "", path: req.originalUrl.split("?")[0], headers: req.headers, rawBody, internal: isInternal(req) });
+  res.status(r.status).json(r.body);
+}));
+
 app.use(express.json({ limit: "400kb" }));
 
 // Every :id is a short lowercase id (util.newId); anything else can't exist.
@@ -222,6 +233,36 @@ app.post("/api/campaigns", limits.createCampaign, (req, res) => {
 });
 
 app.get("/api/campaigns/:id", limits.read, (req, res) => res.json(assertFound(getCampaign(req.params.id), "Campaign")));
+
+// ---------- Agent checkout (Visa Trusted Agent Protocol) ----------
+
+/** The genie backs this wish for the shopper, within a spending limit they set. */
+app.post("/api/campaigns/:id/agent-pledge", limits.agentPledge, wrap(async (req, res) => {
+  const c = assertFound(getCampaign(req.params.id), "Campaign");
+  const email = String(req.body?.email ?? "").trim();
+  if (!PledgeBody.safeParse({ email }).success) throw badRequest("Please enter a valid email.");
+  const maxCents = Math.round(Number(req.body?.maxCents ?? c.priceCents));
+  if (!Number.isFinite(maxCents) || maxCents < 50 || maxCents > 1_000_000) throw badRequest("Pick a spending limit.");
+  const r = await agentPledge(c.id, email, maxCents);
+  res.status(r.status).json(r.body);
+}));
+
+/** Trust demo: send the merchant a bad agent request and show why it's refused. Never places a hold. */
+app.post("/api/campaigns/:id/agent-attack", limits.agent, wrap(async (req, res) => {
+  const c = assertFound(getCampaign(req.params.id), "Campaign");
+  const kind = String(req.body?.kind ?? "") as Attack;
+  if (!["unsigned", "replay", "tampered", "expired", "over_limit"].includes(kind)) throw badRequest("Unknown attack");
+  const r = await agentAttack(c.id, kind);
+  // A refused attack is the expected result (200); anything else (e.g. rate limited) passes through.
+  res.status(r.status === 403 ? 200 : r.status).json(r.body);
+}));
+
+/** Public key registry for agent signatures (in production: Visa's key directory). */
+app.get("/api/tap/keys", limits.read, (req, res) => {
+  const jwk = lookupKey(String(req.query.keyID ?? req.query.keyid ?? ""));
+  if (!jwk) throw notFound("Unknown key");
+  res.json(jwk);
+});
 
 app.post("/api/campaigns/:id/pledges", limits.pledge, wrap(async (req, res) => {
   const parsed = PledgeBody.safeParse(req.body);

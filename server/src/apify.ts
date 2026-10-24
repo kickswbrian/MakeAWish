@@ -1,4 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { childrenOf, colorName, describeProduct, EVENTS, type Match, type MatchesResponse, type Product } from "@wishit/shared";
 import { db } from "./db.ts";
 import { emit } from "./bus.ts";
@@ -6,10 +5,11 @@ import { env } from "./env.ts";
 import { hash, withTimeout } from "./util.ts";
 import { getWish } from "./wishes.ts";
 import { spend } from "./security.ts";
+import { searchStores, STORE_NAMES } from "./stores.ts";
 
 const CACHE_MS = 24 * 3600_000;
-// Etsy's scraper (Playwright) can't finish inside the Actor's per-store timeout, so it's left out.
-export const SOURCES = ["amazon", "google_shopping"];
+// Etsy's scraper (Playwright) can't finish inside a per-store timeout, so it's left out.
+export const SOURCES = STORE_NAMES;
 const MAX_PER_SOURCE = 5;
 /** Per-store run limit inside the Actor. Google Shopping takes ~30 s; the Actor default (25 s) cut it off every time. */
 const STORE_TIMEOUT_SECS = 40;
@@ -117,6 +117,8 @@ export async function findMatches(wishId: string): Promise<void> {
 }
 
 const inflight = new Set<string>();
+/** Set when the deployed Actor proves outdated (it searched but kept no listings). */
+let actorStale = false;
 
 async function search(wishId: string, spec: Product) {
   db.prepare("INSERT OR REPLACE INTO match_runs (wish_id, searched, total, pending, sample) VALUES (?, 0, ?, 1, 0)").run(wishId, SOURCES.length);
@@ -133,175 +135,59 @@ async function search(wishId: string, spec: Product) {
   }
 
   const started = Date.now();
+  const query = matchQuery(spec);
+  console.log(`[apify] searching ${SOURCES.join(" + ")} for "${query}" ${env.apifyActor ? `via ${env.apifyActor}` : "directly"}`);
+  // No deployed Actor (or an outdated one): the server calls the store scrapers itself (same scrapers, one hop less).
+  const direct = async () => {
+    try {
+      const r = await searchStores(query, actorSpec(spec), MAX_PER_SOURCE, STORE_TIMEOUT_SECS + 20);
+      const matches = r.matches.sort((a, b) => b.score - a.score).slice(0, 6);
+      console.log(`[apify] ${matches.length} matches in ${Date.now() - started}ms, searched ${r.searched}/${r.total}`);
+      if (matches.length) writeCache(spec, matches, r.searched, r.total);
+      // Every store came back empty: clearly-labelled samples rather than an empty grid.
+      return matches.length ? save(wishId, matches, r.searched, r.total, false) : save(wishId, sampleMatches(spec), 0, r.total, true);
+    } catch (err) {
+      console.warn("[apify] failed, serving sample matches:", (err as Error).message);
+      return save(wishId, sampleMatches(spec), 0, SOURCES.length, true);
+    }
+  };
+  if (!env.apifyActor || actorStale) return direct();
   try {
-    const r = await searchBoth(spec);
-    const matches = r.matches.sort((a, b) => b.score - a.score).slice(0, 6);
-    console.log(`[apify] ${matches.length} matches via ${r.via} in ${Date.now() - started}ms, searched ${r.searched}/${r.total}, cost ~$${r.costUsd ?? "?"}`);
-    if (matches.length) writeCache(spec, matches, r.searched, r.total);
-    save(wishId, matches, r.searched, r.total, false);
+    // The Actor runs the stores in parallel, each up to STORE_TIMEOUT_SECS, then scores: give it room.
+    const url = `https://api.apify.com/v2/acts/${encodeURIComponent(env.apifyActor)}/run-sync-get-dataset-items?timeout=${STORE_TIMEOUT_SECS + 45}`;
+    const res = await withTimeout(
+      fetch(url, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${env.apifyToken}`, "Content-Type": "application/json" },
+        // minScore 0: keep every listing so the grid shows real results even when scoring is keyword-only.
+        body: JSON.stringify({ query: matchQuery(spec), spec: actorSpec(spec), sources: SOURCES, maxPerSource: MAX_PER_SOURCE, minScore: 0, timeoutSecs: STORE_TIMEOUT_SECS, sourceActors: sourceActors(matchQuery(spec)) }),
+      }),
+      (STORE_TIMEOUT_SECS + 55) * 1000,
+      "apify",
+    );
+    if (!res.ok) throw new Error(`apify ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    const items = (await res.json()) as any[];
+    const meta = items.find((i) => i && i._meta);
+    const matches: Match[] = items
+      .filter((i) => i && !i._meta && i.title && i.url)
+      .map((i) => ({ source: String(i.source ?? "web"), title: String(i.title), url: String(i.url), price: i.price == null ? null : Number(i.price), image: i.image ?? null, score: Number(i.score ?? 0), missing: Array.isArray(i.missing) ? i.missing.map(String) : [] }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 6);
+    if (!matches.length && meta?._meta?.searched > 0 && !meta._meta.listings) {
+      // An outdated Actor build runs the stores but drops every listing: skip it until a restart.
+      console.warn(`[apify] ${env.apifyActor} returned no listings (outdated build? \`apify push\` from actor/), searching the stores directly`);
+      actorStale = true;
+      return direct();
+    }
+    const searched = meta?._meta?.searched ?? new Set(matches.map((m) => m.source)).size;
+    const total = meta?._meta?.total ?? SOURCES.length;
+    console.log(`[apify] ${matches.length} matches in ${Date.now() - started}ms, searched ${searched}/${total}, cost ~$${meta?._meta?.costUsd ?? "?"}`);
+    if (matches.length) writeCache(spec, matches, searched, total);
+    save(wishId, matches, searched, total, false);
   } catch (err) {
     console.warn("[apify] failed, serving sample matches:", (err as Error).message);
     save(wishId, sampleMatches(spec), 0, SOURCES.length, true);
   }
-}
-
-interface SearchResult { matches: Match[]; searched: number; total: number; costUsd?: number; via: "actor" | "stores" }
-
-/**
- * Whether the deployed wish-matcher Actor can be trusted. An outdated build runs the stores fine
- * but drops every listing while normalizing them (it reports listings: 0). Until one run proves it
- * either way, the server searches the stores itself in parallel; once the Actor is known stale it
- * is skipped until the server restarts (after an `apify push`).
- */
-let actorState: "unknown" | "ok" | "stale" = "unknown";
-
-async function searchBoth(spec: Product): Promise<SearchResult> {
-  if (!env.apifyActor || actorState === "stale") return searchStores(spec);
-  const direct = actorState === "unknown" ? searchStores(spec) : null;
-  direct?.catch(() => {}); // awaited below only when needed
-  try {
-    const r = await searchActor(spec);
-    if (r) {
-      actorState = "ok";
-      return r;
-    }
-    if (actorState === "unknown") console.warn("[apify] the deployed Actor returned no listings (outdated build?), searching the stores directly; redeploy with `apify push` from actor/");
-    actorState = "stale";
-  } catch (err) {
-    console.warn("[apify] Actor failed, searching the stores directly:", (err as Error).message);
-  }
-  return direct ?? searchStores(spec);
-}
-
-/** The wish-matcher Actor. Null when it searched stores but kept no listings at all. */
-async function searchActor(spec: Product): Promise<SearchResult | null> {
-  const url = `https://api.apify.com/v2/acts/${encodeURIComponent(env.apifyActor!)}/run-sync-get-dataset-items?token=${env.apifyToken}&timeout=60`;
-  const res = await withTimeout(
-    fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      // minScore 0: keep every listing so the grid shows real results even when scoring is keyword-only.
-      body: JSON.stringify({ query: matchQuery(spec), spec: actorSpec(spec), sources: SOURCES, maxPerSource: MAX_PER_SOURCE, minScore: 0, timeoutSecs: STORE_TIMEOUT_SECS, sourceActors: sourceActors(matchQuery(spec)) }),
-    }),
-    70_000,
-    "apify",
-  );
-  if (!res.ok) throw new Error(`apify ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  const items = (await res.json()) as any[];
-  const meta = items.find((i) => i && i._meta)?._meta;
-  const matches: Match[] = items
-    .filter((i) => i && !i._meta && i.title && i.url)
-    .map((i) => ({ source: String(i.source ?? "web"), title: String(i.title), url: String(i.url), price: i.price == null ? null : Number(i.price), image: i.image ?? null, score: Number(i.score ?? 0), missing: Array.isArray(i.missing) ? i.missing.map(String) : [] }));
-  if (!matches.length && meta && meta.searched > 0 && !meta.listings) return null;
-  return { matches, searched: meta?.searched ?? new Set(matches.map((m) => m.source)).size, total: meta?.total ?? SOURCES.length, costUsd: meta?.costUsd, via: "actor" };
-}
-
-// ---------- Searching the stores directly (same Store actors, called from here) ----------
-
-const first = (...vals: unknown[]) => vals.find((v) => v !== undefined && v !== null && v !== "");
-
-function toPrice(v: unknown): number | null {
-  if (v == null) return null;
-  if (typeof v === "number") return v > 0 ? v : null;
-  if (typeof v === "object") {
-    const o = v as Record<string, unknown>;
-    return toPrice(first(o.value, o.amount, o.current, o.price));
-  }
-  const n = Number(String(v).replace(/[^0-9.]/g, ""));
-  return Number.isFinite(n) && n > 0 ? n : null;
-}
-
-/** Store actors all name things differently; take whatever looks like a title, link, price and image. */
-export function normalizeListing(source: string, item: Record<string, any>): Omit<Match, "score" | "missing"> | null {
-  const title = first(item.title, item.name, item.productTitle, item.product_title, item.productName);
-  let url = first(item.url, item.link, item.productUrl, item.product_url, item.productLink, item.asin ? `https://www.amazon.com/dp/${item.asin}` : undefined) as string | undefined;
-  if (url && url.startsWith("/")) url = `https://www.amazon.com${url}`;
-  const img = first(item.thumbnailImage, item.image, item.imageUrl, item.productImage, item.thumbnail, item.mainImage, Array.isArray(item.images) ? item.images[0] : undefined);
-  const image = typeof img === "string" ? img : (img as { url?: string } | undefined)?.url;
-  if (!title || !url) return null;
-  return {
-    source,
-    title: String(title).slice(0, 200),
-    url: String(url),
-    price: toPrice(first(item.price, item.priceValue, item.currentPrice, item.extracted_price)),
-    // Inline base64 thumbnails (Google Shopping) are kept only when small.
-    image: image && !(image.startsWith("data:") && image.length > 60_000) ? image : null,
-  };
-}
-
-async function runStore(source: string, actorId: string, input: unknown): Promise<Omit<Match, "score" | "missing">[]> {
-  const url = `https://api.apify.com/v2/acts/${actorId.replace("/", "~")}/run-sync-get-dataset-items?token=${env.apifyToken}&timeout=${STORE_TIMEOUT_SECS}&memory=1024&limit=${MAX_PER_SOURCE * 3}`;
-  const res = await withTimeout(fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) }), (STORE_TIMEOUT_SECS + 10) * 1000, source);
-  if (!res.ok) throw new Error(`${source} ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  const items = (await res.json()) as Record<string, any>[];
-  return items.map((i) => normalizeListing(source, i)).filter((m): m is NonNullable<typeof m> => !!m).slice(0, MAX_PER_SOURCE);
-}
-
-async function searchStores(spec: Product): Promise<SearchResult> {
-  const query = matchQuery(spec);
-  const cfg = sourceActors(query) as Record<string, { actorId: string; input: unknown }>;
-  const settled = await Promise.allSettled(SOURCES.map((s) => runStore(s, cfg[s].actorId, cfg[s].input)));
-  const listings = settled.flatMap((r, i) => {
-    if (r.status === "fulfilled") return r.value;
-    console.warn(`[apify] ${SOURCES[i]} skipped: ${(r.reason as Error)?.message ?? r.reason}`);
-    return [];
-  });
-  const searched = settled.filter((r) => r.status === "fulfilled").length;
-  if (!searched) throw new Error("every store failed");
-  return { matches: await scoreListings(spec, listings), searched, total: SOURCES.length, via: "stores" };
-}
-
-const scorer = env.anthropicKey ? new Anthropic({ maxRetries: 1 }) : null;
-
-/** One Claude call scores every listing against the wish; keyword overlap if that fails. */
-async function scoreListings(spec: Product, listings: Omit<Match, "score" | "missing">[]): Promise<Match[]> {
-  if (!listings.length) return [];
-  if (scorer) {
-    try {
-      const lines = listings.map((l, i) => `${i}. [${l.source}] ${l.title}${l.price != null ? ` ($${l.price})` : ""}`).join("\n");
-      const res = await scorer.messages.create(
-        {
-          model: env.editModel,
-          max_tokens: 2000,
-          ...(env.editModel.includes("sonnet") ? { thinking: { type: "disabled" } } : {}),
-          tools: [{
-            name: "score",
-            description: "Score every listing.",
-            input_schema: {
-              type: "object",
-              properties: { results: { type: "array", items: { type: "object", properties: { index: { type: "integer" }, score: { type: "integer" }, missing: { type: "array", items: { type: "string" } } }, required: ["index", "score", "missing"] } } },
-              required: ["results"],
-            },
-          }],
-          tool_choice: { type: "tool", name: "score" },
-          messages: [{
-            role: "user",
-            content:
-              `A shopper wishes this product existed: "${spec.title}"${spec.description ? ` (${spec.description})` : ""}.\n\n` +
-              `Score each marketplace listing below from 0 to 100 for how well it IS that product (80+ = this exists, 50-79 = close but missing something, under 50 = not it). ` +
-              `For each, list up to 3 wished-for things it lacks as short noun phrases, e.g. "laptop stand". Judge only from the title.\n\n${lines}`,
-          }],
-        } as unknown as Anthropic.MessageCreateParamsNonStreaming,
-        { timeout: 20_000 },
-      );
-      const tool = res.content.find((b) => b.type === "tool_use") as { input?: { results?: { index: number; score: number; missing: string[] }[] } } | undefined;
-      const results = tool?.input?.results;
-      if (!Array.isArray(results)) throw new Error("no scores");
-      return listings.map((l, i) => {
-        const r = results.find((x) => x.index === i);
-        return { ...l, score: Math.max(0, Math.min(100, Math.round(Number(r?.score ?? 0)))), missing: (Array.isArray(r?.missing) ? r!.missing : []).map(String).slice(0, 3) };
-      });
-    } catch (err) {
-      console.warn("[apify] scoring failed, using keyword overlap:", (err as Error).message);
-    }
-  }
-  const words = (t: string) => new Set(t.toLowerCase().match(/[a-z]{3,}/g) ?? []);
-  const want = words(`${matchQuery(spec)} ${spec.title}`);
-  return listings.map((l) => {
-    const have = words(l.title);
-    const hit = [...want].filter((w) => have.has(w)).length;
-    return { ...l, score: Math.round((hit / Math.max(1, want.size)) * 90), missing: [] };
-  });
 }
 
 /**
