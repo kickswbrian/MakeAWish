@@ -726,24 +726,24 @@ p { margin: 0; }
 .v2-intro.swipe { background: transparent; }
 .v2-words { display: flex; flex-direction: column; align-items: center; font-weight: 800; letter-spacing: -0.05em; font-size: clamp(56px, 13vw, 132px); line-height: 1.04; text-align: center; padding: 0 16px; }
 /* "Want it?" starts big off to the right and swipes in; "Wish it." then magics in letter by letter. */
-.v2-w1 { color: var(--ink); animation: v2swipeIn .75s cubic-bezier(.16, 1, .3, 1) .1s both; }
+.v2-w1 { color: var(--ink); will-change: transform, opacity; animation: v2swipeIn .75s cubic-bezier(.16, 1, .3, 1) .1s both; }
 .v2-w2 { display: inline-flex; }
-.v2-l { display: inline-block; animation: v2magicIn .7s cubic-bezier(.2, .9, .3, 1.2) both; animation-delay: calc(.95s + var(--i) * 70ms); }
+.v2-l { display: inline-block; will-change: transform, opacity; animation: v2magicIn .7s cubic-bezier(.2, .9, .3, 1.2) both; animation-delay: calc(.95s + var(--i) * 70ms); }
 .v2-intro.swipe .v2-words { animation: v2swipe .55s cubic-bezier(.7, 0, .84, 0) both; }
-@keyframes v2swipeIn { from { opacity: 0; transform: translateX(70vw) scale(1.7); filter: blur(6px); } 40% { opacity: 1; } to { opacity: 1; transform: none; filter: none; } }
+@keyframes v2swipeIn { from { opacity: 0; transform: translateX(70vw) scale(1.7); } 40% { opacity: 1; } to { opacity: 1; transform: none; } }
 @keyframes v2magicIn {
-  0% { opacity: 0; transform: translateY(.25em) scale(.4); filter: blur(10px); text-shadow: 0 0 0 transparent; }
-  60% { opacity: 1; transform: translateY(-.04em) scale(1.08); filter: blur(0); text-shadow: 0 0 .35em rgba(242, 216, 138, .9); }
-  100% { opacity: 1; transform: none; filter: none; text-shadow: 0 0 0 transparent; }
+  0% { opacity: 0; transform: translateY(.25em) scale(.4); }
+  60% { opacity: 1; transform: translateY(-.04em) scale(1.08); }
+  100% { opacity: 1; transform: none; }
 }
-@keyframes v2swipe { 0% { transform: none; } 30% { transform: scale(1.3); opacity: 1; filter: none; } 100% { transform: translateX(-140vw) scale(2.8); opacity: 0; filter: blur(14px); } }
+@keyframes v2swipe { 0% { transform: none; } 30% { transform: scale(1.3); opacity: 1; } 100% { transform: translateX(-140vw) scale(2.8); opacity: 0; } }
 
 .v2-ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 5; }
 .v2-ring-track { fill: none; stroke: rgba(197, 216, 207, .4); stroke-width: .7; animation: fadeOnly .5s ease both; }
 .v2-ring-spin { transform-origin: 50px 50px; animation: v2ringspin 2.2s linear infinite; }
-.v2-ring-draw { fill: none; stroke: url(#v2ringg); stroke-width: 1.7; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; animation: v2draw 1s cubic-bezier(.65, 0, .35, 1) .05s forwards; filter: drop-shadow(0 0 2.5px rgba(242, 216, 138, .9)); }
+.v2-ring-draw { fill: none; stroke: url(#v2ringg); stroke-width: 1.7; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; animation: v2draw 1s cubic-bezier(.65, 0, .35, 1) .05s forwards; }
 .v2-ring-headg { transform-origin: 50px 50px; animation: v2head 1s cubic-bezier(.65, 0, .35, 1) .05s both; }
-.v2-ring-head { fill: #fff; filter: drop-shadow(0 0 3px #F2D88A) drop-shadow(0 0 6px #F4A8C8); }
+.v2-ring-head { fill: #fff; stroke: #E9C46A; stroke-width: .6; }
 .v2-ring.out { animation: v2ringOut .6s ease-out both; }
 @keyframes v2ringspin { from { transform: rotate(-90deg); } to { transform: rotate(270deg); } }
 @keyframes v2draw { to { stroke-dashoffset: 0; } }
@@ -759,6 +759,7 @@ p { margin: 0; }
 .v2-phase-bubble > :not(.orb-slot):not(.glows) { opacity: 0; visibility: hidden; pointer-events: none; }
 .v2-phase-done > .hdr, .v2-phase-done > .title-xl, .v2-phase-done > .title-product, .v2-phase-done > .speech,
 .v2-phase-done > .v2-captions, .v2-phase-done > .dock, .v2-phase-done > .wavebox { transition: opacity .6s ease, visibility .6s; }
+.v2-phase-wait .glow, .v2-phase-words .glow, .v2-phase-swipe .glow, .v2-phase-ring .glow, .v2-phase-bubble .glow { animation-play-state: paused; }
 .v2 .bwrap { transition: opacity .5s ease, transform .9s var(--spring); }
 .v2-phase-wait .bwrap, .v2-phase-words .bwrap, .v2-phase-swipe .bwrap, .v2-phase-ring .bwrap { opacity: 0; transform: scale(.35); }
 
@@ -774,8 +775,9 @@ p { margin: 0; }
 /* One centered stack: the bubble, the voice waves under it, then the captions. */
 .app.v2-landing {
   max-width: none;
-  --bubble: clamp(240px, min(84vw, calc(100dvh - 250px)), 720px);
-  --stack-top: max(20px, calc((100dvh - var(--bubble) - 168px) / 2));
+  --bubble: clamp(240px, min(78vw, calc(100dvh - 360px)), 620px);
+  /* Weighted to the bottom of the screen: as much room as fits above, but never more than 22% of it. */
+  --stack-top: max(16px, min(22dvh, calc(100dvh - var(--bubble) - 196px - 5dvh)));
 }
 .v2-landing .orb-slot {
   top: calc(var(--stack-top) + var(--bubble) / 2); transform: translate(-50%, -50%); animation: v2float 6s ease-in-out infinite;
@@ -793,9 +795,13 @@ p { margin: 0; }
   min-height: 72px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px;
   text-align: center; pointer-events: none; animation: fadeOnly .8s ease both;
 }
-.v2-captions .line { max-width: 680px; }
+.v2-captions .line {
+  max-width: 920px; font-family: "Fraunces", Georgia, serif; font-optical-sizing: auto; font-weight: 700;
+  font-size: clamp(28px, 3.3vw, 42px); line-height: 1.18; letter-spacing: -0.012em;
+}
+.v2-captions .line.interim { font-weight: 600; }
 .v2-captions .note-row { pointer-events: auto; }
-.v2-prompt { color: var(--ink-55); font-weight: 500; }
+.v2-prompt { color: var(--ink-55); }
 .v2-landing .typebox {
   position: absolute; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); transform: translateX(-50%);
   width: min(560px, calc(100% - 32px)); margin: 0; z-index: 7; animation: fadeIn .35s ease both;

@@ -409,6 +409,8 @@ export interface StageProps {
   onGl?: (gl: THREE.WebGLRenderer) => void;
   /** A product has been drawn for the first time (see ProductView). */
   onShown?: (productId: string) => void;
+  /** Stop rendering while the canvas is hidden (UI variation 2's intro plays over it). */
+  paused?: boolean;
 }
 
 /**
@@ -444,7 +446,7 @@ export default function Stage(props: StageProps) {
 function StageCanvas({
   product, framing = "bubble", interactive = true, preload, transparent = false, pedestal = true, effects = true, animate = true,
   celebrateKey = 0, selectedId = null, registry: reg, gizmo = false, focusKey = 0, anchor = null, explode = 0, onHit, onHover, onMiss, onTransform, onGl, onShown,
-  onRestore,
+  paused = false, onRestore,
 }: StageProps & { onRestore: () => void }) {
   const registry = useMemo(() => reg ?? new PartRegistry(), [reg]);
   const hasProduct = !!product.parts[product.rootId];
@@ -461,6 +463,7 @@ function StageCanvas({
   const [lowPower, setLowPower] = useState(false);
   return (
     <Canvas
+      frameloop={paused ? "never" : "always"}
       shadows="soft"
       camera={{ position: [-1.5, 1.75, FRAMES[framing].d * 0.9], fov: 34, near: 0.05, far: 200 }}
       dpr={dpr}

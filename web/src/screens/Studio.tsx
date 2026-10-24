@@ -740,6 +740,9 @@ export default function Studio() {
   const settled = useFramesSettled();
   const [phase, skipIntro] = useIntroPhase(introKey, v2, settled);
   introPlaying.current = v2 && phase !== "done";
+  // While the words and the ring play, nothing 3D is visible: stop both canvases so the intro gets the
+  // whole GPU. (They do render during "wait", so their shaders are built before the bubble appears.)
+  const introHidden = v2 && (phase === "words" || phase === "swipe" || phase === "ring");
   // The wish screen is just the bubble until there is a product; then the usual editor takes over.
   const v2Landing = v2 && mode === "voice" && !hasProduct;
   useEffect(() => {
@@ -819,9 +822,10 @@ export default function Studio() {
             onTransform={(id, tr) => applyLocal([{ op: "update", id, changes: { transform: tr } }])}
             onGl={onGl}
             onShown={setShownId}
+            paused={introHidden}
           />
         </Bubble>
-        {v2 && <Bubble3D revealed={phase === "bubble" || phase === "done"} />}
+        {v2 && <Bubble3D revealed={phase === "bubble" || phase === "done"} paused={introHidden} />}
         {v2Landing && phase === "done" && (
           <button className="v2-tap" onClick={talk} aria-label={voice.active ? "Stop talking to the genie" : "Talk to the genie"} />
         )}
