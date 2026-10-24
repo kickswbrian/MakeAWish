@@ -6,7 +6,9 @@ import Stage from "../three/Stage.tsx";
 import { api } from "../lib/api.ts";
 import { useRoom, useSocketEvent } from "../lib/socket.ts";
 import { fanfare } from "../lib/sound.ts";
-import { TopBar } from "../ui/Chrome.tsx";
+import { Glows } from "../ui/Chrome.tsx";
+import { Bubble, BubbleSparks } from "../ui/Bubble.tsx";
+import { BackIcon } from "../ui/Icons.tsx";
 import { CampaignPanel, Celebration } from "../ui/Campaign.tsx";
 
 /** Laptop view of one campaign: product, live demand bar, QR. Opened from the wishlist. */
@@ -46,25 +48,27 @@ export default function CampaignRoute() {
   }, []);
 
   return (
-    <>
-      <div className="stage-bg">
-        {c && <Stage spec={c.spec} heroUrl={c.modelUrl} framing="side" celebrateKey={celebrate} onGl={onGl} />}
-      </div>
-      {confetti && <Celebration onDone={() => setConfetti(false)} />}
-      <div className="overlay">
-        <TopBar right={<Link to="/wishlist" className="icon-btn" aria-label="Wishlist">☰</Link>} />
-        {missing && (
-          <div className="wishlist">
-            <div className="empty-magic glass">That wish has drifted away. <Link to="/">Make a new one</Link>.</div>
-          </div>
-        )}
-        {c && (
-          <div className="campaign-layout">
-            <div className="campaign-spacer" />
-            <CampaignPanel c={c} snapshot={snapshot} />
-          </div>
-        )}
-      </div>
-    </>
+    <div className="app scrolls wide mode-campaign">
+      <Glows />
+      {confetti && <Celebration image={snapshot} line={c ? `Funded · ${c.captured || c.held} of ${c.targetBackers}` : undefined} onDone={() => setConfetti(false)} />}
+      {c && (
+        <div className="orb-slot">
+          <BubbleSparks />
+          <Bubble>
+            <Stage spec={c.spec} heroUrl={c.modelUrl} framing="bubble" transparent orb={false} pedestal={c.spec.category !== "generic" || !!c.modelUrl} celebrateKey={celebrate} onGl={onGl} />
+          </Bubble>
+        </div>
+      )}
+      <header className="hdr">
+        <Link to="/wishlist" className="cbtn" aria-label="Back to your wishes"><BackIcon /></Link>
+      </header>
+      {missing && <div className="empty-magic" style={{ marginTop: 24 }}>That wish has drifted away. <Link to="/">Make a new one</Link>.</div>}
+      {c && (
+        <div className="campaign-body">
+          <div className="orb-space" />
+          <CampaignPanel c={c} snapshot={snapshot} />
+        </div>
+      )}
+    </div>
   );
 }

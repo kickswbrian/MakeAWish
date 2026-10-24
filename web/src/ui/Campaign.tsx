@@ -3,6 +3,8 @@ import { QRCodeSVG } from "qrcode.react";
 import { colorName, describeSpec, type Campaign } from "@wishit/shared";
 import { api, getConfig, money } from "../lib/api.ts";
 import { chime } from "../lib/sound.ts";
+import { Bubble } from "./Bubble.tsx";
+import { Sparkle } from "./Icons.tsx";
 
 /** "X of N" with a star that flies into the bar on each new held pledge. */
 export function DemandBar({ c, small }: { c: Campaign; small?: boolean }) {
@@ -16,7 +18,7 @@ export function DemandBar({ c, small }: { c: Campaign; small?: boolean }) {
   useEffect(() => {
     if (count > prev.current && bar.current && !small) {
       const r = bar.current.getBoundingClientRect();
-      const tx = r.left + (r.width * pct) / 100 - 17;
+      const tx = r.left + (r.width * pct) / 100 - 15;
       const ty = r.top - 14;
       const id = Date.now();
       setStars((s) => [...s, { id, fx: window.innerWidth / 2, fy: window.innerHeight - 60, tx, ty }]);
@@ -39,17 +41,18 @@ export function DemandBar({ c, small }: { c: Campaign; small?: boolean }) {
           <span className="price-line">{c.status === "funded" ? "Funded" : `${Math.round(pct)}%`}</span>
         </div>
       )}
-      <div ref={bar} key={pulse} className={`bar ${small ? "sm" : ""} ${pulse ? "pulse" : ""}`}>
-        <div className="bar-fill" style={{ width: `${pct}%` }} />
+      <div ref={bar} key={pulse} className={`track ${small ? "" : "lg"} ${pulse ? "pulse" : ""}`}>
+        <div className="fill" style={{ width: `${pct}%` }} />
+        {pulse > 0 && <span className="landflash" style={{ left: `${pct}%` }} />}
       </div>
       {stars.map((s) => (
-        <span
+        <Sparkle
           key={s.id}
+          size={30}
+          color="#E9C46A"
           className="flying-star"
-          style={{ left: 0, top: 0, ["--fx" as string]: `${s.fx}px`, ["--fy" as string]: `${s.fy}px`, ["--tx" as string]: `${s.tx}px`, ["--ty" as string]: `${s.ty}px` }}
-        >
-          ★
-        </span>
+          style={{ ["--fx" as string]: `${s.fx}px`, ["--fy" as string]: `${s.fy}px`, ["--tx" as string]: `${s.tx}px`, ["--ty" as string]: `${s.ty}px` }}
+        />
       ))}
     </div>
   );
@@ -61,7 +64,7 @@ export function Countdown({ to, status }: { to: number; status: Campaign["status
     const t = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(t);
   }, []);
-  if (status === "funded") return <span className="countdown">Wish granted ✨</span>;
+  if (status === "funded") return <span className="countdown">Wish granted</span>;
   if (status === "capturing") return <span className="countdown">Capturing holds…</span>;
   if (status === "expired" || status === "releasing") return <span className="countdown">Deadline passed</span>;
   const ms = Math.max(0, to - now);
@@ -93,10 +96,11 @@ export function CampaignPanel({ c, snapshot }: { c: Campaign; snapshot?: string 
   if (c.status === "funded") return <PurchaseOrder c={c} snapshot={snapshot} />;
 
   return (
-    <div className="campaign-panel glass">
+    <div className="panel">
       <div>
-        <div className="chip ok" style={{ marginBottom: 10 }}>
-          <span className={`status-pill ${c.status}`}>{c.status}</span> {c.paymentMode === "stripe" ? "Stripe test mode" : "Simulated payments"}
+        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
+          <span className={`status-pill ${c.status}`}>{c.status}</span>
+          <span className="note">{c.paymentMode === "stripe" ? "Stripe test mode" : "Simulated payments"}</span>
         </div>
         <h2>{c.name}</h2>
         <div className="price-line">
@@ -108,17 +112,17 @@ export function CampaignPanel({ c, snapshot }: { c: Campaign; snapshot?: string 
       {c.status === "funding" && (
         <div className="qr-box">
           <a className="qr" href={url} target="_blank" rel="noreferrer">
-            <QRCodeSVG value={url} size={148} bgColor="#ffffff" fgColor="#1a1033" level="M" />
+            <QRCodeSVG value={url} size={148} bgColor="#ffffff" fgColor="#182825" level="M" />
           </a>
           <div>
-            <div className="price-line" style={{ marginBottom: 6 }}>Scan to back this wish</div>
+            <div style={{ marginBottom: 6, fontWeight: 600, fontSize: 17 }}>Scan to back this wish</div>
             <div className="short-url">{url.replace(/^https?:\/\//, "")}</div>
             {local && <div className="fineprint" style={{ marginTop: 6 }}>Set PUBLIC_URL (or open this page via your LAN IP) so phones can reach it.</div>}
           </div>
         </div>
       )}
       {(c.status === "expired" || c.status === "releasing") && (
-        <div className="pledge-msg info">
+        <div className="msg info">
           Missed the goal. {c.status === "expired" ? "Every hold was released" : "Releasing every hold"}, and nobody paid a cent.
         </div>
       )}
@@ -136,7 +140,7 @@ export function CampaignPanel({ c, snapshot }: { c: Campaign; snapshot?: string 
       )}
       {admin && c.status === "funding" && (
         <button
-          className="btn"
+          className="pill ghost"
           disabled={expiring}
           onClick={() => {
             setExpiring(true);
@@ -164,7 +168,7 @@ export function PurchaseOrder({ c, snapshot }: { c: Campaign; snapshot?: string 
   ];
   const captured = c.pledges.filter((p) => p.status === "captured");
   return (
-    <div className="po glass">
+    <div className="po">
       <div className="po-head">
         <div>
           <div className="po-num">PO-{c.id.toUpperCase()}</div>
@@ -221,62 +225,39 @@ export function PurchaseOrder({ c, snapshot }: { c: Campaign; snapshot?: string 
   );
 }
 
-/** Full-screen "Wish granted": confetti, golden glow. */
-export function Celebration({ onDone }: { onDone?: () => void }) {
-  const canvas = useRef<HTMLCanvasElement>(null);
+const PARTY = ["#F2D88A", "#F4A8C8", "#E9C46A", "#F9C6DC", "#C5D8CF"];
+const RISING = Array.from({ length: 26 }, (_, i) => ({
+  cls: i % 2 ? "rb rbA" : "rb rbB", x: 3 + ((i * 37) % 88), s: 14 + ((i * 17) % 34), t: 2500 + ((i * 290) % 1100), d: (i * 130) % 1700, c: PARTY[i % 4],
+}));
+const PARTY_SPARKS = [[10, 20, 16, 0, 0], [85, 17, 20, 1, 0.6], [15, 50, 13, 2, 1.2], [82, 47, 17, 3, 0.3], [49, 19, 11, 0, 1.8], [6, 36, 10, 1, 0.9], [90, 34, 11, 2, 1.5], [51, 73, 14, 3, 2.1]];
+
+/** Full-screen "Wish granted": bubbles rise and pop into sparkles around the wish. */
+export function Celebration({ onDone, image, line }: { onDone?: () => void; image?: string | null; line?: string }) {
   const done = useRef(onDone);
   done.current = onDone;
   useEffect(() => {
-    const cv = canvas.current!;
-    const ctx = cv.getContext("2d")!;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    cv.width = window.innerWidth * dpr;
-    cv.height = window.innerHeight * dpr;
-    ctx.scale(dpr, dpr);
-    const colors = ["#f2c96b", "#98e2c6", "#b9a3f0", "#ff8fb1", "#ffffff"];
-    const parts = Array.from({ length: 220 }, () => ({
-      x: window.innerWidth / 2 + (Math.random() - 0.5) * 200,
-      y: window.innerHeight * 0.55,
-      vx: (Math.random() - 0.5) * 16,
-      vy: -8 - Math.random() * 14,
-      r: Math.random() * Math.PI,
-      vr: (Math.random() - 0.5) * 0.4,
-      w: 6 + Math.random() * 8,
-      h: 4 + Math.random() * 6,
-      c: colors[Math.floor(Math.random() * colors.length)],
-      star: Math.random() < 0.25,
-    }));
-    let raf = 0;
-    const started = performance.now();
-    const frame = (t: number) => {
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      for (const p of parts) {
-        p.vy += 0.35;
-        p.vx *= 0.99;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.r += p.vr;
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.r);
-        ctx.fillStyle = p.c;
-        if (p.star) {
-          ctx.font = `${p.w * 2}px serif`;
-          ctx.fillText("★", 0, 0);
-        } else ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-        ctx.restore();
-      }
-      if (t - started < 4200) raf = requestAnimationFrame(frame);
-      else done.current?.();
-    };
-    raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+    const t = setTimeout(() => done.current?.(), 5000);
+    return () => clearTimeout(t);
   }, []);
   return (
-    <div className="celebrate">
-      <div className="glow" />
-      <canvas ref={canvas} />
-      <h1>Wish granted</h1>
+    <div className="party" aria-live="polite">
+      <div className="pscrim" />
+      <div className="party-in">
+        {RISING.map((b, i) => (
+          <div key={i} className={b.cls} style={{ left: `${b.x}%`, width: b.s, height: b.s, animationDuration: `${b.t}ms`, animationDelay: `${b.d}ms` }}>
+            <span className="rbg" style={{ animationDuration: `${b.t}ms`, animationDelay: `${b.d}ms` }} />
+            <Sparkle className="rbs" color={b.c} style={{ animationDuration: `${b.t}ms`, animationDelay: `${b.d}ms` }} />
+          </div>
+        ))}
+        {PARTY_SPARKS.map(([x, y, s, c, d], i) => (
+          <Sparkle key={i} className="spk" color={PARTY[c]} style={{ left: `${x}%`, top: `${y}%`, width: s, height: s, animationDelay: `${d}s` }} />
+        ))}
+        <div className="bigwrap">
+          <Bubble state="speaking">{image ? <img src={image} alt="" /> : null}</Bubble>
+        </div>
+        <h2 className="granted-title">Wish granted</h2>
+        {line && <div className="granted-sub"><span>{line}</span></div>}
+      </div>
     </div>
   );
 }

@@ -6,22 +6,25 @@ import {
   type Campaign, type CampaignUpdatedPayload, type MatchesReadyPayload, type MatchesResponse, type MeshyReadyPayload,
   type ProductSpec, type SpecUpdatedPayload, type WishDTO,
 } from "@wishit/shared";
-import Stage, { type Framing } from "../three/Stage.tsx";
+import Stage from "../three/Stage.tsx";
 import { api, getConfig } from "../lib/api.ts";
 import { getSocket, useRoom, useSocketEvent } from "../lib/socket.ts";
 import { fanfare, setSfxMuted, sparkle, startHum, stopHum } from "../lib/sound.ts";
-import { isSaved, saveWish, unsaveWish } from "../lib/wishlist.ts";
+import { isSaved, loadWishlist, saveWish, unsaveWish } from "../lib/wishlist.ts";
 import { useVoice } from "../voice/useVoice.ts";
-import { Captions, Heart, TopBar } from "../ui/Chrome.tsx";
+import { Glows, Heart, SpeechLine } from "../ui/Chrome.tsx";
+import { Bubble, BubbleSparks } from "../ui/Bubble.tsx";
+import { Waveform } from "../ui/Waveform.tsx";
+import { BackIcon, CategoryIcon, ChevronDown, HeartIcon, KeyboardIcon, MicIcon, MuteIcon, Sparkle } from "../ui/Icons.tsx";
 import { LaunchSheet, MatchGrid, summarize } from "../ui/Results.tsx";
 import { CampaignPanel, Celebration } from "../ui/Campaign.tsx";
 
 type Mode = "voice" | "results" | "campaign";
 
 const EXAMPLES = [
-  "A backpack with a built-in laptop stand",
-  "A bike helmet with built-in headphones",
-  "A midi dress that turns into a skirt",
+  { label: "Laptop-stand backpack", say: "A backpack with a built-in laptop stand" },
+  { label: "Headphone helmet", say: "A bike helmet with built-in headphones" },
+  { label: "A dress that turns into a skirt", say: "A midi dress that turns into a skirt" },
 ];
 
 /** Screens 1 to 3 of the wish, on one canvas: talk to the orb, see what exists, launch and track. */
@@ -39,7 +42,8 @@ export default function Studio() {
   const [saved, setSaved] = useState(false);
   const [typing, setTyping] = useState(false);
   const [text, setText] = useState("");
-  const [example, setExample] = useState(0);
+  const [materializeKey, setMaterializeKey] = useState(0);
+  const [reshapeKey, setReshapeKey] = useState(0);
   const [celebrate, setCelebrate] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
   const [snapshot, setSnapshot] = useState<string | null>(null);
@@ -94,7 +98,10 @@ export default function Studio() {
     if (p.wishId !== wishId) return;
     setSpec(p.spec);
     setPreview(null);
-    if (p.changed.length) sparkle();
+    if (p.changed.length) {
+      sparkle();
+      if (p.spec.category !== "generic" && !p.changed.includes("category")) setReshapeKey((k) => k + 1);
+    }
     if (voice.timing.current && !voice.timing.current.patch) voice.timing.current.patch = performance.now();
   });
   useSocketEvent<MeshyReadyPayload>(EVENTS.meshyReady, (p) => {
@@ -151,13 +158,6 @@ export default function Studio() {
   voiceRef.current = voice;
 
   useEffect(() => setSfxMuted(voice.muted), [voice.muted]);
-
-  // Example wishes cycle gently while idle.
-  useEffect(() => {
-    if (mode !== "voice") return;
-    const t = setInterval(() => setExample((e) => (e + 1) % EXAMPLES.length), 3500);
-    return () => clearInterval(t);
-  }, [mode]);
 
   // ---------- Lock, results, campaign ----------
 
@@ -225,7 +225,6 @@ export default function Studio() {
   }, [debug]);
 
   const shownSpec = preview ?? spec;
-  const framing: Framing = mode === "voice" ? (shownSpec.category === "generic" ? "voice" : "product") : mode === "results" ? "top" : "side";
   const result = matches && !matches.pending ? summarize(matches) : null;
   const toggleSave = () => {
     if (!wishId) return;
@@ -237,6 +236,15 @@ export default function Studio() {
     gl.current = r;
   }, []);
   const hasProduct = spec.category !== "generic" || !!spec.name;
+  const showsModel = shownSpec.category !== "generic" || !!heroUrl;
+
+  // The sparkle spiral plays the moment a product first takes shape in the bubble.
+  const hadModel = useRef(showsModel);
+  useEffect(() => {
+    if (showsModel && !hadModel.current) setMaterializeKey((k) => k + 1);
+    hadModel.current = showsModel;
+  }, [showsModel]);
+
   const status = useMemo(() => {
     const chips: { text: string; cls: string }[] = [];
     if (voice.micStatus === "reconnecting") chips.push({ text: "Mic reconnecting…", cls: "warn" });
@@ -249,137 +257,174 @@ export default function Studio() {
     return chips;
   }, [voice.micStatus, voice.ttsFailed, voice.mode, brain, matches?.sample, mode]);
 
+  const talk = () => {
+    if (!voice.active) void voice.start();
+    else if (voice.state === "speaking") voice.stopSpeaking();
+    else voice.end();
+  };
+  const talkText = !voice.active ? "Talk" : voice.muted ? "Muted" : voice.state === "listening" ? "Listening" : voice.state === "thinking" ? "Thinking" : voice.state === "speaking" ? "Tap to interrupt" : "Talk";
+  const stateLabel = { idle: "Ready", listening: "Listening", thinking: "Genie is searching", speaking: "Genie is speaking" }[voice.state];
+  const slot = launchOpen ? "detail" : mode;
+  const wishCount = loadWishlist().length;
+
   return (
-    <>
-      <div className="stage-bg">
-        <Stage spec={shownSpec} heroUrl={heroUrl} framing={framing} celebrateKey={celebrate} onGl={onGl} />
-      </div>
-      {showConfetti && <Celebration onDone={() => setShowConfetti(false)} />}
+    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""}`}>
+      <Glows />
+      {showConfetti && <Celebration image={snapshot} line={campaign ? `Funded · ${campaign.captured || campaign.held} of ${campaign.targetBackers}` : undefined} onDone={() => setShowConfetti(false)} />}
       {debug && perf && <div className="perf">{perf}</div>}
 
-      <div className="overlay">
-        <TopBar
-          right={
-            <>
-              {mode !== "voice" && <Heart on={saved} onClick={toggleSave} />}
-              <Link to="/wishlist" className="icon-btn" title="Wishlist" aria-label="Wishlist">
-                {mode === "voice" ? "♡" : "☰"}
-              </Link>
-            </>
-          }
-        />
-
-        {mode === "voice" && (
-          <>
-            <div className="voice-center">
-              {!hasProduct && !voice.captions.length && !voice.interim && (
-                <div className="examples">
-                  {EXAMPLES.map((e, i) => (
-                    <button key={e} className={`example ${i === example ? "active" : ""}`} style={{ animationDelay: `${i * 120}ms` }} onClick={() => voice.submit(e)}>
-                      “{e}”
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="state-label">{voice.state === "idle" ? (voice.active ? "muted" : "tap the mic and make a wish") : voice.state}</div>
-            <Captions captions={voice.captions} interim={voice.interim} />
-          </>
-        )}
-
-        {mode === "results" && (
-          <div className="results-wrap">
-            <div className="results-head">
-              <h2>{spec.name ?? "Your wish"}</h2>
-              <span className="sub">
-                {!result ? "Checking if it already exists…" : result.exists ? "It already exists!" : "Does it exist? Not quite."}
-              </span>
-              {matches && !matches.pending && matches.searched < matches.total && (
-                <span className="chip warn">Searched {matches.searched} of {matches.total} stores</span>
-              )}
-            </div>
-            <MatchGrid res={matches} category={spec.category} />
-            {result && !result.exists && (
-              <button className="btn primary" onClick={() => setLaunchOpen(true)}>
-                ✨ Wish it into existence
-              </button>
-            )}
-            {result?.exists && (
-              <button className="btn" onClick={() => setLaunchOpen(true)}>
-                Still wish for my exact version
-              </button>
-            )}
-            <Captions captions={voice.captions.filter((c) => c.who === "genie").slice(-1)} interim={voice.interim} />
-          </div>
-        )}
-
-        {mode === "campaign" && campaign && (
-          <div className="campaign-layout">
-            <div className="campaign-spacer" />
-            <CampaignPanel c={campaign} snapshot={snapshot} />
-          </div>
-        )}
-
-        {(typing || voice.mode === "text") && mode !== "campaign" && (
-          <form
-            className="typebox"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!text.trim()) return;
-              voice.submit(text.trim());
-              setText("");
-            }}
-          >
-            <input autoFocus placeholder="Type your wish…" value={text} onChange={(e) => setText(e.target.value)} />
-            <button className="btn" type="submit">Send</button>
-          </form>
-        )}
-
-        {mode !== "campaign" && (
-          <div className="controls">
-            <button className={`icon-btn ${voice.muted ? "on" : ""}`} onClick={voice.toggleMute} title={voice.muted ? "Unmute" : "Mute"} aria-label="Mute">
-              {voice.muted ? "🔇" : "🎙"}
-            </button>
-            <button
-              className={`icon-btn big ${voice.active ? "live" : ""}`}
-              onClick={() => (voice.active ? voice.stopSpeaking() : void voice.start())}
-              title={voice.active ? "Listening (tap to interrupt the genie)" : "Tap to talk"}
-              aria-label="Microphone"
-            >
-              {voice.active ? "◉" : "🎤"}
-            </button>
-            <button className={`icon-btn ${typing ? "on" : ""}`} onClick={() => setTyping((t) => !t)} title="Type instead" aria-label="Type instead">
-              ⌨
-            </button>
-            <button className="icon-btn danger" onClick={voice.end} title="End" aria-label="End conversation">
-              ✕
-            </button>
-            {mode === "voice" && hasProduct && (
-              <button className="btn primary wish-btn" onClick={() => void lock()}>
-                ✨ Wish it
-              </button>
-            )}
-          </div>
-        )}
+      <div className="orb-slot">
+        <BubbleSparks />
+        <Bubble state={voice.state} robot={!showsModel} materializeKey={materializeKey} reshapeKey={reshapeKey}>
+          <Stage
+            spec={shownSpec}
+            heroUrl={heroUrl}
+            framing="bubble"
+            transparent
+            orb={false}
+            pedestal={showsModel}
+            celebrateKey={celebrate}
+            onGl={onGl}
+          />
+        </Bubble>
       </div>
 
-      {voice.voices.length > 1 && mode !== "campaign" && (
-        <div className="voice-picker">
-          <select value={voice.voiceId} onChange={(e) => voice.setVoiceId(e.target.value)} aria-label="Genie voice">
-            {voice.voices.map((v) => (
-              <option key={v.id} value={v.id}>{v.name}</option>
-            ))}
-          </select>
-        </div>
+      {mode === "voice" && (
+        <>
+          <header className="hdr">
+            <Link to="/wishlist" className="cbtn" aria-label="Back to your wishes"><BackIcon /></Link>
+            <div className="genie-pick">
+              <Sparkle size={16} color="#C5D8CF" />
+              <span>Genie</span>
+              {voice.voices.length > 1 && (
+                <>
+                  <ChevronDown />
+                  <select value={voice.voiceId} onChange={(e) => voice.setVoiceId(e.target.value)} aria-label="Genie voice">
+                    {voice.voices.map((v) => (
+                      <option key={v.id} value={v.id}>{v.name}</option>
+                    ))}
+                  </select>
+                </>
+              )}
+            </div>
+            <Link to="/wishlist" className="cbtn" aria-label={`Your wishes, ${wishCount} saved`}>
+              <HeartIcon filled />
+              {wishCount > 0 && <span className="count">{wishCount}</span>}
+            </Link>
+          </header>
+          <h1 className="title-xl center title-gap">Make a wish</h1>
+          <div className="orb-space" />
+          <Waveform label={stateLabel} />
+          <div className="speech">
+            {!hasProduct && !voice.captions.length && !voice.interim ? (
+              <div className="speech-chips">
+                {EXAMPLES.map((e, i) => (
+                  <button key={e.label} className="chip float" style={{ animationDelay: `${-i * 1.6}s` }} onClick={() => voice.submit(e.say)}>
+                    {e.label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <SpeechLine captions={voice.captions} interim={voice.interim} />
+            )}
+            {status.length > 0 && (
+              <div className="note-row">
+                {status.map((s) => <span key={s.text} className={`note ${s.cls}`}>{s.text}</span>)}
+              </div>
+            )}
+          </div>
+          {hasProduct && (
+            <button className="pill dock-pill" onClick={() => void lock()}>
+              <Sparkle size={18} color="#182825" /> See matches
+            </button>
+          )}
+          {(typing || voice.mode === "text") && (
+            <form
+              className="typebox"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!text.trim()) return;
+                voice.submit(text.trim());
+                setText("");
+              }}
+            >
+              <input autoFocus aria-label="Type your wish" placeholder="Type your wish…" value={text} onChange={(e) => setText(e.target.value)} />
+              <button className="pill" type="submit">Send</button>
+            </form>
+          )}
+          <div className="dock">
+            <button className={`cbtn ${typing ? "on" : ""}`} aria-pressed={typing} aria-label="Type your wish instead" onClick={() => setTyping((t) => !t)}>
+              <KeyboardIcon />
+            </button>
+            <button className="talk" onClick={talk} aria-label={voice.active ? "Stop talking to the genie" : "Talk to the genie"}>
+              {voice.state === "listening" && <span className="micring" />}
+              <span className="micdot"><MicIcon /></span>
+              <span>{talkText}</span>
+            </button>
+            <button className={`cbtn ${voice.muted ? "on" : ""}`} aria-pressed={voice.muted} aria-label={voice.muted ? "Unmute microphone" : "Mute microphone"} onClick={voice.toggleMute}>
+              <MuteIcon muted={voice.muted} />
+            </button>
+          </div>
+        </>
       )}
-      {status.length > 0 && mode !== "campaign" && (
-        <div className="status-chips">
-          {status.map((s) => (
-            <span key={s.text} className={`chip ${s.cls}`}>{s.text}</span>
-          ))}
-        </div>
+
+      {mode === "results" && (
+        <>
+          <header className="hdr">
+            <button className="cbtn" aria-label="Back to the genie" onClick={() => setMode("voice")}><BackIcon /></button>
+            <Heart on={saved} onClick={toggleSave} />
+          </header>
+          <div className="res-head">
+            <h1 className="title-l">Matches</h1>
+            <button className="mywish" onClick={() => setLaunchOpen(true)} aria-label={`Your wish: ${spec.name ?? "untitled"}`}>
+              <span className="mb" style={{ width: 42, height: 42 }}><CategoryIcon category={spec.category} color={spec.color} size={26} /></span>
+              <span>{spec.name ?? "My wish"}</span>
+            </button>
+          </div>
+          <p className="res-sub">
+            {!result ? "Checking if it already exists…" : result.exists ? "It already exists!" : "Not quite. Nobody has made this yet."}
+            {matches && !matches.pending && matches.searched < matches.total && <span className="note warn">Searched {matches.searched} of {matches.total} stores</span>}
+            {status.filter((s) => s.cls === "warn").map((s) => <span key={s.text} className="note warn">{s.text}</span>)}
+          </p>
+          <MatchGrid res={matches} category={spec.category} color={spec.color} />
+          <div className="bottom-fade" />
+          {result && (
+            <div className="bottom-cta">
+              <button className="pill big" onClick={() => setLaunchOpen(true)}>
+                <span>{result.exists ? "Still wish for my exact version" : "Wish it into existence"}</span>
+                <span className="pill-orb" aria-hidden="true"><Sparkle size={20} color="#F2D88A" /></span>
+              </button>
+            </div>
+          )}
+        </>
       )}
-      {launchOpen && <LaunchSheet spec={spec} onClose={() => setLaunchOpen(false)} onLaunch={launch} />}
-    </>
+
+      {mode === "campaign" && campaign && (
+        <>
+          <header className="hdr">
+            <Link to="/wishlist" className="cbtn" aria-label="Back to your wishes"><BackIcon /></Link>
+            <Heart on={saved} onClick={toggleSave} />
+          </header>
+          <div className="campaign-body">
+            <div className="orb-space" />
+            <CampaignPanel c={campaign} snapshot={snapshot} />
+          </div>
+        </>
+      )}
+
+      {launchOpen && (
+        <LaunchSheet
+          spec={spec}
+          saved={saved}
+          onSave={toggleSave}
+          onClose={() => setLaunchOpen(false)}
+          onTalk={() => {
+            setLaunchOpen(false);
+            setMode("voice");
+          }}
+          onLaunch={launch}
+        />
+      )}
+    </div>
   );
 }

@@ -14,6 +14,19 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
+      # Production mode: strict rate limits, Socket.IO locked to PUBLIC_URL, generic 500s, and a boot
+      # check that refuses to start without ADMIN_TOKEN, an https PUBLIC_URL and (with Stripe) a webhook secret.
+      - key: NODE_ENV
+        value: production
+      # Daily caps on paid calls across all users (0 = no cap). Past a cap the app uses its free fallback.
+      - key: DAILY_LLM_TURNS
+        value: "1500"
+      - key: DAILY_APIFY_SEARCHES
+        value: "60"
+      - key: DAILY_MESHY_MODELS
+        value: "30"
+      - key: DAILY_CARTESIA_TOKENS
+        value: "600"
       - key: DATA_DIR
         value: /var/data
       - key: PUBLIC_URL

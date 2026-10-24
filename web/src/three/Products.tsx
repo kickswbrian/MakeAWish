@@ -124,7 +124,7 @@ export function Helmet({ spec, flash }: { spec: ProductSpec; flash: MutableRefOb
   const cups = useRef<THREE.Group>(null);
   const glow = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color(0.6, 1.8, 1.3), toneMapped: false }), []);
   const on = useRef(hasPhones ? 1 : 0);
-  const head = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#ebe5f8", roughness: 0.55, sheen: 0.4, emissive: "#b9a3f0", emissiveIntensity: 0.05 }), []);
+  const head = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#F4F1EA", roughness: 0.55, sheen: 0.4, emissive: "#C5D8CF", emissiveIntensity: 0.05 }), []);
   useFrame((state, dt) => {
     on.current += ((hasPhones ? 1 : 0) - on.current) * morphK(dt);
     if (cups.current) {

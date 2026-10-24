@@ -8,6 +8,9 @@ import { useRoom, useSocketEvent } from "../lib/socket.ts";
 import { pref, setPref } from "../lib/wishlist.ts";
 import { fanfare } from "../lib/sound.ts";
 import { Celebration, Countdown, DemandBar, PurchaseOrder } from "../ui/Campaign.tsx";
+import { Glows, Wordmark } from "../ui/Chrome.tsx";
+import { Bubble, BubbleSparks } from "../ui/Bubble.tsx";
+import { Sparkle } from "../ui/Icons.tsx";
 
 const Stage = lazy(() => import("../three/Stage.tsx"));
 
@@ -130,9 +133,11 @@ export default function Pledge() {
 
   if (missing) {
     return (
-      <div className="pledge-page">
-        <div className="pledge-card glass">
-          <h1>This wish has vanished</h1>
+      <div className="app scrolls">
+        <Glows />
+        <header className="hdr"><Wordmark /></header>
+        <div className="panel" style={{ marginTop: 24 }}>
+          <h2>This wish has vanished</h2>
           <p className="fineprint">We couldn't find that campaign. <Link to="/">Make a wish of your own</Link>.</p>
         </div>
       </div>
@@ -145,22 +150,25 @@ export default function Pledge() {
   const status = myStatus ?? mine?.status ?? null;
 
   return (
-    <div className="pledge-page">
-      {celebrate && <Celebration onDone={() => setCelebrate(false)} />}
-      <div className="pledge-hero glass">
-        <div className="mini-stage">
+    <div className="app scrolls" style={{ gap: 16 }}>
+      <Glows />
+      {celebrate && <Celebration line={`Funded · ${c.captured || c.held} of ${c.targetBackers}`} onDone={() => setCelebrate(false)} />}
+      <header className="hdr"><Wordmark /></header>
+      <div className="bubble-inline">
+        <BubbleSparks />
+        <Bubble>
           {showStage && (
             <Suspense fallback={null}>
-              <Stage spec={c.spec} heroUrl={c.modelUrl} framing="mini" celebrateKey={celebrateKey} bloom={false} />
+              <Stage spec={c.spec} heroUrl={c.modelUrl} framing="bubble" transparent orb={false} pedestal={c.spec.category !== "generic" || !!c.modelUrl} celebrateKey={celebrateKey} />
             </Suspense>
           )}
-        </div>
+        </Bubble>
       </div>
 
       {c.status === "funded" && status === "captured" ? null : (
-        <div className="pledge-card glass">
+        <div className="panel">
           <div>
-            <h1>{c.name}</h1>
+            <h2>{c.name}</h2>
             <div className="price-line" style={{ marginTop: 6 }}>
               {money(c.priceCents)} · charged only if {c.targetBackers} people commit
             </div>
@@ -169,28 +177,28 @@ export default function Pledge() {
           <Countdown to={c.deadlineAt} status={c.status} />
 
           {status === "held" && open && (
-            <div className="pledge-msg ok">
+            <div className="msg ok">
               <b>Hold placed.</b> You'll only be charged {money(c.priceCents)} if this gets made. Your bank may show it as pending.
             </div>
           )}
           {step === "placing" && status !== "held" && status !== "failed" && (
-            <div className="pledge-msg info">Confirming your hold with the bank…</div>
+            <div className="msg info">Confirming your hold with the bank…</div>
           )}
-          {status === "released" && <div className="pledge-msg info"><b>Released, you were not charged.</b> The wish didn't reach its goal in time.</div>}
-          {status === "capture_failed" && <div className="pledge-msg bad">We couldn't capture your hold (it may have expired). You were not charged.</div>}
+          {status === "released" && <div className="msg info"><b>Released, you were not charged.</b> The wish didn't reach its goal in time.</div>}
+          {status === "capture_failed" && <div className="msg bad">We couldn't capture your hold (it may have expired). You were not charged.</div>}
           {(c.status === "capturing" || (c.status === "funded" && status !== "captured")) && status === "held" && (
-            <div className="pledge-msg ok">Goal reached! Capturing holds…</div>
+            <div className="msg ok">Goal reached! Capturing holds…</div>
           )}
 
           {open && !status && step === "email" && (
             <>
               <div className="field">
-                <label>Your email</label>
-                <input type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <label htmlFor="pledge-email">Your email</label>
+                <input id="pledge-email" className="input" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
-              {error && <div className="pledge-msg bad">{error}</div>}
-              <button className="btn primary block" disabled={busy} onClick={startPledge}>
-                I want this too ✨
+              {error && <div className="msg bad">{error}</div>}
+              <button className="pill dark" disabled={busy} onClick={startPledge}>
+                <Sparkle size={18} color="#F2D88A" /> I want this too
               </button>
             </>
           )}
@@ -199,8 +207,8 @@ export default function Pledge() {
             <>
               {status === "failed" ? (
                 <>
-                  <div className="pledge-msg bad">{error ?? "Your card was declined."} Your pledge wasn't counted.</div>
-                  <button className="btn block" onClick={tryAgain}>Try another card</button>
+                  <div className="msg bad">{error ?? "Your card was declined."} Your pledge wasn't counted.</div>
+                  <button className="pill ghost" onClick={tryAgain}>Try another card</button>
                 </>
               ) : mode === "stripe" && clientSecret && stripePromise ? (
                 <Elements
@@ -208,8 +216,8 @@ export default function Pledge() {
                   options={{
                     clientSecret,
                     appearance: {
-                      theme: "night",
-                      variables: { colorPrimary: "#b9a3f0", colorBackground: "#1d1640", borderRadius: "14px", fontFamily: "Inter, system-ui, sans-serif" },
+                      theme: "stripe",
+                      variables: { colorPrimary: "#182825", colorText: "#182825", colorBackground: "#FFFFFF", borderRadius: "16px", fontFamily: "Inter, system-ui, sans-serif" },
                     },
                   }}
                 >
@@ -218,14 +226,14 @@ export default function Pledge() {
               ) : mode === "mock" && pledgeId ? (
                 <MockCardForm pledgeId={pledgeId} price={money(c.priceCents)} onHeld={onHoldPlaced} onDeclined={onDeclined} />
               ) : (
-                <div className="pledge-msg info">Your pledge session expired. <button className="btn" onClick={tryAgain}>Start again</button></div>
+                <div className="msg info">Your pledge session expired. <button className="chip sm" onClick={tryAgain}>Start again</button></div>
               )}
-              {error && status !== "failed" && <div className="pledge-msg bad">{error}</div>}
+              {error && status !== "failed" && <div className="msg bad">{error}</div>}
             </>
           )}
 
           {!open && !status && c.status !== "funded" && (
-            <div className="pledge-msg info">This wish is no longer taking pledges.</div>
+            <div className="msg info">This wish is no longer taking pledges.</div>
           )}
 
           <p className="fineprint">
@@ -239,14 +247,14 @@ export default function Pledge() {
       {c.status === "funded" && (
         <>
           {status === "captured" && (
-            <div className="pledge-msg ok">
+            <div className="msg ok">
               <b>Wish granted!</b> Your card was charged {money(c.priceCents)}. The order is on its way to the maker.
             </div>
           )}
           <PurchaseOrder c={c} />
         </>
       )}
-      <Link to="/" className="next-wish">Make a wish of your own ✦</Link>
+      <Link to="/" className="next-wish"><Sparkle size={16} color="#E9C46A" /> Make a wish of your own</Link>
     </div>
   );
 }
@@ -267,7 +275,7 @@ function StripeForm({ price, onHeld, onDeclined }: { price: string; onHeld: () =
   return (
     <>
       <PaymentElement options={{ layout: "tabs" }} />
-      <button className="btn primary block" disabled={busy || !stripe} onClick={submit}>
+      <button className="pill dark" disabled={busy || !stripe} onClick={submit}>
         {busy ? "Placing hold…" : `Place a ${price} hold`}
       </button>
     </>
@@ -293,17 +301,17 @@ function MockCardForm({ pledgeId, price, onHeld, onDeclined }: { pledgeId: strin
       <div className="field">
         <label>Card (test numbers only)</label>
         <div className="card-row">
-          <input ref={input} inputMode="numeric" autoComplete="off" placeholder="4242 4242 4242 4242" value={card} onChange={(e) => setCard(fmt(e.target.value))} />
-          <input inputMode="numeric" placeholder="MM/YY" value={exp} onChange={(e) => setExp(e.target.value)} />
-          <input inputMode="numeric" placeholder="CVC" value={cvc} onChange={(e) => setCvc(e.target.value)} />
+          <input ref={input} className="input" aria-label="Card number" inputMode="numeric" autoComplete="off" placeholder="4242 4242 4242 4242" value={card} onChange={(e) => setCard(fmt(e.target.value))} />
+          <input className="input" aria-label="Expiry" inputMode="numeric" placeholder="MM/YY" value={exp} onChange={(e) => setExp(e.target.value)} />
+          <input className="input" aria-label="CVC" inputMode="numeric" placeholder="CVC" value={cvc} onChange={(e) => setCvc(e.target.value)} />
         </div>
       </div>
       <div className="test-cards">
         {TEST_CARDS.map((t) => (
-          <button key={t.number} onClick={() => setCard(t.number)}>{t.label}</button>
+          <button key={t.number} className="chip sm" onClick={() => setCard(t.number)}>{t.label}</button>
         ))}
       </div>
-      <button className="btn primary block" disabled={busy} onClick={submit}>
+      <button className="pill dark" disabled={busy} onClick={submit}>
         {busy ? "Placing hold…" : `Place a ${price} hold`}
       </button>
     </>
