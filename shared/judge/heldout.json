@@ -1,0 +1,3845 @@
+[
+  {
+    "id": "ho-dress-01",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "could the dress have a big bow tied right at the waist?",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "bow"
+          ],
+          "placement": "waist"
+        }
+      }
+    ],
+    "tags": [
+      "add",
+      "dress"
+    ]
+  },
+  {
+    "id": "ho-dress-02",
+    "start": {
+      "category": "dress",
+      "name": "Convertible dress",
+      "length": "knee",
+      "silhouette": "fitted",
+      "sleeves": "cap",
+      "neckline": "square",
+      "color": "#F28DB2",
+      "fabric": "satin",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "converts_to_skirt"
+      ]
+    },
+    "say": "Give it pockets deep enough to actually hold my phone",
+    "expect": [
+      {
+        "partShown": "pockets"
+      }
+    ],
+    "tags": [
+      "add",
+      "dress"
+    ]
+  },
+  {
+    "id": "ho-dress-03",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "the pockets are tiny, make them like twice as big",
+    "expect": [
+      {
+        "path": "parts.pockets.scale",
+        "grew": true
+      },
+      {
+        "unchanged": [
+          "scale",
+          "length"
+        ]
+      }
+    ],
+    "tags": [
+      "resize",
+      "dress",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-dress-04",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "I'd like longer sleeves on this one",
+    "expect": [
+      {
+        "path": "sleeves",
+        "oneOf": [
+          "puff",
+          "three_quarter",
+          "long"
+        ]
+      },
+      {
+        "unchanged": [
+          "length"
+        ]
+      }
+    ],
+    "tags": [
+      "style",
+      "dress",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-dress-05",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "so, um, can we go with, like, an off the shoulder kind of neckline?",
+    "expect": [
+      {
+        "path": "neckline",
+        "equals": "off_shoulder"
+      }
+    ],
+    "tags": [
+      "style",
+      "dress",
+      "casual"
+    ]
+  },
+  {
+    "id": "ho-dress-07",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "sweetheart neckline, and let's do it in velvet",
+    "expect": [
+      {
+        "path": "neckline",
+        "equals": "sweetheart"
+      },
+      {
+        "path": "fabric",
+        "equals": "velvet"
+      }
+    ],
+    "tags": [
+      "style",
+      "dress",
+      "multi"
+    ]
+  },
+  {
+    "id": "ho-dress-08",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "swap the V for a scoop neck",
+    "expect": [
+      {
+        "path": "neckline",
+        "equals": "scoop"
+      },
+      {
+        "unchanged": [
+          "sleeves",
+          "length"
+        ]
+      }
+    ],
+    "tags": [
+      "style",
+      "dress",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-dress-09",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "take the hem all the way down to the floor",
+    "expect": [
+      {
+        "path": "length",
+        "equals": "maxi"
+      },
+      {
+        "unchanged": [
+          "sleeves"
+        ]
+      }
+    ],
+    "tags": [
+      "style",
+      "dress",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-dress-10",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "shorten it a bit, it feels too long",
+    "expect": [
+      {
+        "path": "length",
+        "oneOf": [
+          "knee",
+          "mini"
+        ]
+      },
+      {
+        "unchanged": [
+          "sleeves",
+          "neckline"
+        ]
+      }
+    ],
+    "tags": [
+      "style",
+      "dress",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-dress-11",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "cover the whole thing in polka dots",
+    "expect": [
+      {
+        "path": "pattern",
+        "equals": "polka_dot"
+      }
+    ],
+    "tags": [
+      "style",
+      "dress"
+    ]
+  },
+  {
+    "id": "ho-dress-13",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "Make it out of sequins so it sparkles on stage",
+    "expect": [
+      {
+        "path": "fabric",
+        "equals": "sequin"
+      }
+    ],
+    "tags": [
+      "style",
+      "dress"
+    ]
+  },
+  {
+    "id": "ho-dress-15",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "make just the sleeves white",
+    "expect": [
+      {
+        "path": "parts.sleeves.color",
+        "family": "white"
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "recolor",
+      "dress",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-dress-16",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "can the bodice be black while the rest stays blue?",
+    "expect": [
+      {
+        "path": "parts.bodice.color",
+        "family": "black"
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "recolor",
+      "dress",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-dress-17",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "embroider a sunflower on the chest",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "sunflower",
+            "🌻",
+            "flower",
+            "🌼"
+          ],
+          "placement": "front"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "dress"
+    ]
+  },
+  {
+    "id": "ho-dress-18",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "write BRIDE across the back in white letters",
+    "expect": [
+      {
+        "decal": {
+          "kind": "text",
+          "content": [
+            "bride"
+          ],
+          "placement": "back",
+          "family": "white"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "text",
+      "dress"
+    ]
+  },
+  {
+    "id": "ho-dress-19",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "remove the pockets, they ruin the silhouette",
+    "expect": [
+      {
+        "partGone": "pockets"
+      }
+    ],
+    "tags": [
+      "remove",
+      "dress"
+    ]
+  },
+  {
+    "id": "ho-dress-20",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "let's go sleeveless",
+    "expect": [
+      {
+        "path": "sleeves",
+        "equals": "none"
+      },
+      {
+        "unchanged": [
+          "length",
+          "neckline"
+        ]
+      }
+    ],
+    "tags": [
+      "remove",
+      "style",
+      "dress",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-dress-23",
+    "start": {
+      "category": "dress",
+      "name": "Convertible dress",
+      "length": "knee",
+      "silhouette": "fitted",
+      "sleeves": "cap",
+      "neckline": "square",
+      "color": "#F28DB2",
+      "fabric": "satin",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "converts_to_skirt"
+      ]
+    },
+    "say": "I don't need it to turn into a skirt anymore",
+    "expect": [
+      {
+        "path": "features",
+        "excludes": "converts_to_skirt"
+      }
+    ],
+    "tags": [
+      "remove",
+      "dress"
+    ]
+  },
+  {
+    "id": "ho-dress-25",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "red with white polka dots",
+    "expect": [
+      {
+        "path": "color",
+        "family": "red"
+      },
+      {
+        "path": "pattern",
+        "equals": "polka_dot"
+      }
+    ],
+    "tags": [
+      "recolor",
+      "style",
+      "dress",
+      "multi"
+    ]
+  },
+  {
+    "id": "ho-dress-26",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "before": [
+      "make it plaid"
+    ],
+    "say": "hmm no, undo that",
+    "expect": [
+      {
+        "path": "pattern",
+        "equals": "solid"
+      }
+    ],
+    "tags": [
+      "undo",
+      "dress"
+    ]
+  },
+  {
+    "id": "ho-dress-28",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "add little angel wings coming off the back",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "wing"
+          ],
+          "placement": "back"
+        }
+      }
+    ],
+    "tags": [
+      "add",
+      "dress"
+    ]
+  },
+  {
+    "id": "ho-dress-31",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ],
+      "parts": {
+        "sleeves": {
+          "color": "#F4F4F2"
+        }
+      }
+    },
+    "say": "turn the dress red but keep the sleeves white",
+    "expect": [
+      {
+        "path": "color",
+        "family": "red"
+      },
+      {
+        "path": "parts.sleeves.color",
+        "family": "white"
+      }
+    ],
+    "tags": [
+      "recolor",
+      "dress",
+      "multi"
+    ]
+  },
+  {
+    "id": "ho-dress-32",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "haha what's your favorite color?",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "pattern",
+          "fabric",
+          "decals",
+          "addons"
+        ]
+      }
+    ],
+    "tags": [
+      "offtopic",
+      "dress",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-top-01",
+    "start": {
+      "category": "top",
+      "name": "Everyday tee",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "throw a hood on this",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "hood"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "add",
+      "top"
+    ]
+  },
+  {
+    "id": "ho-top-02",
+    "start": {
+      "category": "top",
+      "name": "Everyday tee",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "full-length sleeves please",
+    "expect": [
+      {
+        "path": "sleeves",
+        "equals": "long"
+      },
+      {
+        "unchanged": [
+          "neckline"
+        ]
+      }
+    ],
+    "tags": [
+      "style",
+      "top",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-top-05",
+    "start": {
+      "category": "top",
+      "name": "Everyday tee",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "put a big 99 on the back like a hockey jersey",
+    "expect": [
+      {
+        "decal": {
+          "kind": "text",
+          "content": [
+            "99"
+          ],
+          "placement": "back"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "text",
+      "top"
+    ]
+  },
+  {
+    "id": "ho-top-06",
+    "start": {
+      "category": "top",
+      "name": "Everyday tee",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "I want a cartoon kitty on the chest",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "cat",
+            "kitty",
+            "kitten",
+            "🐱",
+            "🐈",
+            "😺",
+            "😸",
+            "😻"
+          ],
+          "placement": "front"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "top"
+    ]
+  },
+  {
+    "id": "ho-top-08",
+    "start": {
+      "category": "top",
+      "name": "Everyday tee",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "make it camouflage",
+    "expect": [
+      {
+        "path": "pattern",
+        "equals": "camo"
+      }
+    ],
+    "tags": [
+      "style",
+      "top"
+    ]
+  },
+  {
+    "id": "ho-top-09",
+    "start": {
+      "category": "top",
+      "name": "Everyday tee",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "slap a little smiley face over the left side of my chest",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "smiley",
+            "🙂",
+            "😊",
+            "😀",
+            "😃",
+            "😄",
+            "☺"
+          ],
+          "placement": [
+            "left",
+            "front"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "top"
+    ]
+  },
+  {
+    "id": "ho-top-10",
+    "start": {
+      "category": "top",
+      "name": "Everyday tee",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "make it glow in the dark",
+    "expect": [
+      {
+        "path": "finish",
+        "equals": "glow"
+      }
+    ],
+    "tags": [
+      "style",
+      "top"
+    ]
+  },
+  {
+    "id": "ho-top-11",
+    "start": {
+      "category": "top",
+      "name": "Everyday tee",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "black tee instead",
+    "expect": [
+      {
+        "path": "color",
+        "family": "black"
+      },
+      {
+        "unchanged": [
+          "sleeves",
+          "neckline",
+          "fabric"
+        ]
+      }
+    ],
+    "tags": [
+      "recolor",
+      "top",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-top-13",
+    "start": {
+      "category": "top",
+      "name": "Everyday tee",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "write \"hello world\" across the back",
+    "expect": [
+      {
+        "decal": {
+          "kind": "text",
+          "content": [
+            "hello world"
+          ],
+          "placement": "back"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "text",
+      "top"
+    ]
+  },
+  {
+    "id": "ho-top-14",
+    "start": {
+      "category": "top",
+      "name": "Everyday tee",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "a lightning bolt on each shoulder",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "lightning",
+            "⚡",
+            "bolt"
+          ],
+          "placement": [
+            "top",
+            "left",
+            "right"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "top"
+    ]
+  },
+  {
+    "id": "ho-top-15",
+    "start": {
+      "category": "top",
+      "name": "Everyday tee",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "pink sleeves, keep the body white",
+    "expect": [
+      {
+        "path": "parts.sleeves.color",
+        "family": "pink"
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "recolor",
+      "top",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-top-16",
+    "start": {
+      "category": "top",
+      "name": "Everyday tee",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "make it red and put a white star in the middle of the chest",
+    "expect": [
+      {
+        "path": "color",
+        "family": "red"
+      },
+      {
+        "decal": {
+          "content": [
+            "star",
+            "⭐",
+            "🌟",
+            "✨"
+          ],
+          "placement": "front",
+          "family": "white"
+        }
+      }
+    ],
+    "tags": [
+      "recolor",
+      "decal",
+      "top",
+      "multi"
+    ]
+  },
+  {
+    "id": "ho-top-17",
+    "start": {
+      "category": "top",
+      "name": "Everyday tee",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "uhh what if it was, like, leather? like a leather top?",
+    "expect": [
+      {
+        "path": "fabric",
+        "equals": "leather"
+      }
+    ],
+    "tags": [
+      "style",
+      "top",
+      "casual"
+    ]
+  },
+  {
+    "id": "ho-skirt-01",
+    "start": {
+      "category": "skirt",
+      "name": "Pocket skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1F2A55",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "shorter, like a proper mini skirt",
+    "expect": [
+      {
+        "path": "length",
+        "equals": "mini"
+      }
+    ],
+    "tags": [
+      "style",
+      "skirt"
+    ]
+  },
+  {
+    "id": "ho-skirt-02",
+    "start": {
+      "category": "skirt",
+      "name": "Pocket skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1F2A55",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "could the pockets be roomier?",
+    "expect": [
+      {
+        "path": "parts.pockets.scale",
+        "grew": true
+      },
+      {
+        "unchanged": [
+          "scale"
+        ]
+      }
+    ],
+    "tags": [
+      "resize",
+      "skirt",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-skirt-03",
+    "start": {
+      "category": "skirt",
+      "name": "Pocket skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1F2A55",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "lose the pockets",
+    "expect": [
+      {
+        "partGone": "pockets"
+      }
+    ],
+    "tags": [
+      "remove",
+      "skirt"
+    ]
+  },
+  {
+    "id": "ho-skirt-04",
+    "start": {
+      "category": "skirt",
+      "name": "Pocket skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1F2A55",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "plaid, like a school uniform",
+    "expect": [
+      {
+        "path": "pattern",
+        "oneOf": [
+          "plaid",
+          "checkered"
+        ]
+      }
+    ],
+    "tags": [
+      "style",
+      "skirt"
+    ]
+  },
+  {
+    "id": "ho-skirt-05",
+    "start": {
+      "category": "skirt",
+      "name": "Pocket skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1F2A55",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "add a chain belt around the waist",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "chain",
+            "belt"
+          ],
+          "placement": "waist"
+        }
+      }
+    ],
+    "tags": [
+      "add",
+      "skirt"
+    ]
+  },
+  {
+    "id": "ho-skirt-06",
+    "start": {
+      "category": "skirt",
+      "name": "Pocket skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1F2A55",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "put a big pink heart down near the hem",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "heart",
+            "❤",
+            "♥",
+            "💖",
+            "💗",
+            "💕",
+            "🩷"
+          ],
+          "placement": "bottom",
+          "family": "pink"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "skirt"
+    ]
+  },
+  {
+    "id": "ho-skirt-07",
+    "start": {
+      "category": "skirt",
+      "name": "Pocket skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1F2A55",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "switch the denim for black leather",
+    "expect": [
+      {
+        "path": "fabric",
+        "equals": "leather"
+      },
+      {
+        "path": "color",
+        "family": "black"
+      }
+    ],
+    "tags": [
+      "style",
+      "recolor",
+      "skirt",
+      "multi"
+    ]
+  },
+  {
+    "id": "ho-skirt-08",
+    "start": {
+      "category": "skirt",
+      "name": "Pocket skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1F2A55",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "long and flowy, all the way to my ankles",
+    "expect": [
+      {
+        "path": "length",
+        "equals": "maxi"
+      },
+      {
+        "path": "silhouette",
+        "equals": "flowy"
+      }
+    ],
+    "tags": [
+      "style",
+      "skirt",
+      "multi"
+    ]
+  },
+  {
+    "id": "ho-skirt-09",
+    "start": {
+      "category": "skirt",
+      "name": "Pocket skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1F2A55",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "stitch my initials, A.K., near the hem",
+    "expect": [
+      {
+        "decal": {
+          "kind": "text",
+          "content": [
+            "a.k",
+            "ak",
+            "a k"
+          ],
+          "placement": "bottom"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "text",
+      "skirt"
+    ]
+  },
+  {
+    "id": "ho-skirt-10",
+    "start": {
+      "category": "skirt",
+      "name": "Pocket skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1F2A55",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "pastel pink pockets would be cute",
+    "expect": [
+      {
+        "path": "parts.pockets.color",
+        "family": "pink"
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "recolor",
+      "skirt",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-skirt-13",
+    "start": {
+      "category": "skirt",
+      "name": "Pocket skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1F2A55",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "before": [
+      "make it maxi length"
+    ],
+    "say": "no wait, go back",
+    "expect": [
+      {
+        "path": "length",
+        "equals": "knee"
+      }
+    ],
+    "tags": [
+      "undo",
+      "skirt"
+    ]
+  },
+  {
+    "id": "ho-bag-01",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "could it have a holder for my coffee cup on the left?",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "cup",
+            "holder",
+            "coffee",
+            "bottle"
+          ],
+          "placement": "left"
+        }
+      }
+    ],
+    "tags": [
+      "add",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-bag-02",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "beef up the shoulder straps",
+    "expect": [
+      {
+        "path": "parts.straps.scale",
+        "grew": true
+      },
+      {
+        "unchanged": [
+          "scale"
+        ]
+      }
+    ],
+    "tags": [
+      "resize",
+      "backpack",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-bag-03",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "straps in black please",
+    "expect": [
+      {
+        "path": "parts.straps.color",
+        "family": "black"
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "recolor",
+      "backpack",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-bag-04",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "a bright orange zip",
+    "expect": [
+      {
+        "path": "parts.zipper.color",
+        "family": "orange"
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "recolor",
+      "backpack",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-bag-05",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "I'll never use the laptop stand, take it off",
+    "expect": [
+      {
+        "partGone": "stand"
+      }
+    ],
+    "tags": [
+      "remove",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-bag-06",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "I don't need the side pocket",
+    "expect": [
+      {
+        "partGone": "side_pocket"
+      }
+    ],
+    "tags": [
+      "remove",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-bag-07",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "the front pocket sticks out too much, make it smaller",
+    "expect": [
+      {
+        "path": "parts.front_pocket.scale",
+        "shrank": true
+      },
+      {
+        "unchanged": [
+          "scale"
+        ]
+      }
+    ],
+    "tags": [
+      "resize",
+      "backpack",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-bag-08",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "I need it bigger, like a real hiking pack",
+    "expect": [
+      {
+        "path": "scale",
+        "grew": true
+      }
+    ],
+    "tags": [
+      "resize",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-bag-10",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "can it sprout wings like a dragon?",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "wing"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "add",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-bag-11",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "mount a solar panel on the front so I can charge my phone",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "solar",
+            "panel"
+          ],
+          "placement": "front"
+        }
+      }
+    ],
+    "tags": [
+      "add",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-bag-12",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "paint a fire-breathing dragon on the front pocket",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "dragon",
+            "🐉",
+            "🐲"
+          ],
+          "placement": "front"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-bag-13",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "put CAL HACKS on it in big letters",
+    "expect": [
+      {
+        "decal": {
+          "kind": "text",
+          "content": [
+            "cal hacks"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "text",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-bag-14",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ],
+      "decals": [
+        {
+          "kind": "emoji",
+          "content": "🐉",
+          "placement": "back"
+        }
+      ]
+    },
+    "say": "actually I'd rather have the dragon on the front where people can see it",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "dragon",
+            "🐉",
+            "🐲"
+          ],
+          "placement": "front"
+        }
+      },
+      {
+        "noDecal": {
+          "content": [
+            "dragon",
+            "🐉",
+            "🐲"
+          ],
+          "placement": "back"
+        }
+      }
+    ],
+    "tags": [
+      "move",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-bag-15",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ],
+      "parts": {
+        "straps": {
+          "color": "#1A1A1D"
+        }
+      }
+    },
+    "say": "everything red, the whole bag",
+    "expect": [
+      {
+        "path": "color",
+        "family": "red"
+      }
+    ],
+    "tags": [
+      "recolor",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-bag-16",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "go all black and stick a red star on the front",
+    "expect": [
+      {
+        "path": "color",
+        "family": "black"
+      },
+      {
+        "decal": {
+          "content": [
+            "star",
+            "⭐",
+            "🌟",
+            "✨"
+          ],
+          "placement": "front",
+          "family": "red"
+        }
+      }
+    ],
+    "tags": [
+      "recolor",
+      "decal",
+      "backpack",
+      "multi"
+    ]
+  },
+  {
+    "id": "ho-bag-19",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "add a glowing LED strip so cars see me at night",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "led",
+            "light",
+            "strip",
+            "lamp"
+          ],
+          "glow": true
+        }
+      }
+    ],
+    "tags": [
+      "add",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-bag-22",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "no handle on top, I never use it",
+    "expect": [
+      {
+        "partGone": "handle"
+      }
+    ],
+    "tags": [
+      "remove",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-bag-23",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "could it fold out into a laptop stand so I can work on the train?",
+    "expect": [
+      {
+        "partShown": "stand"
+      }
+    ],
+    "tags": [
+      "add",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-bag-25",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "before": [
+      "make the straps pink"
+    ],
+    "say": "undo",
+    "expect": [
+      {
+        "path": "parts.straps.color",
+        "absent": true
+      }
+    ],
+    "tags": [
+      "undo",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-bag-26",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "okay so, um, the zipper, could you make it like, way bigger?",
+    "expect": [
+      {
+        "path": "parts.zipper.scale",
+        "grew": true
+      },
+      {
+        "unchanged": [
+          "scale"
+        ]
+      }
+    ],
+    "tags": [
+      "resize",
+      "backpack",
+      "casual",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-bag-28",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ],
+      "addons": [
+        {
+          "name": "cup holder",
+          "shape": "cylinder",
+          "placement": "left"
+        }
+      ]
+    },
+    "say": "ditch the cup holder",
+    "expect": [
+      {
+        "noAddon": {
+          "name": [
+            "cup"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "remove",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-bag-29",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "say": "how much would this cost to make?",
+    "expect": [
+      {
+        "unchanged": [
+          "color",
+          "scale",
+          "addons",
+          "decals",
+          "features",
+          "parts"
+        ]
+      }
+    ],
+    "tags": [
+      "offtopic",
+      "backpack",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-helm-01",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ]
+    },
+    "say": "add a red blinking taillight at the back",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "light",
+            "lamp",
+            "led"
+          ],
+          "placement": "back",
+          "family": "red"
+        }
+      }
+    ],
+    "tags": [
+      "add",
+      "helmet"
+    ]
+  },
+  {
+    "id": "ho-helm-02",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ]
+    },
+    "say": "the visor is huge, cut it way down",
+    "expect": [
+      {
+        "path": "parts.visor.scale",
+        "shrank": true
+      },
+      {
+        "unchanged": [
+          "scale"
+        ]
+      }
+    ],
+    "tags": [
+      "resize",
+      "helmet",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-helm-03",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ]
+    },
+    "say": "I don't want the headphones, I need to hear traffic",
+    "expect": [
+      {
+        "partGone": "headphones"
+      }
+    ],
+    "tags": [
+      "remove",
+      "helmet"
+    ]
+  },
+  {
+    "id": "ho-helm-04",
+    "start": {
+      "category": "helmet",
+      "name": "Bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "features": []
+    },
+    "say": "can it have built-in headphones?",
+    "expect": [
+      {
+        "partShown": "headphones"
+      }
+    ],
+    "tags": [
+      "add",
+      "helmet"
+    ]
+  },
+  {
+    "id": "ho-helm-05",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ]
+    },
+    "say": "more airflow please, make the vents bigger",
+    "expect": [
+      {
+        "path": "parts.vents.scale",
+        "grew": true
+      },
+      {
+        "unchanged": [
+          "scale"
+        ]
+      }
+    ],
+    "tags": [
+      "resize",
+      "helmet",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-helm-06",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ]
+    },
+    "say": "stick a unicorn horn on top",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "horn",
+            "unicorn"
+          ],
+          "placement": "top"
+        }
+      }
+    ],
+    "tags": [
+      "add",
+      "helmet"
+    ]
+  },
+  {
+    "id": "ho-helm-08",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ]
+    },
+    "say": "I need a side mirror on the left",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "mirror"
+          ],
+          "placement": "left"
+        }
+      }
+    ],
+    "tags": [
+      "add",
+      "helmet"
+    ]
+  },
+  {
+    "id": "ho-helm-09",
+    "start": {
+      "category": "helmet",
+      "name": "Bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "features": []
+    },
+    "say": "give it punk spikes along the top like a mohawk",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "spike",
+            "mohawk"
+          ],
+          "placement": "top"
+        }
+      }
+    ],
+    "tags": [
+      "add",
+      "helmet"
+    ]
+  },
+  {
+    "id": "ho-helm-11",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ]
+    },
+    "say": "a yellow lightning bolt down the left side",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "lightning",
+            "⚡",
+            "bolt"
+          ],
+          "placement": "left",
+          "family": "yellow"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "helmet"
+    ]
+  },
+  {
+    "id": "ho-helm-12",
+    "start": {
+      "category": "helmet",
+      "name": "Bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "features": []
+    },
+    "say": "flames on the back would be sick",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "flame",
+            "fire",
+            "🔥"
+          ],
+          "placement": "back"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "helmet"
+    ]
+  },
+  {
+    "id": "ho-helm-13",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ]
+    },
+    "say": "matte black helmet",
+    "expect": [
+      {
+        "path": "color",
+        "family": "black"
+      },
+      {
+        "path": "finish",
+        "equals": "matte"
+      }
+    ],
+    "tags": [
+      "recolor",
+      "style",
+      "helmet",
+      "multi"
+    ]
+  },
+  {
+    "id": "ho-helm-15",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ]
+    },
+    "say": "make the whole helmet glow so cars can see me",
+    "expect": [
+      {
+        "path": "finish",
+        "equals": "glow"
+      }
+    ],
+    "tags": [
+      "style",
+      "helmet"
+    ]
+  },
+  {
+    "id": "ho-helm-16",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ]
+    },
+    "say": "white trim around the rim",
+    "expect": [
+      {
+        "path": "parts.rim.color",
+        "family": "white"
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "recolor",
+      "helmet",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-helm-18",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ]
+    },
+    "say": "the whole helmet should be smaller, it's for my kid",
+    "expect": [
+      {
+        "path": "scale",
+        "shrank": true
+      }
+    ],
+    "tags": [
+      "resize",
+      "helmet"
+    ]
+  },
+  {
+    "id": "ho-helm-19",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ]
+    },
+    "say": "um make it blue and uh put a skull on the back?",
+    "expect": [
+      {
+        "path": "color",
+        "family": "blue"
+      },
+      {
+        "decal": {
+          "content": [
+            "skull",
+            "💀",
+            "☠"
+          ],
+          "placement": "back"
+        }
+      }
+    ],
+    "tags": [
+      "recolor",
+      "decal",
+      "helmet",
+      "multi",
+      "casual"
+    ]
+  },
+  {
+    "id": "ho-helm-20",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ],
+      "decals": [
+        {
+          "kind": "shape",
+          "content": "star",
+          "placement": "front"
+        }
+      ]
+    },
+    "say": "erase that star",
+    "expect": [
+      {
+        "noDecal": {
+          "content": [
+            "star",
+            "⭐"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "remove",
+      "helmet"
+    ]
+  },
+  {
+    "id": "ho-helm-22",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ]
+    },
+    "before": [
+      "add a unicorn horn on top"
+    ],
+    "say": "actually take that back",
+    "expect": [
+      {
+        "noAddon": {
+          "name": [
+            "horn",
+            "unicorn"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "undo",
+      "helmet"
+    ]
+  },
+  {
+    "id": "ho-helm-25",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ]
+    },
+    "say": "make the ear cups chunkier",
+    "expect": [
+      {
+        "path": "parts.headphones.scale",
+        "grew": true
+      },
+      {
+        "unchanged": [
+          "scale"
+        ]
+      }
+    ],
+    "tags": [
+      "resize",
+      "helmet",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-gen-01",
+    "say": "I wish someone made a water bottle that reminds me to drink",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "path": "body.shape",
+        "oneOf": [
+          "cylinder",
+          "capsule"
+        ]
+      }
+    ],
+    "tags": [
+      "create",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-02",
+    "say": "a coffee mug that keeps my coffee hot all day",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "path": "body.shape",
+        "equals": "cylinder"
+      }
+    ],
+    "tags": [
+      "create",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-03",
+    "say": "a phone case with a built-in kickstand",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "path": "body.shape",
+        "equals": "box"
+      }
+    ],
+    "tags": [
+      "create",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-04",
+    "start": {
+      "category": "generic",
+      "name": "Coffee mug",
+      "color": "#F4EBD0",
+      "finish": "matte",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.45,
+        "height": 0.45
+      }
+    },
+    "say": "it needs a handle on the right",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "handle"
+          ],
+          "placement": "right"
+        }
+      }
+    ],
+    "tags": [
+      "add",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-05",
+    "start": {
+      "category": "generic",
+      "name": "Water bottle",
+      "color": "#30C5C2",
+      "finish": "matte",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.3,
+        "height": 0.8
+      }
+    },
+    "say": "make it taller",
+    "expect": [
+      {
+        "path": "body.height",
+        "grew": true
+      }
+    ],
+    "tags": [
+      "resize",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-06",
+    "start": {
+      "category": "generic",
+      "name": "Water bottle",
+      "color": "#30C5C2",
+      "finish": "matte",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.3,
+        "height": 0.8
+      }
+    },
+    "say": "a straw sticking out the top",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "straw"
+          ],
+          "placement": "top"
+        }
+      }
+    ],
+    "tags": [
+      "add",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-07",
+    "start": {
+      "category": "generic",
+      "name": "Water bottle",
+      "color": "#30C5C2",
+      "finish": "matte",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.3,
+        "height": 0.8
+      }
+    },
+    "say": "add a carabiner loop on the side so I can clip it to my bag",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "carabiner",
+            "clip",
+            "loop",
+            "ring"
+          ],
+          "placement": [
+            "left",
+            "right"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "add",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-08",
+    "start": {
+      "category": "generic",
+      "name": "Water bottle",
+      "color": "#30C5C2",
+      "finish": "matte",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.3,
+        "height": 0.8
+      }
+    },
+    "say": "sunset orange",
+    "expect": [
+      {
+        "path": "color",
+        "family": "orange"
+      }
+    ],
+    "tags": [
+      "recolor",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-09",
+    "start": {
+      "category": "generic",
+      "name": "Water bottle",
+      "color": "#30C5C2",
+      "finish": "matte",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.3,
+        "height": 0.8
+      }
+    },
+    "say": "draw some mountains on the front",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "mountain",
+            "⛰",
+            "🏔",
+            "🗻"
+          ],
+          "placement": "front"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-10",
+    "start": {
+      "category": "generic",
+      "name": "Coffee mug",
+      "color": "#F4EBD0",
+      "finish": "matte",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.45,
+        "height": 0.45
+      }
+    },
+    "say": "write WORLD'S BEST DAD on it",
+    "expect": [
+      {
+        "decal": {
+          "kind": "text",
+          "content": [
+            "best dad"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "text",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-12",
+    "start": {
+      "category": "generic",
+      "name": "Coffee mug",
+      "color": "#F4EBD0",
+      "finish": "matte",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.45,
+        "height": 0.45
+      }
+    },
+    "say": "give it a shiny glazed look",
+    "expect": [
+      {
+        "path": "finish",
+        "equals": "glossy"
+      }
+    ],
+    "tags": [
+      "style",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-15",
+    "start": {
+      "category": "generic",
+      "name": "Desk lamp",
+      "color": "#1A1A1D",
+      "finish": "matte",
+      "body": {
+        "shape": "cone",
+        "width": 0.5,
+        "height": 0.7
+      }
+    },
+    "say": "make the whole lamp twice the size",
+    "expect": [
+      {
+        "path": "scale",
+        "grew": true
+      }
+    ],
+    "tags": [
+      "resize",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-17",
+    "start": {
+      "category": "generic",
+      "name": "Phone case",
+      "color": "#7B4FC9",
+      "finish": "matte",
+      "body": {
+        "shape": "box",
+        "width": 0.4,
+        "height": 0.8,
+        "depth": 0.1
+      }
+    },
+    "say": "a ring grip on the back for my finger",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "ring",
+            "grip",
+            "popsocket",
+            "holder"
+          ],
+          "placement": "back"
+        }
+      }
+    ],
+    "tags": [
+      "add",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-18",
+    "start": {
+      "category": "generic",
+      "name": "Phone case",
+      "color": "#7B4FC9",
+      "finish": "matte",
+      "body": {
+        "shape": "box",
+        "width": 0.4,
+        "height": 0.8,
+        "depth": 0.1
+      }
+    },
+    "say": "leopard print case",
+    "expect": [
+      {
+        "path": "pattern",
+        "equals": "leopard"
+      }
+    ],
+    "tags": [
+      "style",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-19",
+    "start": {
+      "category": "generic",
+      "name": "Phone case",
+      "color": "#7B4FC9",
+      "finish": "matte",
+      "body": {
+        "shape": "box",
+        "width": 0.4,
+        "height": 0.8,
+        "depth": 0.1
+      }
+    },
+    "say": "my initials, M.K., along the bottom",
+    "expect": [
+      {
+        "decal": {
+          "kind": "text",
+          "content": [
+            "m.k",
+            "mk",
+            "m k"
+          ],
+          "placement": "bottom"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "text",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-20",
+    "start": {
+      "category": "generic",
+      "name": "Phone case",
+      "color": "#7B4FC9",
+      "finish": "matte",
+      "body": {
+        "shape": "box",
+        "width": 0.4,
+        "height": 0.8,
+        "depth": 0.1
+      }
+    },
+    "say": "sprinkle little stars everywhere",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "star",
+            "⭐",
+            "🌟",
+            "✨"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-22",
+    "start": {
+      "category": "generic",
+      "name": "Water bottle",
+      "color": "#30C5C2",
+      "finish": "matte",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.3,
+        "height": 0.8
+      }
+    },
+    "say": "make it black and put a white lightning bolt on the front",
+    "expect": [
+      {
+        "path": "color",
+        "family": "black"
+      },
+      {
+        "decal": {
+          "content": [
+            "lightning",
+            "⚡",
+            "bolt"
+          ],
+          "placement": "front",
+          "family": "white"
+        }
+      }
+    ],
+    "tags": [
+      "recolor",
+      "decal",
+      "generic",
+      "multi"
+    ]
+  },
+  {
+    "id": "ho-gen-23",
+    "start": {
+      "category": "generic",
+      "name": "Water bottle",
+      "color": "#30C5C2",
+      "finish": "matte",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.3,
+        "height": 0.8
+      }
+    },
+    "before": [
+      "make it pink"
+    ],
+    "say": "eh, change it back",
+    "expect": [
+      {
+        "path": "color",
+        "equals": "#30C5C2"
+      }
+    ],
+    "tags": [
+      "undo",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-25",
+    "start": {
+      "category": "generic",
+      "name": "Desk lamp",
+      "color": "#1A1A1D",
+      "finish": "matte",
+      "body": {
+        "shape": "cone",
+        "width": 0.5,
+        "height": 0.7
+      },
+      "addons": [
+        {
+          "name": "pull chain",
+          "shape": "cylinder",
+          "placement": "right"
+        }
+      ]
+    },
+    "say": "no pull chain, I want a touch lamp",
+    "expect": [
+      {
+        "noAddon": {
+          "name": [
+            "chain"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "remove",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-gen-26",
+    "start": {
+      "category": "generic",
+      "name": "Water bottle",
+      "color": "#30C5C2",
+      "finish": "matte",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.3,
+        "height": 0.8
+      }
+    },
+    "say": "make the bottle look like brushed metal",
+    "expect": [
+      {
+        "path": "finish",
+        "equals": "metallic"
+      }
+    ],
+    "tags": [
+      "style",
+      "generic"
+    ]
+  },
+  {
+    "id": "ho-new-01",
+    "say": "show me a long-sleeved red gown that goes all the way to the floor",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "dress"
+      },
+      {
+        "path": "color",
+        "family": "red"
+      },
+      {
+        "path": "sleeves",
+        "equals": "long"
+      },
+      {
+        "path": "length",
+        "equals": "maxi"
+      }
+    ],
+    "tags": [
+      "create",
+      "dress",
+      "multi"
+    ]
+  },
+  {
+    "id": "ho-new-02",
+    "say": "I need a black leather backpack for school",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "backpack"
+      },
+      {
+        "path": "color",
+        "family": "black"
+      },
+      {
+        "path": "fabric",
+        "equals": "leather"
+      }
+    ],
+    "tags": [
+      "create",
+      "backpack",
+      "multi"
+    ]
+  },
+  {
+    "id": "ho-new-03",
+    "say": "a bike helmet with headphones built in",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "helmet"
+      },
+      {
+        "partShown": "headphones"
+      }
+    ],
+    "tags": [
+      "create",
+      "helmet"
+    ]
+  },
+  {
+    "id": "ho-new-04",
+    "say": "denim mini skirt",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "skirt"
+      },
+      {
+        "path": "fabric",
+        "equals": "denim"
+      },
+      {
+        "path": "length",
+        "equals": "mini"
+      }
+    ],
+    "tags": [
+      "create",
+      "skirt",
+      "multi"
+    ]
+  },
+  {
+    "id": "ho-new-05",
+    "say": "a striped turtleneck top",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "top"
+      },
+      {
+        "path": "pattern",
+        "equals": "stripe"
+      },
+      {
+        "path": "neckline",
+        "equals": "turtleneck"
+      }
+    ],
+    "tags": [
+      "create",
+      "top",
+      "multi"
+    ]
+  },
+  {
+    "id": "ho-mt-01",
+    "start": {
+      "category": "top",
+      "name": "Everyday tee",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "before": [
+      "paint a dragon on the back"
+    ],
+    "say": "can you make that dragon way bigger",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "dragon",
+            "🐉",
+            "🐲"
+          ],
+          "sizeGt": 1
+        }
+      },
+      {
+        "unchanged": [
+          "scale"
+        ]
+      }
+    ],
+    "tags": [
+      "multiturn",
+      "resize",
+      "decal",
+      "top",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-mt-02",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "before": [
+      "add a bow on the back"
+    ],
+    "say": "make the bow pink",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "bow"
+          ],
+          "family": "pink"
+        }
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "multiturn",
+      "recolor",
+      "dress",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-mt-03",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ]
+    },
+    "before": [
+      "put a heart on the front"
+    ],
+    "say": "move it to the side",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "heart",
+            "❤",
+            "♥",
+            "💖",
+            "💗",
+            "💕",
+            "🩷"
+          ],
+          "placement": [
+            "left",
+            "right"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "multiturn",
+      "move",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-mt-04",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ]
+    },
+    "before": [
+      "make it black",
+      "add a bow on top"
+    ],
+    "say": "undo that",
+    "expect": [
+      {
+        "noAddon": {
+          "name": [
+            "bow"
+          ]
+        }
+      },
+      {
+        "path": "color",
+        "family": "black"
+      }
+    ],
+    "tags": [
+      "multiturn",
+      "undo",
+      "helmet"
+    ]
+  },
+  {
+    "id": "ho-mt-05",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "before": [
+      "make it velvet"
+    ],
+    "say": "actually go back to how it was",
+    "expect": [
+      {
+        "path": "fabric",
+        "equals": "cotton"
+      }
+    ],
+    "tags": [
+      "multiturn",
+      "undo",
+      "dress"
+    ]
+  },
+  {
+    "id": "ho-mt-06",
+    "start": {
+      "category": "top",
+      "name": "Everyday tee",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "decals": [
+        {
+          "kind": "text",
+          "content": "CAL",
+          "placement": "front"
+        }
+      ]
+    },
+    "say": "change the text to say GO BEARS",
+    "expect": [
+      {
+        "decal": {
+          "kind": "text",
+          "content": [
+            "go bears"
+          ]
+        }
+      },
+      {
+        "noDecal": {
+          "content": [
+            "cal"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "text",
+      "top"
+    ]
+  },
+  {
+    "id": "ho-mt-07",
+    "start": {
+      "category": "helmet",
+      "name": "City bike helmet",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "features": [
+        "headphones"
+      ],
+      "addons": [
+        {
+          "name": "unicorn horn",
+          "shape": "cone",
+          "placement": "top"
+        }
+      ]
+    },
+    "say": "make the horn smaller, it's a bit much",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "horn"
+          ],
+          "sizeLt": 1
+        }
+      }
+    ],
+    "tags": [
+      "resize",
+      "helmet"
+    ]
+  },
+  {
+    "id": "ho-mt-08",
+    "start": {
+      "category": "top",
+      "name": "Everyday tee",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "decals": [
+        {
+          "kind": "shape",
+          "content": "heart",
+          "placement": "front"
+        }
+      ]
+    },
+    "say": "shrink the heart a little",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "heart",
+            "❤",
+            "♥",
+            "💖",
+            "💗",
+            "💕",
+            "🩷"
+          ],
+          "sizeLt": 1
+        }
+      }
+    ],
+    "tags": [
+      "resize",
+      "decal",
+      "top"
+    ]
+  },
+  {
+    "id": "ho-mt-09",
+    "start": {
+      "category": "generic",
+      "name": "Water bottle",
+      "color": "#30C5C2",
+      "finish": "matte",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.3,
+        "height": 0.8
+      },
+      "decals": [
+        {
+          "kind": "shape",
+          "content": "star",
+          "placement": "front",
+          "color": "#F6D44A"
+        }
+      ]
+    },
+    "say": "make the star blue",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "star",
+            "⭐",
+            "🌟",
+            "✨"
+          ],
+          "family": "blue"
+        }
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "recolor",
+      "decal",
+      "generic",
+      "unchanged"
+    ]
+  },
+  {
+    "id": "ho-mt-10",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ],
+      "addons": [
+        {
+          "name": "bow",
+          "shape": "bow",
+          "placement": "front"
+        }
+      ]
+    },
+    "say": "put the bow on the back instead",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "bow"
+          ],
+          "placement": "back"
+        }
+      },
+      {
+        "noAddon": {
+          "name": [
+            "bow"
+          ],
+          "placement": "front"
+        }
+      }
+    ],
+    "tags": [
+      "move",
+      "dress"
+    ]
+  },
+  {
+    "id": "ho-mt-12",
+    "start": {
+      "category": "backpack",
+      "name": "Commuter backpack",
+      "color": "#8A8D93",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "phone_pockets",
+        "laptop_stand"
+      ],
+      "decals": [
+        {
+          "kind": "text",
+          "content": "WISH",
+          "placement": "front"
+        }
+      ]
+    },
+    "say": "erase the writing",
+    "expect": [
+      {
+        "noDecal": {
+          "kind": "text"
+        }
+      }
+    ],
+    "tags": [
+      "remove",
+      "backpack"
+    ]
+  },
+  {
+    "id": "ho-mt-13",
+    "start": {
+      "category": "dress",
+      "name": "Garden party dress",
+      "length": "midi",
+      "silhouette": "a_line",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "actually make it a skirt instead",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "skirt"
+      }
+    ],
+    "tags": [
+      "style",
+      "dress"
+    ]
+  }
+]

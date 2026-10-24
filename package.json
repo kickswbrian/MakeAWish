@@ -12,9 +12,10 @@
     "build": "npm run build -w web",
     "start": "npm start -w server",
     "typecheck": "tsc -p shared && tsc -p server && tsc -p web",
-    "test": "npm test -w shared",
+    "test": "npm test -w shared && tsx --test web/src/three/render-coverage.test.ts",
     "brain:test": "npm run brain:test -w server",
-    "demo:reset": "npm run demo:reset -w server --"
+    "demo:reset": "npm run demo:reset -w server --",
+    "judge": "npm run judge -w server --"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

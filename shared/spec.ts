@@ -5,15 +5,89 @@ import { z } from "zod";
 export const CATEGORIES = ["dress", "top", "skirt", "backpack", "helmet", "generic"] as const;
 export const LENGTHS = ["mini", "knee", "midi", "maxi"] as const;
 export const SILHOUETTES = ["fitted", "a_line", "wrap", "flowy"] as const;
-export const SLEEVES = ["none", "cap", "short", "long"] as const;
-export const NECKLINES = ["crew", "v", "square", "halter"] as const;
-export const FABRICS = ["cotton", "satin", "linen", "knit"] as const;
-export const PATTERNS = ["solid", "floral", "stripe"] as const;
+/** Ordered shortest to longest (puff sits with short), so "longer sleeves" can step along it. */
+export const SLEEVES = ["none", "cap", "short", "puff", "three_quarter", "long"] as const;
+export const NECKLINES = ["crew", "v", "square", "halter", "scoop", "sweetheart", "turtleneck", "off_shoulder"] as const;
+export const FABRICS = ["cotton", "satin", "linen", "knit", "denim", "leather", "velvet", "sequin"] as const;
+export const PATTERNS = ["solid", "floral", "stripe", "polka_dot", "plaid", "checkered", "camo", "leopard", "chevron"] as const;
+/** Surface treatment on top of the fabric: glow makes the whole product emissive. */
+export const FINISHES = ["matte", "glossy", "metallic", "glow"] as const;
 
 /** Features the parametric 3D models know how to draw. Unknown features are still kept. */
 export const KNOWN_FEATURES = ["phone_pockets", "converts_to_skirt", "laptop_stand", "headphones"] as const;
 
 export const CLOTHING: readonly Category[] = ["dress", "top", "skirt"];
+
+// ---------- Edits a judge can ask for: parts, decals, add-ons ----------
+
+/** Where a decal or add-on sits. Every renderer resolves every placement for every category. */
+export const PLACEMENTS = ["front", "back", "left", "right", "top", "bottom", "waist"] as const;
+export type Placement = (typeof PLACEMENTS)[number];
+/** Icons drawn as vector shapes. Anything else is an emoji (pictures) or text (words, names, numbers). */
+export const DECAL_SHAPES = [
+  "star", "heart", "circle", "square", "triangle", "diamond", "lightning", "moon", "sun", "x", "check",
+  "arrow", "flower", "smiley", "peace", "paw", "music_note", "cloud", "crown", "spiral",
+] as const;
+export const DECAL_KINDS = ["text", "emoji", "shape"] as const;
+/** Primitives an add-on is built from. bow, spike, fin and dome are small composites. */
+export const ADDON_SHAPES = ["box", "sphere", "cylinder", "cone", "torus", "capsule", "bow", "spike", "fin", "dome"] as const;
+/** Shapes for a generic product's body, so any wish can render instantly before the AI mesh lands. */
+export const BODY_SHAPES = ["box", "cylinder", "sphere", "cone", "capsule", "torus"] as const;
+
+/**
+ * Named parts of each parametric model. A part can be resized, recolored or hidden through spec.parts.
+ * Renderers must draw every name listed here (checked by the render-coverage test).
+ */
+export const PARTS = {
+  dress: ["skirt", "bodice", "sleeves", "pockets", "seam"],
+  top: ["bodice", "sleeves"],
+  skirt: ["skirt", "pockets"],
+  backpack: ["body", "front_pocket", "straps", "handle", "side_pocket", "stand", "zipper"],
+  helmet: ["shell", "vents", "visor", "rim", "headphones"],
+  generic: ["body"],
+} as const satisfies Record<Category, readonly string[]>;
+export type PartName = (typeof PARTS)[keyof typeof PARTS][number];
+export const ALL_PARTS = [...new Set(Object.values(PARTS).flat())] as PartName[];
+
+const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+const factor = z.number().min(0.3).max(3);
+
+export const PartStyle = z.object({
+  scale: factor.optional(),
+  color: hex.optional(),
+  hidden: z.boolean().optional(),
+});
+export type PartStyle = z.infer<typeof PartStyle>;
+
+export const Decal = z.object({
+  kind: z.enum(DECAL_KINDS),
+  /** text: the words; emoji: one emoji; shape: a DECAL_SHAPES name. */
+  content: z.string().trim().min(1).max(24),
+  placement: z.enum(PLACEMENTS).default("front"),
+  color: hex.optional(),
+  size: factor.optional(),
+});
+export type Decal = z.infer<typeof Decal>;
+
+export const Addon = z.object({
+  name: z.string().trim().min(1).max(30),
+  shape: z.enum(ADDON_SHAPES),
+  placement: z.enum(PLACEMENTS).default("front"),
+  size: factor.optional(),
+  color: hex.optional(),
+  glow: z.boolean().optional(),
+  count: z.number().int().min(1).max(6).optional(),
+});
+export type Addon = z.infer<typeof Addon>;
+
+export const Body = z.object({
+  shape: z.enum(BODY_SHAPES),
+  /** Scene units; the pedestal is ~1.1 wide and the camera frames ~1.5 tall. */
+  width: z.number().min(0.1).max(1.2).default(0.5),
+  height: z.number().min(0.1).max(1.4).default(0.6),
+  depth: z.number().min(0.1).max(1.2).optional(),
+});
+export type Body = z.infer<typeof Body>;
 
 const fields = {
   category: z.enum(CATEGORIES),
@@ -22,13 +96,20 @@ const fields = {
   silhouette: z.enum(SILHOUETTES),
   sleeves: z.enum(SLEEVES),
   neckline: z.enum(NECKLINES),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  color: hex,
   fabric: z.enum(FABRICS),
   pattern: z.enum(PATTERNS),
+  finish: z.enum(FINISHES),
   size: z.string().trim().min(1).max(20),
   features: z.array(z.string().trim().min(1).max(40)).max(12),
   target_price_usd: z.number().positive().max(10000),
   notes: z.string().max(300),
+  /** Overall model size, 1 = default. */
+  scale: z.number().min(0.5).max(1.8),
+  parts: z.record(z.string(), PartStyle),
+  decals: z.array(Decal).max(8),
+  addons: z.array(Addon).max(10),
+  body: Body,
 };
 
 export const ProductSpec = z.object({
@@ -41,10 +122,16 @@ export const ProductSpec = z.object({
   color: fields.color.optional(),
   fabric: fields.fabric.optional(),
   pattern: fields.pattern.optional(),
+  finish: fields.finish.optional(),
   size: fields.size.optional(),
   features: fields.features.optional(),
   target_price_usd: fields.target_price_usd.optional(),
   notes: fields.notes.optional(),
+  scale: fields.scale.optional(),
+  parts: fields.parts.optional(),
+  decals: fields.decals.optional(),
+  addons: fields.addons.optional(),
+  body: fields.body.optional(),
 });
 export type ProductSpec = z.infer<typeof ProductSpec>;
 export type Category = (typeof CATEGORIES)[number];
@@ -76,6 +163,34 @@ export function applyPatch(spec: ProductSpec, patch: unknown): { spec: ProductSp
     if (field === "color" && typeof value === "string") value = normalizeHex(value);
     if (field === "target_price_usd" && typeof value === "string") value = Number(value.replace(/[^0-9.]/g, ""));
     if (field === "features" && Array.isArray(value)) value = [...new Set(value.map((f) => String(f).trim().toLowerCase().replace(/\s+/g, "_")))];
+    if (field === "scale" && typeof value === "number") value = Math.min(1.8, Math.max(0.5, value));
+    // Lists of edits: keep the valid items, drop the rest (an empty list clears them all).
+    if ((field === "decals" || field === "addons") && Array.isArray(value)) {
+      const schema = field === "decals" ? Decal : Addon;
+      const max = field === "decals" ? 8 : 10;
+      const items = value.map((v) => schema.safeParse(normalizeItem(v))).filter((r) => r.success).map((r) => r.data!);
+      if (items.length < value.length) dropped.push(`${key}[${value.length - items.length}]`);
+      value = items.slice(-max);
+    }
+    // Parts merge one part at a time; null clears that part's overrides.
+    if (field === "parts" && value && typeof value === "object" && !Array.isArray(value)) {
+      const merged: Record<string, PartStyle> = { ...(next.parts ?? {}) };
+      for (const [rawName, style] of Object.entries(value as Record<string, unknown>)) {
+        const name = normalizePartName(rawName);
+        if (style === null) {
+          delete merged[name];
+          continue;
+        }
+        const p = PartStyle.safeParse(normalizeItem(style));
+        if (!p.success) {
+          dropped.push(`parts.${rawName}`);
+          continue;
+        }
+        const style2 = { ...merged[name], ...p.data };
+        if (Object.keys(style2).length) merged[name] = style2;
+      }
+      value = merged;
+    }
     if (value === null || value === undefined) {
       dropped.push(key);
       continue;
@@ -92,6 +207,37 @@ export function applyPatch(spec: ProductSpec, patch: unknown): { spec: ProductSp
   }
   return { spec: next, changed, dropped };
 }
+
+/** Same color normalization inside nested decal / add-on / part objects; factors clamped into range. */
+function normalizeItem(v: unknown): unknown {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return v;
+  const o: Record<string, unknown> = { ...(v as Record<string, unknown>) };
+  if (typeof o.color === "string") o.color = normalizeHex(o.color);
+  if (o.color === null) delete o.color;
+  for (const k of ["scale", "size"]) if (typeof o[k] === "number") o[k] = Math.min(3, Math.max(0.3, o[k] as number));
+  if (typeof o.shape === "string") o.shape = o.shape.trim().toLowerCase();
+  if (typeof o.placement === "string") o.placement = PLACEMENT_ALIASES[o.placement.trim().toLowerCase()] ?? o.placement.trim().toLowerCase();
+  if (typeof o.count === "number") o.count = Math.min(6, Math.max(1, Math.round(o.count)));
+  return o;
+}
+
+const PLACEMENT_ALIASES: Record<string, (typeof PLACEMENTS)[number]> = {
+  rear: "back", behind: "back", chest: "front", center: "front", centre: "front", side: "right",
+  "left side": "left", "right side": "right", shoulder: "top", shoulders: "top", hem: "bottom", base: "bottom",
+  belt: "waist", middle: "waist",
+};
+
+/** "pocket" -> "pockets", "laptop stand" -> "stand"; unknown names pass through snake_cased. */
+export function normalizePartName(raw: string): string {
+  const s = raw.trim().toLowerCase().replace(/[\s-]+/g, "_");
+  return PART_NAME_ALIASES[s] ?? s;
+}
+const PART_NAME_ALIASES: Record<string, string> = {
+  pocket: "pockets", sleeve: "sleeves", strap: "straps", shoulder_straps: "straps", vent: "vents",
+  laptop_stand: "stand", zip: "zipper", zippers: "zipper", side_pockets: "side_pocket", front_pockets: "front_pocket",
+  pouch: "front_pocket", ear_cups: "headphones", earcups: "headphones", headphone: "headphones", brim: "visor",
+  top_handle: "handle", waist_seam: "seam",
+};
 
 function normalizeHex(v: string): string {
   const s = v.trim();

@@ -7,7 +7,8 @@
     "dev": "tsx watch --env-file-if-exists=../.env src/index.ts",
     "start": "tsx --env-file-if-exists=../.env src/index.ts",
     "brain:test": "tsx --env-file-if-exists=../.env scripts/brain-test.ts",
-    "demo:reset": "tsx --env-file-if-exists=../.env scripts/demo-reset.ts"
+    "demo:reset": "tsx --env-file-if-exists=../.env scripts/demo-reset.ts",
+    "judge": "tsx --env-file-if-exists=../.env scripts/judge-eval.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
