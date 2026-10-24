@@ -28,6 +28,13 @@ export function torsoR(y: number): number {
 export const torsoXS = (y: number) => 1 + 0.18 * smooth(1.32, 1.5, y);
 export const TORSO_ZS = 0.78;
 
+/** Bodice radius at y for part scale s: a bigger bodice stands further off the form (not at the
+ * neckline), a smaller one never sinks into it. Shared by Garment.tsx and anchors.ts. */
+export function bodiceR(y: number, base: number, s: number): number {
+  const f = 1 + (Math.max(0.3, s) - 1) * 0.35 * (1 - smooth(1.5, 1.6, y));
+  return Math.max(torsoR(y) + 0.004, base * f);
+}
+
 export function smooth(a: number, b: number, x: number) {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
   return t * t * (3 - 2 * t);

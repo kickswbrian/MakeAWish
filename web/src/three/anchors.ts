@@ -1,6 +1,6 @@
 import { CLOTHING, type Addon, type Placement, type ProductSpec } from "@wishit/shared";
 import { skirtRadius, targetsFor } from "./garmentShape.ts";
-import { HEM_Y, HIP_Y, smooth, TORSO_ZS, torsoR, torsoXS, WAIST_Y } from "./shapes.ts";
+import { bodiceR, HEM_Y, HIP_Y, smooth, TORSO_ZS, torsoR, torsoXS, WAIST_Y } from "./shapes.ts";
 
 /**
  * Where decals and add-ons go on each model. Pure math (no React), so the render-coverage test
@@ -65,10 +65,12 @@ function garmentAnchor(spec: ProductSpec, p: Placement): Anchor {
   const a = targetsFor(spec);
   const cat = spec.category;
   const hem = HEM_Y[spec.length ?? "midi"];
+  // Same factor as Garment.tsx, so decals stay on a bigger or smaller bodice.
+  const bs = spec.parts?.bodice?.hidden ? 1 : spec.parts?.bodice?.scale ?? 1;
+  const bodR = (y: number) => bodiceR(y, torsoR(y) + 0.011, bs) + 0.009;
   const bodice = (y: number, theta: number, base: number) => {
     const h = base * 0.6;
-    const r = torsoR(y) + 0.02;
-    return wrapAnchor(y, r, torsoXS(y), TORSO_ZS + 0.02, theta, base, torsoR(y + h) + 0.02, torsoR(y - h) + 0.02);
+    return wrapAnchor(y, bodR(y), torsoXS(y), TORSO_ZS + 0.02, theta, base, bodR(y + h), bodR(y - h));
   };
   // Same fullness as Garment.tsx: a bigger skirt flares more below the hips.
   const full = spec.parts?.skirt?.hidden ? 1 : spec.parts?.skirt?.scale ?? 1;

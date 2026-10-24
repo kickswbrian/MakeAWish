@@ -205,7 +205,7 @@ function DecalMesh({ spec, d, ink }: { spec: ProductSpec; d: Decal; ink: string 
     if (ref.current && built.flat) ref.current.scale.setScalar(Math.max(0.001, grow.current));
     mat.opacity = grow.current;
   });
-  return <mesh ref={ref} geometry={built.geo} material={mat} position={built.pos} rotation={built.flat ? rotation : undefined} scale={built.flat ? undefined : built.scale} renderOrder={2} />;
+  return <mesh ref={ref} geometry={built.geo} material={mat} position={built.pos} rotation={built.flat ? rotation : [0, 0, 0]} scale={built.flat ? undefined : built.scale} renderOrder={2} />;
 }
 
 export function Decals({ spec }: { spec: ProductSpec }) {

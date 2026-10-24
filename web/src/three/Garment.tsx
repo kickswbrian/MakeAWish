@@ -2,7 +2,7 @@ import { useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { ProductSpec } from "@wishit/shared";
-import { fillWrapGrid, HIP_Y, makeWrapGrid, morphK, smooth, TORSO_ZS, torsoR, torsoXS, WAIST_Y } from "./shapes.ts";
+import { bodiceR, fillWrapGrid, HIP_Y, makeWrapGrid, morphK, smooth, TORSO_ZS, torsoR, torsoXS, WAIST_Y } from "./shapes.ts";
 import { skirtPoint, targetsFor, topY, type Targets } from "./garmentShape.ts";
 import { usePartMaterials, usePattern } from "./materials.ts";
 
@@ -110,7 +110,7 @@ export function Garment({ spec, flash }: { spec: ProductSpec; flash: MutableRefO
           const y = cur.bodiceBottom + (topY(th, cur) - cur.bodiceBottom) * s;
           const flare = spec.category === "top" ? 0.03 * (1 - s) ** 2 : 0;
           // A bigger bodice stands further off the form; the neckline edge stays close to the neck.
-          out[0] = (torsoR(y) + 0.011 + flare + 0.008 * smooth(1.56, 1.62, y)) * (1 + (Math.max(0.3, P.bodice) - 1) * 0.35 * (1 - smooth(1.5, 1.6, y)));
+          out[0] = bodiceR(y, torsoR(y) + 0.011 + flare + 0.008 * smooth(1.56, 1.62, y), P.bodice);
           out[1] = y;
           out[2] = torsoXS(y);
           out[3] = TORSO_ZS + 0.02;
