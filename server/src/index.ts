@@ -15,7 +15,7 @@ import {
   PledgeError, reconcilePledge, startCampaignTimers,
 } from "./campaigns.ts";
 import { assertSafeConfig, env, isProd, logConfig, paymentMode, WEB_DIST } from "./env.ts";
-import { findMatches, getMatches } from "./apify.ts";
+import { findMatches, getMatches, prepareMatches } from "./apify.ts";
 import { resetDemo } from "./demo.ts";
 import { handleStripeEvent, mockConfirm, stripe } from "./payments.ts";
 import { agentAttack, agentPledge, handleAgentPledge, type Attack } from "./agent.ts";
@@ -163,6 +163,8 @@ app.post("/api/wish/:id/turn", ...limits.turn, wrap(async (req, res) => {
       saveProduct(id, result.product);
       if (result.say) appendTranscript(id, [{ role: "user", text, at: started }, { role: "genie", text: result.say, at: Date.now() }]);
       emit(`wish:${id}`, EVENTS.productUpdated, { wishId: id, product: result.product });
+      // Plan the "does it exist" search in the background, so See matches goes straight to the stores.
+      prepareMatches(result.product);
     }
     if (result.lock) send({ t: "lock" });
     const ms = Date.now() - started;
@@ -201,6 +203,7 @@ app.put("/api/wish/:id/product", limits.editProduct, (req, res) => {
   const thumb = req.body?.thumb;
   if (typeof thumb === "string" && /^data:image\/(png|webp|jpeg);base64,/.test(thumb) && thumb.length < 150_000) saveThumb(req.params.id, thumb);
   emit(`wish:${req.params.id}`, EVENTS.productUpdated, { wishId: req.params.id, product });
+  prepareMatches(product); // a kept speculative turn lands here; cached when the wish's meta is unchanged
   res.json({ ok: true });
 });
 

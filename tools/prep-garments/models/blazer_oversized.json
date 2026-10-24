@@ -1,0 +1,411 @@
+{
+ "credit": "\"Wide-Shoulder Blazer and Skirt Ensemble\" by Style3D CG (https://sketchfab.com/3d-models/wide-shoulder-blazer-and-skirt-ensemble-5fb3cf3e06dc4f13bec0e3b4060c43ff), CC-BY-4.0",
+ "source": "blazer_oversized",
+ "height": 0.8,
+ "keep": [
+  "uniform_1001"
+ ],
+ "budget": 36000,
+ "fold": "uniform_1001",
+ "fold_size": 2048,
+ "fold_quality": 82,
+ "rules": [
+  {
+   "name": "collar",
+   "when": "ptris > 40 and ((abs(pu-0.06)<0.008 and abs(pv-0.324)<0.008) or (abs(pu-0.052)<0.008 and abs(pv-0.252)<0.008) or (abs(pu-0.16)<0.008 and abs(pv-0.319)<0.008) or (abs(pu-0.156)<0.008 and abs(pv-0.277)<0.008))"
+  },
+  {
+   "name": "pocket_square",
+   "when": "ptris > 40 and ((abs(pu-0.355)<0.008 and abs(pv-0.423)<0.008))"
+  },
+  {
+   "name": "pocket_flaps",
+   "when": "ptris > 40 and ((abs(pu-0.567)<0.008 and abs(pv-0.453)<0.008) or (abs(pu-0.16)<0.008 and abs(pv-0.231)<0.008) or (abs(pu-0.567)<0.008 and abs(pv-0.409)<0.008) or (abs(pu-0.556)<0.008 and abs(pv-0.488)<0.008))"
+  },
+  {
+   "name": "sleeve_r",
+   "when": "ptris > 40 and ((abs(pu-0.706)<0.008 and abs(pv-0.323)<0.008) or (abs(pu-0.259)<0.008 and abs(pv-0.371)<0.008))"
+  },
+  {
+   "name": "sleeve_l",
+   "when": "ptris > 40 and ((abs(pu-0.892)<0.008 and abs(pv-0.432)<0.008) or (abs(pu-0.47)<0.008 and abs(pv-0.366)<0.008))"
+  },
+  {
+   "name": "body",
+   "when": "True"
+  }
+ ],
+ "zones": {
+  "front_button_upper": {
+   "from": [
+    0.031,
+    0.358,
+    0.4
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.03,
+    0.03
+   ],
+   "label": "upper front button"
+  },
+  "front_button_lower": {
+   "from": [
+    0.026,
+    0.258,
+    0.4
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.03,
+    0.03
+   ],
+   "label": "lower front button"
+  },
+  "chest_right": {
+   "from": [
+    0.13,
+    0.6,
+    0.4
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.1,
+    0.03
+   ],
+   "bend": 0.25,
+   "label": "right breast pocket (pocket square)",
+   "part": "body"
+  },
+  "chest_left": {
+   "from": [
+    -0.12,
+    0.56,
+    0.4
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.1,
+    0.05
+   ],
+   "bend": 0.25,
+   "label": "left chest"
+  },
+  "hip_right": {
+   "from": [
+    0.134,
+    0.3,
+    0.4
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.14,
+    0.1
+   ],
+   "bend": 0.3,
+   "label": "right hip flap pockets",
+   "part": "body"
+  },
+  "hip_left": {
+   "near": [
+    -0.165,
+    0.26,
+    0.0
+   ],
+   "room": [
+    0.12,
+    0.06
+   ],
+   "label": "left hip pocket",
+   "part": "body"
+  },
+  "lapel_left": {
+   "from": [
+    -0.09,
+    0.6,
+    0.4
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.03,
+    0.03
+   ],
+   "label": "left lapel",
+   "part": "body"
+  },
+  "lapel_right": {
+   "from": [
+    0.06,
+    0.66,
+    0.4
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.03,
+    0.03
+   ],
+   "label": "right lapel",
+   "part": "body"
+  },
+  "collar": {
+   "kind": "line",
+   "from": [
+    0.09,
+    0.765,
+    -0.4
+   ],
+   "to": [
+    -0.09,
+    0.765,
+    -0.4
+   ],
+   "dir": [
+    0,
+    0,
+    1
+   ],
+   "samples": 12,
+   "label": "back collar",
+   "part": "collar"
+  },
+  "back_center": {
+   "from": [
+    0,
+    0.45,
+    -0.4
+   ],
+   "dir": [
+    0,
+    0,
+    1
+   ],
+   "room": [
+    0.24,
+    0.22
+   ],
+   "bend": 0.35,
+   "label": "center back"
+  },
+  "neck_label": {
+   "from": [
+    0,
+    0.71,
+    0.0
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.05,
+    0.03
+   ],
+   "label": "inside back neck",
+   "part": "body"
+  },
+  "hem": {
+   "kind": "line",
+   "from": [
+    0.17,
+    0.03,
+    -0.4
+   ],
+   "to": [
+    -0.17,
+    0.03,
+    -0.4
+   ],
+   "dir": [
+    0,
+    0,
+    1
+   ],
+   "samples": 20,
+   "label": "back hem",
+   "part": "body"
+  },
+  "sleeve_left": {
+   "from": [
+    -0.45,
+    0.56,
+    -0.03
+   ],
+   "dir": [
+    1,
+    0,
+    0
+   ],
+   "room": [
+    0.07,
+    0.09
+   ],
+   "bend": 0.06,
+   "label": "left upper sleeve",
+   "part": "sleeve_l"
+  },
+  "cuff_button_left": {
+   "kind": "line",
+   "from": [
+    -0.45,
+    0.186,
+    -0.062
+   ],
+   "to": [
+    -0.45,
+    0.12,
+    -0.053
+   ],
+   "dir": [
+    1,
+    0,
+    0
+   ],
+   "samples": 6,
+   "label": "left cuff buttons",
+   "part": "sleeve_l"
+  },
+  "cuff_left": {
+   "kind": "ring",
+   "center": [
+    -0.215,
+    0.12,
+    -0.005
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "radius": 0.08,
+   "samples": 24,
+   "label": "left cuff",
+   "part": "sleeve_l"
+  },
+  "shoulder_left": {
+   "kind": "line",
+   "from": [
+    -0.1,
+    0.95,
+    -0.04
+   ],
+   "to": [
+    -0.24,
+    0.95,
+    -0.04
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "samples": 12,
+   "label": "left shoulder (padded)"
+  },
+  "sleeve_right": {
+   "from": [
+    0.45,
+    0.56,
+    -0.03
+   ],
+   "dir": [
+    -1,
+    0,
+    0
+   ],
+   "room": [
+    0.07,
+    0.09
+   ],
+   "bend": 0.06,
+   "label": "right upper sleeve",
+   "part": "sleeve_r"
+  },
+  "cuff_button_right": {
+   "kind": "line",
+   "from": [
+    0.45,
+    0.186,
+    -0.062
+   ],
+   "to": [
+    0.45,
+    0.12,
+    -0.053
+   ],
+   "dir": [
+    -1,
+    0,
+    0
+   ],
+   "samples": 6,
+   "label": "right cuff buttons",
+   "part": "sleeve_r"
+  },
+  "cuff_right": {
+   "kind": "ring",
+   "center": [
+    0.215,
+    0.12,
+    -0.005
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "radius": 0.08,
+   "samples": 24,
+   "label": "right cuff",
+   "part": "sleeve_r"
+  },
+  "shoulder_right": {
+   "kind": "line",
+   "from": [
+    0.1,
+    0.95,
+    -0.04
+   ],
+   "to": [
+    0.24,
+    0.95,
+    -0.04
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "samples": 12,
+   "label": "right shoulder (padded)"
+  }
+ }
+}

@@ -11,3 +11,7 @@ web/public/bench/
 
 # browser tool scratch logs
 .playwright-mcp/
+
+# Raw 3D model downloads (processed copies live in web/public/models)
+assets-src/
+tools/prep-garments/build/

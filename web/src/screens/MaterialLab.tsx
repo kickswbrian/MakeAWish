@@ -15,7 +15,7 @@ import { boxProjectUVs, scaleUVs } from "../three/parts/uv.ts";
  * CSS backdrop, NeutralToneMapping at 0.92, the studio HDRI at 0.62, key/rim/fill lights, N8AO,
  * bloom and SMAA. Keep the lighting below in sync with Stage.tsx.
  * URL params: ?p=leather,nylon (only these presets), ?cols=3, ?view=close (camera close-up),
- * ?shapes=box,sphere,panel,cyl,window (default box,sphere), ?fx=0 (no post effects),
+ * ?shapes=box,sphere,panel,cyl,window,gem (default box,sphere), ?fx=0 (no post effects),
  * ?rough=0.3 / ?metal=1 (override every material).
  */
 
@@ -39,6 +39,26 @@ const TINTS: Record<MaterialPreset, [string, string]> = {
   concrete: ["#A7A39B", "#E8E4DC"],
   marble: ["#EDEBE6", "#2B2D30"],
   cork: ["#C08A55", "#4A4D52"],
+  jersey: ["#F4F4F2", "#8A8D93"],
+  rib_knit: ["#D9C6A5", "#1A1A1D"],
+  cable_knit: ["#F4EBD0", "#7A1F2B"],
+  fleece: ["#9CAF88", "#3A3D42"],
+  sherpa: ["#F1EEE6", "#C8A27A"],
+  linen: ["#E8E2D4", "#9CAF88"],
+  wool_suiting: ["#3A3D42", "#1F2A55"],
+  tweed: ["#C8A27A", "#F7C5D5"],
+  corduroy: ["#B7472A", "#BF8F5B"],
+  velvet: ["#7A1F2B", "#1F5631"],
+  denim_light: ["#8FB0D4", "#2F3A4A"],
+  leather_pebbled: ["#1A1A1D", "#BF8F5B"],
+  patent_leather: ["#1A1A1D", "#D7263D"],
+  mesh_fabric: ["#1A1A1D", "#F4F4F2"],
+  lace: ["#F6F1E1", "#1A1A1D"],
+  gingham: ["#F28DB2", "#3A6FD8"],
+  quilted: ["#1A1A1D", "#F4EBD0"],
+  pearl: ["#F6F1E1", "#F4C2C2"],
+  gem: ["#E8F4FF", "#1F8A5B"],
+  horn: ["#5C3A21", "#D9C6A5"],
 };
 
 const BOX = { w: 0.24, h: 0.28, d: 0.14, r: 0.028 };
@@ -50,15 +70,34 @@ const SHAPE_STEP = 0.29;
 const CELL_D = 0.8;
 const GAP = 0.22;
 
+/** A round brilliant cut (flat facets), for the gem preset. */
+const GEM = { r: 0.09, pavilion: 0.078, crown: 0.034, table: 0.53 };
+
 /** window: a panel in front of an opaque block (toaster window, phone screen over a display). */
-type Shape = "box" | "sphere" | "panel" | "cyl" | "window";
+type Shape = "box" | "sphere" | "panel" | "cyl" | "window" | "gem";
 const SHAPES: Record<Shape, { y: number; rotY: number }> = {
   box: { y: BOX.h / 2, rotY: 0 },
   sphere: { y: SPHERE_R, rotY: 0 },
   panel: { y: PANEL.h / 2, rotY: -0.45 },
   cyl: { y: CYL.h / 2, rotY: 0 },
   window: { y: PANEL.h / 2, rotY: 0 },
+  gem: { y: 0.004, rotY: 0.2 },
 };
+
+function brilliantGeometry(): THREE.BufferGeometry {
+  const { r, pavilion, crown, table } = GEM;
+  const girdle = 0.004;
+  const profile = [
+    new THREE.Vector2(0.0001, 0),
+    new THREE.Vector2(r, pavilion),
+    new THREE.Vector2(r, pavilion + girdle),
+    new THREE.Vector2(r * table, pavilion + girdle + crown),
+    new THREE.Vector2(0.0001, pavilion + girdle + crown),
+  ];
+  const g = new THREE.LatheGeometry(profile, 16).toNonIndexed();
+  g.computeVertexNormals();
+  return boxProjectUVs(g);
+}
 const BACKING: PartMaterial = { preset: "plastic_matte", color: "#E07A3F" };
 
 let geometries: Record<Shape, THREE.BufferGeometry> | null = null;
@@ -69,6 +108,7 @@ function getGeometries() {
     panel: boxProjectUVs(new RoundedBoxGeometry(PANEL.w, PANEL.h, PANEL.d, 2, PANEL.d * 0.45)),
     cyl: scaleUVs(new THREE.CylinderGeometry(CYL.r, CYL.r, CYL.h, 96, 1), 2 * Math.PI * CYL.r, CYL.h),
     window: boxProjectUVs(new RoundedBoxGeometry(PANEL.w, PANEL.h, PANEL.d, 2, PANEL.d * 0.45)),
+    gem: brilliantGeometry(),
   };
   return geometries;
 }

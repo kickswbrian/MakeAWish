@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useStore } from "zustand";
 import * as THREE from "three";
 import {
-  emptyProduct, EVENTS, isEmpty, matchTemplate, parseIntent, templateById, templateProduct,
+  emptyProduct, EVENTS, isEmpty, localOutfit, matchTemplate, outfitProduct, parseIntent, templateById, templateProduct,
   type Campaign, type CampaignUpdatedPayload, type MatchesReadyPayload, type MatchesResponse, type Patch, type Product,
   type TurnEvent, type WishDTO,
 } from "@wishit/shared";
@@ -293,7 +293,9 @@ export default function Studio() {
     const p = useProduct.getState().product;
     // Brand-new wish that names a known product: show its template instantly, the genie customizes it.
     const tpl = isEmpty(p) ? matchTemplate(utterance) : null;
-    const base = tpl ? { ...templateProduct(tpl, p.id), id: p.id } : p;
+    // Fashion templates come up already styled for the wish ("cozy", "downtown girl"), instantly.
+    const styled = tpl?.fashion ? outfitProduct(localOutfit(utterance, tpl.fashion), p.id) : null;
+    const base = styled ?? (tpl ? { ...templateProduct(tpl, p.id), id: p.id } : p);
     return {
       template: tpl ? base : null,
       body: {
@@ -482,6 +484,9 @@ export default function Studio() {
         }
         case "meta":
           useProduct.getState().meta(ev.meta);
+          break;
+        case "fashion":
+          useProduct.getState().fashion(ev.fashion);
           break;
         case "say":
           stopHum();

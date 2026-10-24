@@ -1,0 +1,7196 @@
+{
+  "version": 1,
+  "styles": [
+    {
+      "id": "cute",
+      "name": "Cute",
+      "aliases": [
+        "cute",
+        "kawaii",
+        "sweet",
+        "adorable",
+        "girly",
+        "playful",
+        "pastel",
+        "pastels",
+        "soft girl"
+      ],
+      "vibe": "Sweet and playful: pastels, gingham, bows, ruffles, puff sleeves, lace trim, pearl buttons, tiny hearts.",
+      "palette": {
+        "main": {
+          "baby pink": "#F7C5D5",
+          "butter yellow": "#F6E3A1",
+          "baby blue": "#BFDDF2",
+          "lilac": "#D9C4EC"
+        },
+        "secondary": {
+          "white": "#FAF7F2",
+          "cream": "#F4EBD0"
+        },
+        "accent": {
+          "cherry red": "#D7263D",
+          "strawberry pink": "#F28DB2"
+        },
+        "neutrals": {
+          "ivory": "#F6F1E1"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "gingham",
+          "jersey",
+          "rib_knit",
+          "cotton"
+        ],
+        "outerwear": [
+          "knit",
+          "corduroy",
+          "sherpa",
+          "denim_light"
+        ],
+        "bottom": [
+          "denim_light",
+          "corduroy",
+          "cotton"
+        ],
+        "skirt": [
+          "gingham",
+          "denim_light",
+          "cotton",
+          "lace"
+        ],
+        "dress": [
+          "gingham",
+          "cotton",
+          "satin"
+        ],
+        "bag": [
+          "quilted",
+          "patent_leather",
+          "canvas",
+          "knit"
+        ],
+        "jewelry": [
+          "metal_polished"
+        ],
+        "lining": [
+          "cotton"
+        ],
+        "trim": [
+          "lace",
+          "cotton"
+        ],
+        "stone": [
+          "pearl",
+          "gem"
+        ]
+      },
+      "fabricColors": {
+        "denim_light": "#A9C4E2",
+        "denim": "#9EBBDD"
+      },
+      "controls": {
+        "fit": [
+          "fitted",
+          "regular"
+        ],
+        "length": [
+          "cropped",
+          "mini",
+          "regular"
+        ],
+        "leg": [
+          "wide",
+          "straight"
+        ],
+        "rise": [
+          "high"
+        ],
+        "flare": [
+          "a_line",
+          "full"
+        ],
+        "size": [
+          "small",
+          "mini"
+        ],
+        "shape": [
+          "structured"
+        ],
+        "style": [
+          "drop",
+          "stud",
+          "huggie"
+        ],
+        "thickness": [
+          "thin"
+        ]
+      },
+      "hardware": "gold",
+      "tones": {
+        "trim": "secondary",
+        "accent": "accent",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "pearl_dome",
+            "count": 5
+          },
+          "material": {
+            "preset": "pearl",
+            "color": "#F3EDE2"
+          },
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress"
+          ],
+          "replace": true
+        },
+        {
+          "module": "bow",
+          "zone": [
+            "neckline",
+            "chest_center",
+            "back_center"
+          ],
+          "params": {
+            "style": "ribbon"
+          },
+          "material": "accent",
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress"
+          ]
+        },
+        {
+          "module": "puff_band",
+          "zone": [
+            "cuff_*",
+            "armhole_*"
+          ],
+          "material": "shell",
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "lace_trim",
+          "zone": [
+            "hem",
+            "hem_*"
+          ],
+          "material": "trim",
+          "kinds": [
+            "top",
+            "skirt",
+            "dress",
+            "bottom"
+          ]
+        },
+        {
+          "module": "scallop_edge",
+          "zone": [
+            "collar",
+            "cuff_*"
+          ],
+          "material": "trim",
+          "kinds": [
+            "outerwear",
+            "top"
+          ]
+        },
+        {
+          "module": "ruffle",
+          "zone": [
+            "neckline",
+            "hem"
+          ],
+          "material": "shell",
+          "kinds": [
+            "top",
+            "skirt",
+            "dress"
+          ]
+        },
+        {
+          "module": "embroidery",
+          "zone": [
+            "chest_left",
+            "chest_right",
+            "thigh_left",
+            "front_center"
+          ],
+          "params": {
+            "motif": "heart"
+          },
+          "material": "accent",
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress",
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "patch_pocket",
+          "zone": "hip_*",
+          "params": {
+            "flap": "none",
+            "corner": "rounded"
+          },
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "scallop_edge",
+          "zone": "cuff_*",
+          "material": "trim",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "bow",
+          "zone": [
+            "front_center",
+            "waist"
+          ],
+          "params": {
+            "style": "ribbon"
+          },
+          "material": "accent",
+          "kinds": [
+            "skirt"
+          ]
+        },
+        {
+          "module": "button",
+          "zone": "waistband",
+          "params": {
+            "style": "pearl_dome"
+          },
+          "material": {
+            "preset": "pearl",
+            "color": "#F3EDE2"
+          },
+          "kinds": [
+            "skirt"
+          ]
+        },
+        {
+          "module": "bow",
+          "zone": [
+            "front_center",
+            "strap_anchor_left"
+          ],
+          "params": {
+            "style": "ribbon"
+          },
+          "material": "accent",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "bag_charm",
+          "zone": [
+            "strap_anchor_right",
+            "handle_left"
+          ],
+          "params": {
+            "charm": "heart"
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "handle_wrap",
+          "zone": "handle_left",
+          "params": {
+            "print": "dotted"
+          },
+          "material": "accent",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "piping",
+          "zone": [
+            "edge_front",
+            "edge_back"
+          ],
+          "material": "trim",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "charm",
+          "zone": "drop_point",
+          "params": {
+            "shape": "heart"
+          },
+          "material": "metal",
+          "kinds": [
+            "jewelry"
+          ]
+        },
+        {
+          "module": "gem",
+          "zone": "face",
+          "material": "stone",
+          "kinds": [
+            "jewelry"
+          ]
+        }
+      ],
+      "accessories": [
+        "pearl hair clips",
+        "heart sunglasses",
+        "mary jane flats",
+        "mini shoulder bag with a bow"
+      ],
+      "avoid": {
+        "modules": [
+          "cargo_pocket",
+          "jeans_rivet",
+          "print_graphic",
+          "d_ring",
+          "swivel_hook",
+          "fringe"
+        ],
+        "fabrics": [
+          "wool_suiting",
+          "tweed",
+          "mesh_fabric",
+          "leather_pebbled"
+        ],
+        "colors": [
+          "black",
+          "charcoal",
+          "graphite",
+          "olive"
+        ],
+        "controls": {
+          "fit": [
+            "oversized"
+          ],
+          "leg": [
+            "skinny"
+          ]
+        }
+      }
+    },
+    {
+      "id": "cozy",
+      "name": "Cozy",
+      "aliases": [
+        "cozy",
+        "cosy",
+        "comfy",
+        "comfortable",
+        "snuggly",
+        "hygge",
+        "loungewear",
+        "lounge",
+        "fuzzy",
+        "warm and soft"
+      ],
+      "vibe": "Soft and warm: oatmeal, cream and camel, chunky cable knits, sherpa and fleece, oversized cuts, rib cuffs, drawstrings, horn buttons.",
+      "palette": {
+        "main": {
+          "oatmeal": "#D8CBB3",
+          "cream": "#F1E8D6",
+          "camel": "#BF8F5B"
+        },
+        "secondary": {
+          "chocolate": "#5A3B28",
+          "heather grey": "#A7A39C"
+        },
+        "accent": {
+          "sage": "#9CAF88",
+          "rust": "#B7472A"
+        },
+        "neutrals": {
+          "ivory": "#F6F1E1",
+          "mushroom": "#B8A99A"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "cable_knit",
+          "knit",
+          "fleece",
+          "rib_knit"
+        ],
+        "outerwear": [
+          "cable_knit",
+          "sherpa",
+          "fleece",
+          "knit",
+          "corduroy"
+        ],
+        "bottom": [
+          "fleece",
+          "knit",
+          "corduroy"
+        ],
+        "skirt": [
+          "knit",
+          "corduroy"
+        ],
+        "dress": [
+          "knit",
+          "rib_knit"
+        ],
+        "bag": [
+          "knit",
+          "sherpa",
+          "suede"
+        ],
+        "jewelry": [
+          "metal_brushed"
+        ],
+        "lining": [
+          "sherpa",
+          "fleece"
+        ],
+        "trim": [
+          "rib_knit"
+        ],
+        "strap": [
+          "suede",
+          "leather"
+        ],
+        "stone": [
+          "gem"
+        ]
+      },
+      "controls": {
+        "fit": [
+          "oversized",
+          "regular"
+        ],
+        "length": [
+          "long",
+          "regular",
+          "midi",
+          "maxi"
+        ],
+        "leg": [
+          "wide",
+          "baggy",
+          "straight"
+        ],
+        "rise": [
+          "high",
+          "mid"
+        ],
+        "flare": [
+          "straight"
+        ],
+        "size": [
+          "large",
+          "medium"
+        ],
+        "shape": [
+          "slouchy"
+        ],
+        "style": [
+          "hoop",
+          "huggie"
+        ],
+        "thickness": [
+          "chunky"
+        ]
+      },
+      "hardware": "brass",
+      "tones": {
+        "trim": "main",
+        "lining": "neutral",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "rib_band",
+          "zone": "cuff_*",
+          "material": "trim",
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": "hem",
+          "material": "trim",
+          "kinds": [
+            "top",
+            "outerwear"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": [
+            "neckline",
+            "collar"
+          ],
+          "material": "trim",
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "horn_rim",
+            "count": 5
+          },
+          "material": {
+            "preset": "horn",
+            "color": "#6B4A32"
+          },
+          "kinds": [
+            "outerwear"
+          ],
+          "replace": true
+        },
+        {
+          "module": "patch_pocket",
+          "zone": "hip_*",
+          "params": {
+            "flap": "none",
+            "corner": "rounded"
+          },
+          "kinds": [
+            "outerwear",
+            "top"
+          ]
+        },
+        {
+          "module": "sherpa_band",
+          "zone": "collar",
+          "material": "lining",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "drawstring",
+          "zone": [
+            "neckline",
+            "hem"
+          ],
+          "kinds": [
+            "top"
+          ]
+        },
+        {
+          "module": "leather_patch",
+          "zone": [
+            "sleeve_left",
+            "chest_left"
+          ],
+          "material": {
+            "preset": "suede",
+            "color": "#8B5E3C"
+          },
+          "kinds": [
+            "top",
+            "outerwear"
+          ]
+        },
+        {
+          "module": "drawstring",
+          "zone": "waistband",
+          "kinds": [
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": "hem_*",
+          "material": "trim",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "slash_pocket",
+          "zone": "pocket_front_*",
+          "params": {
+            "shape": "curved"
+          },
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "sherpa_band",
+          "zone": "top_edge",
+          "material": "lining",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "leather_patch",
+          "zone": [
+            "front_center",
+            "front_panel"
+          ],
+          "material": {
+            "preset": "suede",
+            "color": "#8B5E3C"
+          },
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "pompom",
+          "zone": [
+            "strap_anchor_left",
+            "zip_top"
+          ],
+          "material": "shell",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "magnetic_snap",
+          "zone": "top_edge",
+          "kinds": [
+            "bag"
+          ]
+        }
+      ],
+      "accessories": [
+        "chunky knit beanie",
+        "shearling slippers",
+        "wool socks",
+        "oversized scarf"
+      ],
+      "avoid": {
+        "modules": [
+          "print_graphic",
+          "jeans_rivet",
+          "chain_strap",
+          "lace_trim",
+          "turn_lock"
+        ],
+        "fabrics": [
+          "mesh_fabric",
+          "patent_leather",
+          "satin",
+          "wool_suiting"
+        ],
+        "colors": [
+          "neon pink",
+          "neon green",
+          "hot pink"
+        ],
+        "controls": {
+          "fit": [
+            "fitted"
+          ],
+          "leg": [
+            "skinny"
+          ],
+          "length": [
+            "cropped",
+            "mini"
+          ]
+        }
+      },
+      "fabricColors": {
+        "denim": "#5B7393",
+        "denim_light": "#9DB2CC"
+      }
+    },
+    {
+      "id": "clean_girl",
+      "name": "Clean girl",
+      "aliases": [
+        "clean girl",
+        "that girl",
+        "clean aesthetic",
+        "effortless",
+        "model off duty",
+        "glazed"
+      ],
+      "vibe": "Polished and effortless: cream, beige and white, ribbed jersey, fitted basics, minimal seams, small gold hoops, no logos or prints.",
+      "palette": {
+        "main": {
+          "cream": "#F2EBDD",
+          "white": "#F7F5F0",
+          "beige": "#D9C6A5"
+        },
+        "secondary": {
+          "oat": "#E6DCCB",
+          "taupe": "#B9A89A"
+        },
+        "accent": {
+          "champagne": "#E9D8B4"
+        },
+        "neutrals": {
+          "espresso": "#4B3A30",
+          "stone": "#CFC6BA"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "rib_knit",
+          "jersey",
+          "cotton"
+        ],
+        "outerwear": [
+          "wool_suiting",
+          "linen",
+          "leather"
+        ],
+        "bottom": [
+          "linen",
+          "cotton",
+          "jersey"
+        ],
+        "skirt": [
+          "satin",
+          "linen",
+          "rib_knit"
+        ],
+        "dress": [
+          "rib_knit",
+          "satin",
+          "jersey"
+        ],
+        "bag": [
+          "leather",
+          "leather_pebbled"
+        ],
+        "jewelry": [
+          "metal_polished"
+        ],
+        "lining": [
+          "satin"
+        ],
+        "trim": [
+          "rib_knit"
+        ],
+        "stone": [
+          "pearl",
+          "gem"
+        ]
+      },
+      "controls": {
+        "fit": [
+          "fitted",
+          "regular"
+        ],
+        "length": [
+          "regular",
+          "cropped",
+          "midi"
+        ],
+        "leg": [
+          "straight",
+          "wide"
+        ],
+        "rise": [
+          "high",
+          "mid"
+        ],
+        "flare": [
+          "straight"
+        ],
+        "size": [
+          "small",
+          "medium"
+        ],
+        "shape": [
+          "structured"
+        ],
+        "style": [
+          "hoop",
+          "huggie"
+        ],
+        "thickness": [
+          "regular",
+          "chunky"
+        ],
+        "bag.size": [
+          "medium",
+          "small"
+        ]
+      },
+      "hardware": "gold",
+      "tones": {
+        "trim": "main",
+        "thread": "tonal",
+        "label": "neutral"
+      },
+      "modules": [
+        {
+          "module": "topstitch",
+          "zone": "hem",
+          "params": {
+            "rows": 1,
+            "weight": "fine"
+          },
+          "kinds": [
+            "top",
+            "outerwear",
+            "skirt",
+            "dress"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": [
+            "neckline",
+            "collar"
+          ],
+          "params": {
+            "rows": 1,
+            "weight": "fine"
+          },
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "flat2"
+          },
+          "material": "shell",
+          "kinds": [
+            "top",
+            "outerwear"
+          ]
+        },
+        {
+          "module": "seam_welt",
+          "zone": "side_seam_*",
+          "kinds": [
+            "top",
+            "dress",
+            "skirt"
+          ]
+        },
+        {
+          "module": "welt_pocket",
+          "zone": "hip_*",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "welt_pocket",
+          "zone": "chest_left",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "woven_label",
+          "zone": [
+            "neck_label",
+            "waistband"
+          ],
+          "material": "label",
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress",
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "pleats",
+          "zone": "waistband",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "slash_pocket",
+          "zone": "pocket_front_*",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": [
+            "outseam_*",
+            "waistband"
+          ],
+          "params": {
+            "rows": 1,
+            "weight": "fine"
+          },
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "edge_paint",
+          "zone": [
+            "edge_front",
+            "top_edge"
+          ],
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "edge_paint",
+          "zone": "edge_back",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "magnetic_snap",
+          "zone": "top_edge",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "foot_stud",
+          "zone": "base_corners",
+          "params": {
+            "count": 4
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "ear_back",
+          "zone": "earlobe",
+          "material": "metal",
+          "kinds": [
+            "jewelry"
+          ]
+        }
+      ],
+      "accessories": [
+        "small gold hoops",
+        "slick claw clip",
+        "tortoise sunglasses",
+        "white leather sneakers"
+      ],
+      "avoid": {
+        "modules": [
+          "print_graphic",
+          "brand_patch",
+          "embroidery",
+          "logo_plate",
+          "fringe",
+          "ruffle",
+          "cargo_pocket",
+          "pompom",
+          "bag_charm",
+          "tassel",
+          "charm"
+        ],
+        "fabrics": [
+          "gingham",
+          "mesh_fabric",
+          "patent_leather",
+          "sherpa",
+          "fleece"
+        ],
+        "colors": [
+          "neon pink",
+          "neon green",
+          "hot pink",
+          "lime"
+        ],
+        "controls": {
+          "leg": [
+            "baggy"
+          ],
+          "thickness": [
+            "thin"
+          ]
+        }
+      },
+      "fabricColors": {
+        "denim": "#E9E2D3",
+        "denim_light": "#E9E2D3"
+      }
+    },
+    {
+      "id": "downtown_girl",
+      "name": "Downtown girl",
+      "aliases": [
+        "downtown girl",
+        "downtown",
+        "nyc girl",
+        "new york girl",
+        "city girl",
+        "it girl",
+        "soho"
+      ],
+      "vibe": "Effortless city cool: black, brown and grey, leather, oversized blazers, baggy jeans, silver chunky jewelry, slouchy shoulder bags, almost no cute details.",
+      "palette": {
+        "main": {
+          "black": "#1A1A1D",
+          "chocolate": "#3E2A20",
+          "charcoal": "#3A3D42"
+        },
+        "secondary": {
+          "espresso": "#2B1E17",
+          "heather grey": "#8A8D93"
+        },
+        "accent": {
+          "oxblood": "#5E1A24",
+          "deep olive": "#4B4A2F"
+        },
+        "neutrals": {
+          "grey": "#8A8D93",
+          "bone": "#EDE6DA"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "rib_knit",
+          "jersey",
+          "mesh_fabric"
+        ],
+        "outerwear": [
+          "leather",
+          "wool_suiting",
+          "suede",
+          "denim"
+        ],
+        "bottom": [
+          "denim",
+          "leather",
+          "wool_suiting"
+        ],
+        "skirt": [
+          "leather",
+          "satin",
+          "denim"
+        ],
+        "dress": [
+          "satin",
+          "jersey"
+        ],
+        "bag": [
+          "leather",
+          "suede",
+          "leather_pebbled"
+        ],
+        "jewelry": [
+          "metal_polished"
+        ],
+        "lining": [
+          "satin"
+        ],
+        "trim": [
+          "rib_knit"
+        ],
+        "strap": [
+          "leather"
+        ],
+        "stone": [
+          "gem"
+        ]
+      },
+      "fabricColors": {
+        "denim": "#2A2B2F",
+        "denim_light": "#9FA6AE"
+      },
+      "controls": {
+        "fit": [
+          "oversized",
+          "regular"
+        ],
+        "length": [
+          "regular",
+          "long",
+          "midi"
+        ],
+        "leg": [
+          "baggy",
+          "wide",
+          "straight"
+        ],
+        "rise": [
+          "low",
+          "mid"
+        ],
+        "flare": [
+          "straight"
+        ],
+        "size": [
+          "medium",
+          "large"
+        ],
+        "shape": [
+          "slouchy"
+        ],
+        "style": [
+          "hoop",
+          "drop"
+        ],
+        "thickness": [
+          "chunky"
+        ]
+      },
+      "hardware": "silver",
+      "tones": {
+        "trim": "main",
+        "lining": "secondary",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "flap",
+          "zone": "hip_*",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "welt_pocket",
+          "zone": "chest_left",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "flat4",
+            "count": 2
+          },
+          "material": {
+            "preset": "horn",
+            "color": "#1E1A18"
+          },
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": [
+            "collar",
+            "placket"
+          ],
+          "params": {
+            "rows": 1,
+            "weight": "fine"
+          },
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "woven_label",
+          "zone": "neck_label",
+          "material": "label",
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": "hem",
+          "params": {
+            "rows": 2,
+            "weight": "regular"
+          },
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "buckle_belt",
+          "zone": [
+            "waistband",
+            "waist"
+          ],
+          "material": "hardware",
+          "kinds": [
+            "bottom",
+            "skirt",
+            "dress"
+          ]
+        },
+        {
+          "module": "jeans_rivet",
+          "zone": "pocket_front_*",
+          "material": "hardware",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "jeans_back_pocket",
+          "zone": "pocket_back_*",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "coin_pocket",
+          "zone": "coin_pocket",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": "outseam_*",
+          "params": {
+            "rows": 2,
+            "weight": "heavy"
+          },
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "leather_patch",
+          "zone": "back_patch",
+          "material": {
+            "preset": "leather",
+            "color": "#3E2A20"
+          },
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "zipper_path",
+          "zone": "side_seam_left",
+          "material": "hardware",
+          "kinds": [
+            "skirt"
+          ]
+        },
+        {
+          "module": "swivel_hook",
+          "zone": "strap_anchor_*",
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "zip_puller",
+          "zone": "zip_top",
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "edge_paint",
+          "zone": "edge_front",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "edge_paint",
+          "zone": "edge_back",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "strap_keeper",
+          "zone": "handle_left",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "foot_stud",
+          "zone": "base_corners",
+          "params": {
+            "count": 4
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        }
+      ],
+      "accessories": [
+        "chunky silver rings",
+        "slim black sunglasses",
+        "black leather loafers",
+        "wired headphones"
+      ],
+      "avoid": {
+        "modules": [
+          "bow",
+          "ruffle",
+          "lace_trim",
+          "scallop_edge",
+          "pompom",
+          "puff_band",
+          "embroidery",
+          "bag_charm",
+          "tassel"
+        ],
+        "fabrics": [
+          "gingham",
+          "lace",
+          "fleece",
+          "sherpa",
+          "denim_light"
+        ],
+        "colors": [
+          "pastel pink",
+          "baby blue",
+          "lilac",
+          "neon green",
+          "hot pink"
+        ],
+        "controls": {
+          "leg": [
+            "skinny"
+          ],
+          "fit": [
+            "fitted"
+          ]
+        }
+      }
+    },
+    {
+      "id": "pilates_princess",
+      "name": "Pilates princess",
+      "aliases": [
+        "pilates princess",
+        "pilates girl",
+        "pilates",
+        "barre",
+        "yoga girl",
+        "yoga",
+        "wellness girl"
+      ],
+      "vibe": "Soft, sculpted and serene: ballet pink and soft pastels, seamless sculpting knits, ruching, crossover straps, wide waistbands, delicate gold jewelry.",
+      "palette": {
+        "main": {
+          "ballet pink": "#F2D4D7",
+          "soft white": "#F8F4EF",
+          "baby blue": "#CFE0EE",
+          "heather grey": "#CFCDCB"
+        },
+        "secondary": {
+          "mauve": "#D8B4B8",
+          "oat": "#E6DCCB"
+        },
+        "accent": {
+          "rose": "#E8A0AE"
+        },
+        "neutrals": {
+          "white": "#F7F5F0",
+          "cream": "#F2EBDD"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "rib_knit",
+          "jersey",
+          "mesh_fabric"
+        ],
+        "outerwear": [
+          "fleece",
+          "rib_knit",
+          "sherpa",
+          "knit"
+        ],
+        "bottom": [
+          "rib_knit",
+          "jersey",
+          "fleece"
+        ],
+        "skirt": [
+          "jersey",
+          "rib_knit"
+        ],
+        "dress": [
+          "rib_knit",
+          "jersey"
+        ],
+        "bag": [
+          "nylon",
+          "canvas",
+          "leather"
+        ],
+        "jewelry": [
+          "metal_polished"
+        ],
+        "trim": [
+          "rib_knit"
+        ],
+        "stone": [
+          "pearl",
+          "gem"
+        ]
+      },
+      "controls": {
+        "fit": [
+          "fitted"
+        ],
+        "length": [
+          "cropped",
+          "regular"
+        ],
+        "leg": [
+          "flare",
+          "wide",
+          "straight"
+        ],
+        "rise": [
+          "high"
+        ],
+        "flare": [
+          "a_line"
+        ],
+        "size": [
+          "medium",
+          "small"
+        ],
+        "shape": [
+          "slouchy"
+        ],
+        "style": [
+          "huggie",
+          "stud",
+          "hoop"
+        ],
+        "thickness": [
+          "thin"
+        ],
+        "jewelry.size": [
+          "small"
+        ]
+      },
+      "hardware": "gold",
+      "tones": {
+        "trim": "main",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "ruching",
+          "zone": [
+            "side_seam_*",
+            "chest_center"
+          ],
+          "material": "shell",
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "lacing",
+          "zone": "back_center",
+          "material": "trim",
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": [
+            "neckline",
+            "collar"
+          ],
+          "material": "trim",
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "bow",
+          "zone": [
+            "chest_center",
+            "neckline"
+          ],
+          "params": {
+            "style": "skinny"
+          },
+          "material": {
+            "preset": "satin",
+            "color": "#E8A0AE"
+          },
+          "kinds": [
+            "top"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": "cuff_*",
+          "material": "trim",
+          "kinds": [
+            "outerwear",
+            "top"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": "hem",
+          "material": "trim",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "welt_pocket",
+          "zone": "hip_*",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "woven_label",
+          "zone": [
+            "neck_label",
+            "waistband"
+          ],
+          "material": "label",
+          "kinds": [
+            "top",
+            "outerwear",
+            "bottom",
+            "skirt",
+            "dress"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": "waistband",
+          "material": "trim",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "ruching",
+          "zone": [
+            "yoke_back",
+            "outseam_*"
+          ],
+          "material": "shell",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "seam_welt",
+          "zone": [
+            "inseam_*",
+            "side_seam_*"
+          ],
+          "kinds": [
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "zip_puller",
+          "zone": "zip_top",
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "bag_charm",
+          "zone": [
+            "strap_anchor_left",
+            "handle_left"
+          ],
+          "params": {
+            "charm": "pompom"
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "strap_keeper",
+          "zone": [
+            "handle_right",
+            "handle_left"
+          ],
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "drawstring",
+          "zone": "top_edge",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "pearl",
+          "zone": "drop_point",
+          "material": "stone",
+          "kinds": [
+            "jewelry"
+          ]
+        },
+        {
+          "module": "gem",
+          "zone": "face",
+          "material": "stone",
+          "kinds": [
+            "jewelry"
+          ]
+        }
+      ],
+      "accessories": [
+        "grip socks",
+        "oversized claw clip",
+        "dainty gold huggies",
+        "nylon shoulder bag"
+      ],
+      "avoid": {
+        "modules": [
+          "cargo_pocket",
+          "jeans_rivet",
+          "fringe",
+          "buckle_belt",
+          "print_graphic",
+          "leather_patch",
+          "chain_strap"
+        ],
+        "fabrics": [
+          "denim",
+          "leather_pebbled",
+          "corduroy",
+          "tweed",
+          "wool_suiting",
+          "patent_leather"
+        ],
+        "colors": [
+          "neon green",
+          "burgundy",
+          "black"
+        ],
+        "controls": {
+          "fit": [
+            "oversized"
+          ],
+          "leg": [
+            "baggy"
+          ],
+          "thickness": [
+            "chunky"
+          ]
+        }
+      },
+      "fabricColors": {
+        "denim": "#C9D3DF",
+        "denim_light": "#D6DEE8"
+      }
+    },
+    {
+      "id": "trendy",
+      "name": "Trendy",
+      "aliases": [
+        "trendy",
+        "trending",
+        "on trend",
+        "viral",
+        "tiktok",
+        "fashion forward",
+        "cool",
+        "it piece"
+      ],
+      "vibe": "Of the moment: cargo pockets, mesh, cropped cuts, low rise, mixed silver and gold hardware, bag charms.",
+      "palette": {
+        "main": {
+          "black": "#1A1A1D",
+          "chrome": "#C9CCD2",
+          "cherry red": "#B0102D",
+          "butter yellow": "#F3DE8A"
+        },
+        "secondary": {
+          "khaki": "#A89B7A",
+          "denim blue": "#5B7FA6"
+        },
+        "accent": {
+          "lime": "#A4D65E",
+          "silver": "#C9CCD2"
+        },
+        "neutrals": {
+          "white": "#F4F4F2",
+          "grey": "#8A8D93"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "mesh_fabric",
+          "jersey",
+          "satin",
+          "rib_knit"
+        ],
+        "outerwear": [
+          "nylon",
+          "leather",
+          "suede",
+          "denim"
+        ],
+        "bottom": [
+          "denim",
+          "nylon",
+          "satin"
+        ],
+        "skirt": [
+          "denim",
+          "satin",
+          "mesh_fabric"
+        ],
+        "dress": [
+          "mesh_fabric",
+          "satin"
+        ],
+        "bag": [
+          "patent_leather",
+          "leather",
+          "nylon"
+        ],
+        "jewelry": [
+          "metal_polished"
+        ],
+        "trim": [
+          "rib_knit"
+        ],
+        "stone": [
+          "gem"
+        ]
+      },
+      "controls": {
+        "fit": [
+          "fitted",
+          "oversized"
+        ],
+        "length": [
+          "cropped",
+          "mini"
+        ],
+        "leg": [
+          "baggy",
+          "wide"
+        ],
+        "rise": [
+          "low"
+        ],
+        "flare": [
+          "straight"
+        ],
+        "size": [
+          "mini",
+          "small"
+        ],
+        "shape": [
+          "slouchy"
+        ],
+        "style": [
+          "hoop",
+          "drop"
+        ],
+        "thickness": [
+          "chunky"
+        ]
+      },
+      "hardware": "silver",
+      "tones": {
+        "trim": "main",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "cargo_pocket",
+          "zone": [
+            "hip_*",
+            "thigh_*"
+          ],
+          "kinds": [
+            "outerwear",
+            "bottom"
+          ]
+        },
+        {
+          "module": "d_ring",
+          "zone": [
+            "side_seam_left",
+            "outseam_left",
+            "waist"
+          ],
+          "material": "hardware",
+          "kinds": [
+            "outerwear",
+            "bottom"
+          ]
+        },
+        {
+          "module": "drawstring",
+          "zone": [
+            "hem",
+            "waist"
+          ],
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "snap_button",
+          "zone": [
+            "collar",
+            "chest_left"
+          ],
+          "material": {
+            "preset": "metal_polished",
+            "color": "#D4AF5A",
+            "roughness": 0.22
+          },
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "print_graphic",
+          "zone": [
+            "chest_center",
+            "back_center"
+          ],
+          "kinds": [
+            "top"
+          ]
+        },
+        {
+          "module": "lacing",
+          "zone": [
+            "side_seam_*",
+            "back_center"
+          ],
+          "material": "trim",
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "buckle_belt",
+          "zone": "waistband",
+          "material": {
+            "preset": "metal_polished",
+            "color": "#D4AF5A",
+            "roughness": 0.22
+          },
+          "kinds": [
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "jeans_rivet",
+          "zone": "pocket_front_*",
+          "material": "hardware",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": [
+            "outseam_*",
+            "hem"
+          ],
+          "params": {
+            "rows": 2,
+            "weight": "heavy"
+          },
+          "kinds": [
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "zipper_path",
+          "zone": "side_seam_left",
+          "material": "hardware",
+          "kinds": [
+            "skirt"
+          ]
+        },
+        {
+          "module": "bag_charm",
+          "zone": [
+            "handle_left",
+            "strap_anchor_left"
+          ],
+          "params": {
+            "charm": "bear"
+          },
+          "material": {
+            "preset": "metal_polished",
+            "color": "#D4AF5A",
+            "roughness": 0.22
+          },
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "o_ring",
+          "zone": "strap_anchor_*",
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "zip_puller",
+          "zone": "zip_top",
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "chain_strap",
+          "zone": "handle_right",
+          "params": {
+            "style": "curb"
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "charm",
+          "zone": "drop_point",
+          "params": {
+            "shape": "star"
+          },
+          "material": "metal",
+          "kinds": [
+            "jewelry"
+          ]
+        },
+        {
+          "module": "gem",
+          "zone": "face",
+          "material": "stone",
+          "kinds": [
+            "jewelry"
+          ]
+        }
+      ],
+      "accessories": [
+        "slim oval sunglasses",
+        "stacked mixed-metal rings",
+        "bag charm keychain",
+        "chunky sneakers"
+      ],
+      "avoid": {
+        "modules": [
+          "scallop_edge",
+          "pleats",
+          "dart"
+        ],
+        "fabrics": [
+          "tweed",
+          "wool_suiting"
+        ],
+        "colors": [],
+        "controls": {}
+      },
+      "fabricColors": {
+        "denim": "#556F95",
+        "denim_light": "#A3B8D2"
+      }
+    },
+    {
+      "id": "officewear",
+      "name": "Officewear",
+      "aliases": [
+        "officewear",
+        "office wear",
+        "office",
+        "work",
+        "for work",
+        "to work",
+        "business casual",
+        "business",
+        "corporate",
+        "professional",
+        "office siren",
+        "interview",
+        "smart casual",
+        "workplace"
+      ],
+      "vibe": "Sharp and polished: tailored wool suiting, structured shoulders, welt and flap pockets, horn buttons, navy, charcoal, camel and ivory, structured leather totes.",
+      "palette": {
+        "main": {
+          "navy": "#1F2A44",
+          "charcoal": "#3A3D42",
+          "camel": "#BF9B6F",
+          "black": "#1A1A1D"
+        },
+        "secondary": {
+          "ivory": "#F2EDE4",
+          "grey": "#8A8D93"
+        },
+        "accent": {
+          "burgundy": "#6B1E2A"
+        },
+        "neutrals": {
+          "cream": "#EDE6DA",
+          "stone": "#CFC6BA"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "satin",
+          "cotton",
+          "knit",
+          "jersey"
+        ],
+        "outerwear": [
+          "wool_suiting",
+          "tweed",
+          "leather"
+        ],
+        "bottom": [
+          "wool_suiting",
+          "linen"
+        ],
+        "skirt": [
+          "wool_suiting",
+          "leather",
+          "tweed"
+        ],
+        "dress": [
+          "wool_suiting",
+          "jersey"
+        ],
+        "bag": [
+          "leather",
+          "leather_pebbled"
+        ],
+        "jewelry": [
+          "metal_polished"
+        ],
+        "lining": [
+          "satin"
+        ],
+        "trim": [
+          "wool_suiting"
+        ],
+        "strap": [
+          "leather"
+        ],
+        "stone": [
+          "pearl",
+          "gem"
+        ]
+      },
+      "controls": {
+        "fit": [
+          "fitted",
+          "regular"
+        ],
+        "length": [
+          "regular",
+          "midi",
+          "long"
+        ],
+        "leg": [
+          "straight",
+          "wide"
+        ],
+        "rise": [
+          "high",
+          "mid"
+        ],
+        "flare": [
+          "straight"
+        ],
+        "size": [
+          "large",
+          "medium"
+        ],
+        "shape": [
+          "structured"
+        ],
+        "style": [
+          "stud",
+          "huggie"
+        ],
+        "thickness": [
+          "regular"
+        ],
+        "jewelry.size": [
+          "small"
+        ]
+      },
+      "hardware": "gold",
+      "tones": {
+        "trim": "main",
+        "lining": "secondary",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "welt_pocket",
+          "zone": "chest_left",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "flap",
+          "zone": "hip_*",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "horn_rim",
+            "count": 2
+          },
+          "material": {
+            "preset": "horn",
+            "color": "#4A2E1C"
+          },
+          "kinds": [
+            "outerwear"
+          ],
+          "replace": true
+        },
+        {
+          "module": "topstitch",
+          "zone": "collar",
+          "params": {
+            "rows": 1,
+            "weight": "fine"
+          },
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "dart",
+          "zone": [
+            "chest_right",
+            "back_center"
+          ],
+          "kinds": [
+            "outerwear",
+            "dress"
+          ]
+        },
+        {
+          "module": "bow",
+          "zone": "neckline",
+          "params": {
+            "style": "ribbon"
+          },
+          "material": "shell",
+          "kinds": [
+            "top"
+          ]
+        },
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "covered",
+            "count": 6
+          },
+          "material": "shell",
+          "kinds": [
+            "top"
+          ],
+          "replace": true
+        },
+        {
+          "module": "woven_label",
+          "zone": [
+            "neck_label",
+            "waistband"
+          ],
+          "material": "label",
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress",
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "pleats",
+          "zone": "waistband",
+          "params": {
+            "style": "knife"
+          },
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "welt_pocket",
+          "zone": "pocket_back_*",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "slash_pocket",
+          "zone": "pocket_front_*",
+          "params": {
+            "shape": "slant"
+          },
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "hook_eye",
+          "zone": "waistband",
+          "material": "hardware",
+          "kinds": [
+            "bottom",
+            "skirt"
+          ],
+          "replace": true
+        },
+        {
+          "module": "zipper_path",
+          "zone": [
+            "side_seam_left",
+            "back_center"
+          ],
+          "material": "hardware",
+          "kinds": [
+            "skirt",
+            "dress"
+          ]
+        },
+        {
+          "module": "logo_plate",
+          "zone": [
+            "front_center",
+            "front_panel"
+          ],
+          "params": {
+            "shape": "bar",
+            "text": "none"
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "edge_paint",
+          "zone": "edge_front",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "edge_paint",
+          "zone": "edge_back",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "foot_stud",
+          "zone": "base_corners",
+          "params": {
+            "count": 4,
+            "shape": "dome"
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "magnetic_snap",
+          "zone": "top_edge",
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "strap_keeper",
+          "zone": "handle_*",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "swivel_hook",
+          "zone": "strap_anchor_*",
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "pearl",
+          "zone": "face",
+          "material": "stone",
+          "kinds": [
+            "jewelry"
+          ]
+        }
+      ],
+      "accessories": [
+        "slim gold watch",
+        "pointed slingback pumps",
+        "rimless glasses",
+        "pearl studs"
+      ],
+      "avoid": {
+        "modules": [
+          "fringe",
+          "pompom",
+          "ruffle",
+          "cargo_pocket",
+          "print_graphic",
+          "embroidery",
+          "puff_band",
+          "bag_charm",
+          "tassel",
+          "scallop_edge",
+          "brand_patch"
+        ],
+        "fabrics": [
+          "fleece",
+          "sherpa",
+          "mesh_fabric",
+          "gingham",
+          "denim_light"
+        ],
+        "colors": [
+          "neon pink",
+          "neon green",
+          "hot pink",
+          "lime"
+        ],
+        "controls": {
+          "length": [
+            "cropped",
+            "mini"
+          ],
+          "leg": [
+            "baggy",
+            "skinny"
+          ],
+          "rise": [
+            "low"
+          ]
+        }
+      },
+      "fabricColors": {
+        "denim": "#1B2638",
+        "denim_light": "#3A4A66"
+      }
+    },
+    {
+      "id": "coquette",
+      "name": "Coquette",
+      "aliases": [
+        "coquette",
+        "balletcore",
+        "ballet core",
+        "feminine",
+        "romantic",
+        "dainty",
+        "ultra feminine"
+      ],
+      "vibe": "Romantic and feminine: blush, ivory and satin pink, lace trim, satin bows everywhere, pearl buttons, corset lacing, ruffles.",
+      "palette": {
+        "main": {
+          "blush": "#F4C9CF",
+          "ivory": "#F6F1E1",
+          "baby pink": "#F7C5D5"
+        },
+        "secondary": {
+          "white": "#FAF7F2",
+          "champagne": "#EAD9C2"
+        },
+        "accent": {
+          "satin pink": "#E9A3B4",
+          "cherry red": "#B0102D"
+        },
+        "neutrals": {
+          "cream": "#F4EBD0"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "lace",
+          "satin",
+          "rib_knit",
+          "jersey"
+        ],
+        "outerwear": [
+          "knit",
+          "satin",
+          "velvet"
+        ],
+        "bottom": [
+          "satin",
+          "lace",
+          "cotton"
+        ],
+        "skirt": [
+          "lace",
+          "satin",
+          "gingham"
+        ],
+        "dress": [
+          "satin",
+          "lace"
+        ],
+        "bag": [
+          "satin",
+          "patent_leather",
+          "quilted"
+        ],
+        "jewelry": [
+          "metal_polished"
+        ],
+        "lining": [
+          "satin"
+        ],
+        "trim": [
+          "lace",
+          "satin"
+        ],
+        "stone": [
+          "pearl"
+        ]
+      },
+      "controls": {
+        "fit": [
+          "fitted"
+        ],
+        "length": [
+          "cropped",
+          "mini",
+          "regular"
+        ],
+        "leg": [
+          "wide"
+        ],
+        "rise": [
+          "low",
+          "mid"
+        ],
+        "flare": [
+          "full",
+          "a_line"
+        ],
+        "size": [
+          "mini",
+          "small"
+        ],
+        "shape": [
+          "structured"
+        ],
+        "style": [
+          "drop",
+          "stud"
+        ],
+        "thickness": [
+          "thin"
+        ]
+      },
+      "hardware": "gold",
+      "tones": {
+        "trim": "secondary",
+        "accent": "accent",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "bow",
+          "zone": [
+            "chest_center",
+            "neckline",
+            "back_center"
+          ],
+          "params": {
+            "style": "ribbon"
+          },
+          "material": "accent",
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress"
+          ]
+        },
+        {
+          "module": "lace_trim",
+          "zone": [
+            "neckline",
+            "collar"
+          ],
+          "material": "trim",
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress"
+          ]
+        },
+        {
+          "module": "lace_trim",
+          "zone": [
+            "hem",
+            "hem_*"
+          ],
+          "material": "trim",
+          "kinds": [
+            "top",
+            "skirt",
+            "dress",
+            "bottom",
+            "outerwear"
+          ]
+        },
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "pearl_dome",
+            "count": 6
+          },
+          "material": {
+            "preset": "pearl",
+            "color": "#F3EDE2"
+          },
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress"
+          ],
+          "replace": true
+        },
+        {
+          "module": "lacing",
+          "zone": "back_center",
+          "material": "accent",
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "ruching",
+          "zone": "side_seam_*",
+          "material": "shell",
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "puff_band",
+          "zone": [
+            "cuff_*",
+            "armhole_*"
+          ],
+          "material": "shell",
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "bow",
+          "zone": [
+            "shoulder_left",
+            "waist"
+          ],
+          "params": {
+            "style": "skinny"
+          },
+          "material": "accent",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "ruffle",
+          "zone": "cuff_*",
+          "material": "trim",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "bow",
+          "zone": [
+            "front_center",
+            "waist"
+          ],
+          "params": {
+            "style": "ribbon"
+          },
+          "material": "accent",
+          "kinds": [
+            "skirt"
+          ]
+        },
+        {
+          "module": "ruffle",
+          "zone": "hem",
+          "material": "shell",
+          "kinds": [
+            "skirt",
+            "dress"
+          ]
+        },
+        {
+          "module": "bow",
+          "zone": [
+            "front_center",
+            "strap_anchor_left"
+          ],
+          "params": {
+            "style": "ribbon"
+          },
+          "material": "accent",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "bag_charm",
+          "zone": [
+            "strap_anchor_right",
+            "handle_left"
+          ],
+          "params": {
+            "charm": "heart"
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "chain_strap",
+          "zone": "handle_right",
+          "params": {
+            "style": "box"
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "pearl",
+          "zone": "front_center",
+          "material": {
+            "preset": "pearl",
+            "color": "#F3EDE2"
+          },
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "pearl",
+          "zone": [
+            "face",
+            "drop_point"
+          ],
+          "material": "stone",
+          "kinds": [
+            "jewelry"
+          ]
+        },
+        {
+          "module": "bow",
+          "zone": "earlobe",
+          "params": {
+            "style": "skinny"
+          },
+          "material": "accent",
+          "kinds": [
+            "jewelry"
+          ]
+        },
+        {
+          "module": "charm",
+          "zone": "drop_point",
+          "params": {
+            "shape": "heart"
+          },
+          "material": "metal",
+          "kinds": [
+            "jewelry"
+          ]
+        }
+      ],
+      "accessories": [
+        "satin hair ribbon",
+        "pearl drop earrings",
+        "ballet flats",
+        "lace ankle socks"
+      ],
+      "avoid": {
+        "modules": [
+          "cargo_pocket",
+          "jeans_rivet",
+          "print_graphic",
+          "brand_patch",
+          "d_ring",
+          "buckle_belt",
+          "swivel_hook"
+        ],
+        "fabrics": [
+          "denim",
+          "nylon",
+          "fleece",
+          "corduroy",
+          "canvas"
+        ],
+        "colors": [
+          "neon green",
+          "lime",
+          "olive"
+        ],
+        "controls": {
+          "fit": [
+            "oversized"
+          ],
+          "leg": [
+            "baggy"
+          ]
+        }
+      },
+      "fabricColors": {
+        "denim": "#C8D7EA",
+        "denim_light": "#C8D7EA"
+      }
+    },
+    {
+      "id": "y2k",
+      "name": "Y2K",
+      "aliases": [
+        "y2k",
+        "2000s",
+        "early 2000s",
+        "00s",
+        "mcbling",
+        "juicy",
+        "bratz"
+      ],
+      "vibe": "Early 2000s pop: baby pink, baby blue and chrome, velour tracksuits, low-rise flares, baby tees with graphics, butterflies, rhinestones, logo plates.",
+      "palette": {
+        "main": {
+          "baby pink": "#F7B8D2",
+          "baby blue": "#A9D3F2",
+          "lilac": "#C8A2C8",
+          "chrome": "#C9CCD2"
+        },
+        "secondary": {
+          "white": "#F4F4F2",
+          "light wash": "#8FB0D4"
+        },
+        "accent": {
+          "hot pink": "#FF3E9A",
+          "lime": "#A4D65E"
+        },
+        "neutrals": {
+          "white": "#F4F4F2"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "rib_knit",
+          "mesh_fabric",
+          "satin",
+          "velvet"
+        ],
+        "outerwear": [
+          "velvet",
+          "leather",
+          "fleece",
+          "denim_light"
+        ],
+        "bottom": [
+          "denim_light",
+          "velvet",
+          "satin"
+        ],
+        "skirt": [
+          "denim_light",
+          "satin",
+          "mesh_fabric"
+        ],
+        "dress": [
+          "satin",
+          "mesh_fabric"
+        ],
+        "bag": [
+          "patent_leather",
+          "satin",
+          "sherpa"
+        ],
+        "jewelry": [
+          "metal_polished"
+        ],
+        "trim": [
+          "rib_knit"
+        ],
+        "stone": [
+          "gem"
+        ]
+      },
+      "fabricColors": {
+        "denim_light": "#8FB0D4",
+        "denim": "#7EA2CC"
+      },
+      "controls": {
+        "fit": [
+          "fitted"
+        ],
+        "length": [
+          "cropped",
+          "mini"
+        ],
+        "leg": [
+          "flare",
+          "wide",
+          "baggy"
+        ],
+        "rise": [
+          "low"
+        ],
+        "flare": [
+          "a_line"
+        ],
+        "size": [
+          "mini",
+          "small"
+        ],
+        "shape": [
+          "slouchy"
+        ],
+        "style": [
+          "hoop",
+          "drop"
+        ],
+        "thickness": [
+          "thin"
+        ],
+        "jewelry.size": [
+          "large"
+        ]
+      },
+      "hardware": "silver",
+      "tones": {
+        "trim": "secondary",
+        "accent": "accent",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "print_graphic",
+          "zone": [
+            "chest_center",
+            "back_center"
+          ],
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "embroidery",
+          "zone": [
+            "chest_left",
+            "chest_right",
+            "thigh_left",
+            "front_center"
+          ],
+          "params": {
+            "motif": "butterfly"
+          },
+          "material": "accent",
+          "kinds": [
+            "top",
+            "outerwear",
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": [
+            "neckline",
+            "cuff_*"
+          ],
+          "material": "trim",
+          "kinds": [
+            "top"
+          ]
+        },
+        {
+          "module": "piping",
+          "zone": [
+            "side_seam_*",
+            "outseam_*"
+          ],
+          "material": "trim",
+          "kinds": [
+            "outerwear",
+            "bottom"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": "cuff_*",
+          "material": "shell",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": "hem",
+          "material": "shell",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "brand_patch",
+          "zone": [
+            "back_center",
+            "back_patch"
+          ],
+          "material": "accent",
+          "kinds": [
+            "outerwear",
+            "bottom"
+          ]
+        },
+        {
+          "module": "jeans_rivet",
+          "zone": "pocket_front_*",
+          "material": "hardware",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "lace_trim",
+          "zone": "hem",
+          "material": "trim",
+          "kinds": [
+            "skirt"
+          ]
+        },
+        {
+          "module": "logo_plate",
+          "zone": [
+            "front_center",
+            "front_panel"
+          ],
+          "params": {
+            "shape": "oval",
+            "text": "maison"
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "bag_charm",
+          "zone": [
+            "strap_anchor_left",
+            "handle_left"
+          ],
+          "params": {
+            "charm": "star"
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "zip_puller",
+          "zone": "zip_top",
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "sherpa_band",
+          "zone": "top_edge",
+          "material": "shell",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "charm",
+          "zone": "drop_point",
+          "params": {
+            "shape": "star"
+          },
+          "material": "metal",
+          "kinds": [
+            "jewelry"
+          ]
+        },
+        {
+          "module": "gem",
+          "zone": "face",
+          "material": "stone",
+          "kinds": [
+            "jewelry"
+          ]
+        }
+      ],
+      "accessories": [
+        "tinted rimless sunglasses",
+        "butterfly clips",
+        "baguette shoulder bag",
+        "rhinestone choker"
+      ],
+      "avoid": {
+        "modules": [
+          "pleats",
+          "welt_pocket",
+          "dart"
+        ],
+        "fabrics": [
+          "tweed",
+          "wool_suiting",
+          "linen",
+          "corduroy"
+        ],
+        "colors": [
+          "camel",
+          "chocolate",
+          "beige"
+        ],
+        "controls": {
+          "rise": [
+            "high"
+          ],
+          "leg": [
+            "straight"
+          ]
+        }
+      }
+    },
+    {
+      "id": "old_money",
+      "name": "Old money",
+      "aliases": [
+        "old money",
+        "quiet luxury",
+        "classy",
+        "elegant",
+        "timeless",
+        "country club",
+        "aristocratic",
+        "stealth wealth",
+        "ivy"
+      ],
+      "vibe": "Understated wealth: navy, cream, camel and forest green, cashmere and cable knits, tweed and wool, gold crest buttons, pearl studs, no visible logos.",
+      "palette": {
+        "main": {
+          "navy": "#1F2A44",
+          "cream": "#F2EBDD",
+          "camel": "#C19A6B"
+        },
+        "secondary": {
+          "forest green": "#23402F",
+          "white": "#F7F5F0"
+        },
+        "accent": {
+          "burgundy": "#6B1E2A",
+          "antique gold": "#C9A44C"
+        },
+        "neutrals": {
+          "oatmeal": "#D8CBB3",
+          "chocolate": "#4E3524"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "knit",
+          "cable_knit",
+          "cotton",
+          "satin"
+        ],
+        "outerwear": [
+          "wool_suiting",
+          "tweed",
+          "cable_knit",
+          "suede"
+        ],
+        "bottom": [
+          "wool_suiting",
+          "linen",
+          "corduroy"
+        ],
+        "skirt": [
+          "tweed",
+          "wool_suiting",
+          "satin"
+        ],
+        "dress": [
+          "satin",
+          "linen",
+          "knit"
+        ],
+        "bag": [
+          "leather",
+          "suede"
+        ],
+        "jewelry": [
+          "metal_polished"
+        ],
+        "lining": [
+          "satin"
+        ],
+        "trim": [
+          "rib_knit",
+          "wool_suiting"
+        ],
+        "strap": [
+          "leather"
+        ],
+        "stone": [
+          "pearl"
+        ]
+      },
+      "controls": {
+        "fit": [
+          "regular",
+          "fitted"
+        ],
+        "length": [
+          "regular",
+          "midi"
+        ],
+        "leg": [
+          "straight",
+          "wide"
+        ],
+        "rise": [
+          "high"
+        ],
+        "flare": [
+          "a_line",
+          "straight"
+        ],
+        "size": [
+          "medium"
+        ],
+        "shape": [
+          "structured"
+        ],
+        "style": [
+          "stud",
+          "huggie"
+        ],
+        "thickness": [
+          "regular"
+        ],
+        "jewelry.size": [
+          "small"
+        ]
+      },
+      "hardware": "gold",
+      "tones": {
+        "trim": "secondary",
+        "lining": "secondary",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "shank_dome",
+            "count": 2
+          },
+          "material": "hardware",
+          "kinds": [
+            "outerwear"
+          ],
+          "replace": true
+        },
+        {
+          "module": "welt_pocket",
+          "zone": "chest_left",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "flap",
+          "zone": "hip_*",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "piping",
+          "zone": "collar",
+          "material": "trim",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": "placket",
+          "params": {
+            "rows": 1,
+            "weight": "fine"
+          },
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "flat4",
+            "count": 3
+          },
+          "material": {
+            "preset": "horn",
+            "color": "#5C3A21"
+          },
+          "kinds": [
+            "top"
+          ],
+          "replace": true
+        },
+        {
+          "module": "rib_band",
+          "zone": [
+            "neckline",
+            "collar"
+          ],
+          "material": "trim",
+          "kinds": [
+            "top"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": "hem",
+          "material": "trim",
+          "kinds": [
+            "top"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": "cuff_*",
+          "material": "shell",
+          "kinds": [
+            "top"
+          ]
+        },
+        {
+          "module": "woven_label",
+          "zone": [
+            "neck_label",
+            "waistband"
+          ],
+          "material": "label",
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress",
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "pleats",
+          "zone": "waistband",
+          "params": {
+            "style": "box"
+          },
+          "kinds": [
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "welt_pocket",
+          "zone": "pocket_back_*",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "slash_pocket",
+          "zone": "pocket_front_*",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "hook_eye",
+          "zone": "waistband",
+          "material": "hardware",
+          "kinds": [
+            "bottom"
+          ],
+          "replace": true
+        },
+        {
+          "module": "turn_lock",
+          "zone": [
+            "front_center",
+            "front_panel"
+          ],
+          "params": {
+            "style": "twist"
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "edge_paint",
+          "zone": "edge_front",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "edge_paint",
+          "zone": "edge_back",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "foot_stud",
+          "zone": "base_corners",
+          "params": {
+            "count": 4
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "strap_keeper",
+          "zone": "handle_left",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "pearl",
+          "zone": "face",
+          "material": "stone",
+          "kinds": [
+            "jewelry"
+          ]
+        }
+      ],
+      "accessories": [
+        "pearl studs",
+        "silk headscarf",
+        "suede loafers",
+        "slim gold watch"
+      ],
+      "avoid": {
+        "modules": [
+          "print_graphic",
+          "brand_patch",
+          "logo_plate",
+          "cargo_pocket",
+          "fringe",
+          "bag_charm",
+          "pompom",
+          "zip_puller"
+        ],
+        "fabrics": [
+          "mesh_fabric",
+          "patent_leather",
+          "fleece",
+          "denim_light",
+          "nylon"
+        ],
+        "colors": [
+          "neon pink",
+          "neon green",
+          "hot pink",
+          "lime"
+        ],
+        "controls": {
+          "leg": [
+            "baggy",
+            "skinny"
+          ],
+          "length": [
+            "cropped"
+          ],
+          "rise": [
+            "low"
+          ]
+        }
+      },
+      "fabricColors": {
+        "denim": "#1E2B45",
+        "denim_light": "#ECE6D8"
+      }
+    },
+    {
+      "id": "streetwear",
+      "name": "Streetwear",
+      "aliases": [
+        "streetwear",
+        "street wear",
+        "street style",
+        "street",
+        "hypebeast",
+        "skater",
+        "skate",
+        "urban"
+      ],
+      "vibe": "Oversized and graphic: black, heather grey and olive with a loud accent, heavyweight jersey and fleece, nylon, back prints, rib cuffs, cargo pockets, drawcords.",
+      "palette": {
+        "main": {
+          "black": "#1A1A1D",
+          "heather grey": "#9A9C9F",
+          "olive": "#5B5E3A",
+          "washed black": "#2E2E31"
+        },
+        "secondary": {
+          "white": "#F4F4F2",
+          "sand": "#CDBB9A"
+        },
+        "accent": {
+          "varsity red": "#C8102E",
+          "safety orange": "#F28C28"
+        },
+        "neutrals": {
+          "bone": "#E8E1D3",
+          "grey": "#8A8D93"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "jersey",
+          "fleece",
+          "rib_knit"
+        ],
+        "outerwear": [
+          "nylon",
+          "fleece",
+          "leather",
+          "denim"
+        ],
+        "bottom": [
+          "denim",
+          "nylon",
+          "fleece",
+          "canvas"
+        ],
+        "skirt": [
+          "nylon",
+          "denim"
+        ],
+        "dress": [
+          "jersey"
+        ],
+        "bag": [
+          "nylon",
+          "canvas"
+        ],
+        "jewelry": [
+          "metal_polished"
+        ],
+        "trim": [
+          "rib_knit"
+        ],
+        "strap": [
+          "nylon"
+        ]
+      },
+      "controls": {
+        "fit": [
+          "oversized"
+        ],
+        "length": [
+          "regular",
+          "long"
+        ],
+        "leg": [
+          "baggy",
+          "wide"
+        ],
+        "rise": [
+          "mid",
+          "low"
+        ],
+        "flare": [
+          "straight"
+        ],
+        "size": [
+          "medium",
+          "large"
+        ],
+        "shape": [
+          "slouchy"
+        ],
+        "style": [
+          "hoop",
+          "stud"
+        ],
+        "thickness": [
+          "chunky"
+        ]
+      },
+      "hardware": "black",
+      "tones": {
+        "trim": "main",
+        "accent": "accent",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "print_graphic",
+          "zone": [
+            "back_center",
+            "chest_center"
+          ],
+          "kinds": [
+            "top",
+            "outerwear"
+          ]
+        },
+        {
+          "module": "brand_patch",
+          "zone": [
+            "chest_left",
+            "sleeve_left"
+          ],
+          "material": "accent",
+          "kinds": [
+            "top",
+            "outerwear"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": "cuff_*",
+          "material": "trim",
+          "kinds": [
+            "top",
+            "outerwear"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": "hem",
+          "material": "trim",
+          "kinds": [
+            "top",
+            "outerwear"
+          ]
+        },
+        {
+          "module": "drawstring",
+          "zone": [
+            "neckline",
+            "hem"
+          ],
+          "material": "accent",
+          "kinds": [
+            "top",
+            "outerwear"
+          ]
+        },
+        {
+          "module": "cargo_pocket",
+          "zone": [
+            "hip_*",
+            "thigh_*"
+          ],
+          "kinds": [
+            "outerwear",
+            "bottom"
+          ]
+        },
+        {
+          "module": "d_ring",
+          "zone": [
+            "side_seam_left",
+            "outseam_left"
+          ],
+          "material": "hardware",
+          "kinds": [
+            "outerwear",
+            "bottom"
+          ]
+        },
+        {
+          "module": "drawstring",
+          "zone": "waistband",
+          "material": "accent",
+          "kinds": [
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "bar_tack",
+          "zone": [
+            "fly",
+            "pocket_front_*"
+          ],
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": "outseam_*",
+          "params": {
+            "rows": 2,
+            "weight": "heavy"
+          },
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "woven_label",
+          "zone": [
+            "back_patch",
+            "waistband"
+          ],
+          "material": "accent",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "swivel_hook",
+          "zone": "strap_anchor_*",
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "zip_puller",
+          "zone": "zip_top",
+          "material": "accent",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "d_ring",
+          "zone": [
+            "side_left",
+            "side_right"
+          ],
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "brand_patch",
+          "zone": [
+            "front_panel",
+            "front_center"
+          ],
+          "material": "accent",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "strap_keeper",
+          "zone": "handle_left",
+          "kinds": [
+            "bag"
+          ]
+        }
+      ],
+      "accessories": [
+        "fitted cap",
+        "chunky sneakers",
+        "crossbody sling bag",
+        "crew socks"
+      ],
+      "avoid": {
+        "modules": [
+          "lace_trim",
+          "ruffle",
+          "bow",
+          "scallop_edge",
+          "puff_band",
+          "pearl",
+          "ruching",
+          "turn_lock"
+        ],
+        "fabrics": [
+          "lace",
+          "tweed",
+          "velvet",
+          "gingham",
+          "wool_suiting"
+        ],
+        "colors": [
+          "pastel pink",
+          "lilac",
+          "blush"
+        ],
+        "controls": {
+          "fit": [
+            "fitted"
+          ],
+          "leg": [
+            "skinny"
+          ],
+          "length": [
+            "cropped"
+          ]
+        }
+      },
+      "fabricColors": {
+        "denim": "#2F4058",
+        "denim_light": "#8BA3C1"
+      }
+    },
+    {
+      "id": "boho",
+      "name": "Boho",
+      "aliases": [
+        "boho",
+        "bohemian",
+        "boho chic",
+        "hippie",
+        "festival",
+        "coachella",
+        "free spirit",
+        "70s",
+        "seventies"
+      ],
+      "vibe": "Free-spirited 70s: terracotta, rust, mustard and cream, suede fringe, crochet and lace, floral embroidery, tie necklines, tiered ruffles, turquoise and antique gold.",
+      "palette": {
+        "main": {
+          "terracotta": "#C9643B",
+          "cream": "#F1E8D6",
+          "mustard": "#D4A017",
+          "rust": "#B7472A"
+        },
+        "secondary": {
+          "sage": "#9CAF88",
+          "suede brown": "#8B5E3C"
+        },
+        "accent": {
+          "turquoise": "#30A9A3"
+        },
+        "neutrals": {
+          "ivory": "#F6F1E1",
+          "sand": "#D8C3A0"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "linen",
+          "lace",
+          "cotton"
+        ],
+        "outerwear": [
+          "suede",
+          "knit",
+          "corduroy"
+        ],
+        "bottom": [
+          "linen",
+          "denim_light",
+          "suede"
+        ],
+        "skirt": [
+          "linen",
+          "lace",
+          "cotton"
+        ],
+        "dress": [
+          "linen",
+          "lace",
+          "cotton"
+        ],
+        "bag": [
+          "suede",
+          "leather",
+          "canvas"
+        ],
+        "jewelry": [
+          "metal_brushed"
+        ],
+        "trim": [
+          "lace",
+          "suede"
+        ],
+        "strap": [
+          "suede"
+        ],
+        "stone": [
+          "gem"
+        ]
+      },
+      "controls": {
+        "fit": [
+          "regular",
+          "oversized"
+        ],
+        "length": [
+          "long",
+          "maxi",
+          "midi"
+        ],
+        "leg": [
+          "flare",
+          "wide"
+        ],
+        "rise": [
+          "high",
+          "low"
+        ],
+        "flare": [
+          "full",
+          "a_line"
+        ],
+        "size": [
+          "large",
+          "medium"
+        ],
+        "shape": [
+          "slouchy"
+        ],
+        "style": [
+          "drop",
+          "hoop"
+        ],
+        "thickness": [
+          "thin"
+        ],
+        "jewelry.size": [
+          "large"
+        ]
+      },
+      "hardware": "brass",
+      "tones": {
+        "trim": "secondary",
+        "accent": "accent",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "fringe",
+          "zone": [
+            "back_yoke",
+            "hem",
+            "cuff_*"
+          ],
+          "params": {
+            "style": "suede"
+          },
+          "material": "shell",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "fringe",
+          "zone": "cuff_*",
+          "params": {
+            "style": "suede"
+          },
+          "material": "shell",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "embroidery",
+          "zone": [
+            "chest_left",
+            "chest_right",
+            "thigh_left",
+            "front_center"
+          ],
+          "params": {
+            "motif": "flower"
+          },
+          "material": "accent",
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress",
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "drawstring",
+          "zone": "neckline",
+          "material": "trim",
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "lace_trim",
+          "zone": [
+            "hem",
+            "cuff_*"
+          ],
+          "material": "trim",
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "puff_band",
+          "zone": [
+            "cuff_*",
+            "armhole_*"
+          ],
+          "material": "shell",
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "ruffle",
+          "zone": "hem",
+          "material": "shell",
+          "kinds": [
+            "skirt",
+            "dress"
+          ]
+        },
+        {
+          "module": "lacing",
+          "zone": [
+            "neckline",
+            "placket"
+          ],
+          "params": {
+            "lace": "round",
+            "bow": "bow"
+          },
+          "material": "trim",
+          "kinds": [
+            "top"
+          ]
+        },
+        {
+          "module": "fringe",
+          "zone": [
+            "flap_edge",
+            "edge_front",
+            "top_edge"
+          ],
+          "params": {
+            "style": "suede"
+          },
+          "material": "shell",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "tassel",
+          "zone": [
+            "strap_anchor_left",
+            "zip_top"
+          ],
+          "params": {
+            "material": "leather"
+          },
+          "material": "shell",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "leather_patch",
+          "zone": [
+            "front_center",
+            "front_panel"
+          ],
+          "material": "trim",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "gem",
+          "zone": "face",
+          "material": "stone",
+          "kinds": [
+            "jewelry"
+          ]
+        },
+        {
+          "module": "drop",
+          "zone": "drop_point",
+          "params": {
+            "charm": "teardrop"
+          },
+          "material": "metal",
+          "kinds": [
+            "jewelry"
+          ]
+        }
+      ],
+      "accessories": [
+        "stacked turquoise rings",
+        "suede ankle boots",
+        "wide brim hat",
+        "fringe crossbody"
+      ],
+      "avoid": {
+        "modules": [
+          "cargo_pocket",
+          "print_graphic",
+          "brand_patch",
+          "logo_plate",
+          "piping",
+          "welt_pocket",
+          "swivel_hook"
+        ],
+        "fabrics": [
+          "patent_leather",
+          "nylon",
+          "mesh_fabric",
+          "wool_suiting",
+          "quilted"
+        ],
+        "colors": [
+          "neon pink",
+          "neon green",
+          "black"
+        ],
+        "controls": {
+          "fit": [
+            "fitted"
+          ],
+          "leg": [
+            "skinny"
+          ]
+        }
+      },
+      "fabricColors": {
+        "denim": "#6C88AA",
+        "denim_light": "#A9BCD3"
+      }
+    },
+    {
+      "id": "sporty",
+      "name": "Sporty",
+      "aliases": [
+        "sporty",
+        "athletic",
+        "athleisure",
+        "gym",
+        "sport",
+        "tennis",
+        "track",
+        "workout",
+        "activewear",
+        "running",
+        "tracksuit"
+      ],
+      "vibe": "Clean athletic: white, navy and heather grey with a red or royal stripe, jersey, mesh and nylon, side piping, rib collars, zip pulls, drawcords, pleated tennis skirts.",
+      "palette": {
+        "main": {
+          "white": "#F4F4F2",
+          "navy": "#1F2A55",
+          "heather grey": "#A3A6AA",
+          "black": "#1A1A1D"
+        },
+        "secondary": {
+          "red": "#D7263D",
+          "royal blue": "#2A4FC9"
+        },
+        "accent": {
+          "lime": "#A4D65E"
+        },
+        "neutrals": {
+          "grey": "#8A8D93"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "jersey",
+          "mesh_fabric",
+          "rib_knit"
+        ],
+        "outerwear": [
+          "nylon",
+          "fleece"
+        ],
+        "bottom": [
+          "nylon",
+          "fleece",
+          "jersey"
+        ],
+        "skirt": [
+          "nylon",
+          "jersey"
+        ],
+        "dress": [
+          "jersey"
+        ],
+        "bag": [
+          "nylon",
+          "canvas"
+        ],
+        "jewelry": [
+          "metal_polished"
+        ],
+        "trim": [
+          "rib_knit"
+        ],
+        "strap": [
+          "nylon"
+        ]
+      },
+      "controls": {
+        "fit": [
+          "regular"
+        ],
+        "length": [
+          "cropped",
+          "regular",
+          "mini"
+        ],
+        "leg": [
+          "straight",
+          "wide"
+        ],
+        "rise": [
+          "high",
+          "mid"
+        ],
+        "flare": [
+          "a_line"
+        ],
+        "size": [
+          "medium"
+        ],
+        "shape": [
+          "slouchy"
+        ],
+        "style": [
+          "stud",
+          "huggie"
+        ],
+        "thickness": [
+          "regular"
+        ]
+      },
+      "hardware": "black",
+      "tones": {
+        "trim": "secondary",
+        "accent": "secondary",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "piping",
+          "zone": [
+            "side_seam_*",
+            "outseam_*"
+          ],
+          "material": "trim",
+          "kinds": [
+            "top",
+            "outerwear",
+            "bottom",
+            "skirt",
+            "dress"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": [
+            "collar",
+            "neckline"
+          ],
+          "material": "trim",
+          "kinds": [
+            "top",
+            "outerwear"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": "cuff_*",
+          "material": "trim",
+          "kinds": [
+            "top",
+            "outerwear"
+          ]
+        },
+        {
+          "module": "zipper_path",
+          "zone": "placket",
+          "params": {
+            "style": "plastic",
+            "pull": "cord"
+          },
+          "material": "hardware",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "welt_pocket",
+          "zone": "hip_*",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "brand_patch",
+          "zone": [
+            "chest_left",
+            "thigh_left"
+          ],
+          "material": "trim",
+          "kinds": [
+            "top",
+            "outerwear",
+            "bottom"
+          ]
+        },
+        {
+          "module": "drawstring",
+          "zone": "waistband",
+          "material": "trim",
+          "kinds": [
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": "hem_*",
+          "material": "trim",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "pleats",
+          "zone": [
+            "hem",
+            "waistband"
+          ],
+          "params": {
+            "style": "knife"
+          },
+          "kinds": [
+            "skirt"
+          ]
+        },
+        {
+          "module": "swivel_hook",
+          "zone": "strap_anchor_*",
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "zip_puller",
+          "zone": "zip_top",
+          "material": "trim",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "d_ring",
+          "zone": [
+            "side_left",
+            "side_right"
+          ],
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "brand_patch",
+          "zone": [
+            "front_panel",
+            "front_center"
+          ],
+          "material": "trim",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "strap_keeper",
+          "zone": "handle_left",
+          "kinds": [
+            "bag"
+          ]
+        }
+      ],
+      "accessories": [
+        "white crew socks",
+        "visor or cap",
+        "retro runners",
+        "sport sunglasses"
+      ],
+      "avoid": {
+        "modules": [
+          "lace_trim",
+          "ruffle",
+          "bow",
+          "pearl",
+          "fringe",
+          "tassel",
+          "scallop_edge",
+          "turn_lock",
+          "chain_strap"
+        ],
+        "fabrics": [
+          "lace",
+          "velvet",
+          "tweed",
+          "satin",
+          "patent_leather",
+          "wool_suiting"
+        ],
+        "colors": [
+          "chocolate",
+          "burgundy"
+        ],
+        "controls": {
+          "length": [
+            "long",
+            "maxi"
+          ]
+        }
+      },
+      "fabricColors": {
+        "denim": "#3E5C82",
+        "denim_light": "#A3B8D2"
+      }
+    },
+    {
+      "id": "minimalist",
+      "name": "Minimalist",
+      "aliases": [
+        "minimalist",
+        "minimal",
+        "minimalism",
+        "simple",
+        "basic",
+        "clean lines",
+        "scandi",
+        "scandinavian",
+        "understated",
+        "capsule",
+        "essential",
+        "essentials"
+      ],
+      "vibe": "Pared back: black, white, camel and grey, quality jersey, wool and leather, concealed closures, fine tonal stitching, no decoration or logos.",
+      "palette": {
+        "main": {
+          "black": "#1A1A1D",
+          "white": "#F4F4F2",
+          "camel": "#C19A6B",
+          "grey": "#8A8D93"
+        },
+        "secondary": {
+          "charcoal": "#3A3D42",
+          "off white": "#F1EEE6"
+        },
+        "accent": {
+          "stone": "#CFC6BA"
+        },
+        "neutrals": {
+          "off white": "#F1EEE6"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "jersey",
+          "cotton",
+          "rib_knit"
+        ],
+        "outerwear": [
+          "wool_suiting",
+          "leather",
+          "nylon"
+        ],
+        "bottom": [
+          "wool_suiting",
+          "cotton",
+          "denim"
+        ],
+        "skirt": [
+          "satin",
+          "wool_suiting"
+        ],
+        "dress": [
+          "jersey",
+          "satin"
+        ],
+        "bag": [
+          "leather",
+          "leather_pebbled"
+        ],
+        "jewelry": [
+          "metal_polished"
+        ],
+        "trim": [
+          "rib_knit"
+        ],
+        "strap": [
+          "leather"
+        ]
+      },
+      "controls": {
+        "fit": [
+          "regular"
+        ],
+        "length": [
+          "regular",
+          "midi"
+        ],
+        "leg": [
+          "straight",
+          "wide"
+        ],
+        "rise": [
+          "mid",
+          "high"
+        ],
+        "flare": [
+          "straight"
+        ],
+        "size": [
+          "medium"
+        ],
+        "shape": [
+          "structured"
+        ],
+        "style": [
+          "stud",
+          "huggie"
+        ],
+        "thickness": [
+          "thin",
+          "regular"
+        ]
+      },
+      "hardware": "silver",
+      "tones": {
+        "trim": "main",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "topstitch",
+          "zone": "hem",
+          "params": {
+            "rows": 1,
+            "weight": "fine"
+          },
+          "kinds": [
+            "top",
+            "outerwear",
+            "skirt",
+            "dress"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": "placket",
+          "params": {
+            "rows": 1,
+            "weight": "fine"
+          },
+          "kinds": [
+            "outerwear",
+            "top"
+          ]
+        },
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "covered"
+          },
+          "material": "shell",
+          "kinds": [
+            "top",
+            "outerwear"
+          ]
+        },
+        {
+          "module": "seam_welt",
+          "zone": "side_seam_*",
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress",
+            "skirt"
+          ]
+        },
+        {
+          "module": "welt_pocket",
+          "zone": "hip_*",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "woven_label",
+          "zone": [
+            "neck_label",
+            "waistband"
+          ],
+          "material": "label",
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress",
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "slash_pocket",
+          "zone": "pocket_front_*",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "welt_pocket",
+          "zone": "pocket_back_*",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "zipper_path",
+          "zone": [
+            "side_seam_left",
+            "back_center"
+          ],
+          "params": {
+            "style": "invisible"
+          },
+          "material": "hardware",
+          "kinds": [
+            "skirt",
+            "dress"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": "outseam_*",
+          "params": {
+            "rows": 1,
+            "weight": "fine"
+          },
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "edge_paint",
+          "zone": "edge_front",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "edge_paint",
+          "zone": "edge_back",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "magnetic_snap",
+          "zone": "top_edge",
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "foot_stud",
+          "zone": "base_corners",
+          "params": {
+            "count": 4
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        }
+      ],
+      "accessories": [
+        "thin silver ring",
+        "leather card holder",
+        "white sneakers",
+        "black square sunglasses"
+      ],
+      "avoid": {
+        "modules": [
+          "bow",
+          "ruffle",
+          "lace_trim",
+          "fringe",
+          "pompom",
+          "embroidery",
+          "print_graphic",
+          "brand_patch",
+          "logo_plate",
+          "bag_charm",
+          "tassel",
+          "scallop_edge",
+          "puff_band",
+          "cargo_pocket",
+          "piping",
+          "charm"
+        ],
+        "fabrics": [
+          "gingham",
+          "lace",
+          "sherpa",
+          "tweed",
+          "patent_leather"
+        ],
+        "colors": [
+          "neon pink",
+          "neon green",
+          "hot pink",
+          "lime"
+        ],
+        "controls": {
+          "thickness": [
+            "chunky"
+          ]
+        }
+      },
+      "fabricColors": {
+        "denim": "#20232A",
+        "denim_light": "#D9D9D6"
+      }
+    },
+    {
+      "id": "grunge",
+      "name": "Grunge",
+      "aliases": [
+        "grunge",
+        "grungy",
+        "edgy",
+        "punk",
+        "rocker",
+        "rock",
+        "emo",
+        "goth",
+        "gothic",
+        "indie sleaze",
+        "alt",
+        "alternative",
+        "moto"
+      ],
+      "vibe": "Worn-in and dark: black, charcoal, oxblood and olive, leather, washed denim, mesh, moto snaps and zips, heavy topstitching, gunmetal hardware, chains and O-rings.",
+      "palette": {
+        "main": {
+          "black": "#1A1A1D",
+          "charcoal": "#3A3D42",
+          "washed black": "#2E2E31",
+          "oxblood": "#4A1C22"
+        },
+        "secondary": {
+          "dark red": "#8B1E2B",
+          "olive": "#4B4A2F"
+        },
+        "accent": {
+          "dark plum": "#4A2040"
+        },
+        "neutrals": {
+          "grey": "#8A8D93"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "jersey",
+          "mesh_fabric",
+          "knit"
+        ],
+        "outerwear": [
+          "leather",
+          "denim",
+          "corduroy",
+          "canvas"
+        ],
+        "bottom": [
+          "denim",
+          "leather"
+        ],
+        "skirt": [
+          "leather",
+          "denim"
+        ],
+        "dress": [
+          "mesh_fabric",
+          "velvet"
+        ],
+        "bag": [
+          "leather",
+          "canvas"
+        ],
+        "jewelry": [
+          "metal_brushed"
+        ],
+        "trim": [
+          "rib_knit"
+        ],
+        "strap": [
+          "leather"
+        ]
+      },
+      "fabricColors": {
+        "denim": "#2E2E31",
+        "denim_light": "#8E949B"
+      },
+      "controls": {
+        "fit": [
+          "oversized",
+          "regular"
+        ],
+        "length": [
+          "regular",
+          "long"
+        ],
+        "leg": [
+          "baggy",
+          "straight",
+          "skinny"
+        ],
+        "rise": [
+          "low",
+          "mid"
+        ],
+        "flare": [
+          "straight"
+        ],
+        "size": [
+          "medium"
+        ],
+        "shape": [
+          "slouchy"
+        ],
+        "style": [
+          "hoop"
+        ],
+        "thickness": [
+          "chunky"
+        ]
+      },
+      "hardware": "gunmetal",
+      "tones": {
+        "trim": "main",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "zipper_path",
+          "zone": "placket",
+          "params": {
+            "style": "metal",
+            "pull": "ring"
+          },
+          "material": "hardware",
+          "kinds": [
+            "outerwear"
+          ],
+          "replace": true
+        },
+        {
+          "module": "snap_button",
+          "zone": "collar",
+          "material": "hardware",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "buckle_belt",
+          "zone": [
+            "waist",
+            "hem"
+          ],
+          "material": "hardware",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "zipper_path",
+          "zone": "cuff_*",
+          "material": "hardware",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": [
+            "shoulder_*",
+            "hem"
+          ],
+          "params": {
+            "rows": 2,
+            "weight": "heavy"
+          },
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "lacing",
+          "zone": [
+            "side_seam_*",
+            "back_center"
+          ],
+          "params": {
+            "lace": "flat",
+            "bow": "none"
+          },
+          "material": "trim",
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "chain",
+          "zone": "waist",
+          "params": {
+            "link": "curb"
+          },
+          "material": "hardware",
+          "kinds": [
+            "top",
+            "bottom",
+            "outerwear"
+          ]
+        },
+        {
+          "module": "jeans_rivet",
+          "zone": "pocket_front_*",
+          "material": "hardware",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "jeans_back_pocket",
+          "zone": "pocket_back_*",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "bar_tack",
+          "zone": "fly",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "d_ring",
+          "zone": [
+            "outseam_left",
+            "waistband"
+          ],
+          "material": "hardware",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": "outseam_*",
+          "params": {
+            "rows": 2,
+            "weight": "heavy"
+          },
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "buckle_belt",
+          "zone": "waistband",
+          "material": "hardware",
+          "kinds": [
+            "skirt",
+            "bottom"
+          ]
+        },
+        {
+          "module": "swivel_hook",
+          "zone": "strap_anchor_*",
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "chain_strap",
+          "zone": "handle_right",
+          "params": {
+            "style": "curb"
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "o_ring",
+          "zone": [
+            "side_left",
+            "side_right"
+          ],
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "zip_puller",
+          "zone": "zip_top",
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "chain",
+          "zone": "hoop_front",
+          "params": {
+            "link": "curb"
+          },
+          "material": "metal",
+          "kinds": [
+            "jewelry"
+          ]
+        }
+      ],
+      "accessories": [
+        "combat boots",
+        "layered chain necklaces",
+        "studded belt",
+        "dark sunglasses"
+      ],
+      "avoid": {
+        "modules": [
+          "bow",
+          "ruffle",
+          "pearl",
+          "scallop_edge",
+          "puff_band",
+          "pompom",
+          "lace_trim"
+        ],
+        "fabrics": [
+          "gingham",
+          "linen",
+          "quilted"
+        ],
+        "colors": [
+          "pastel pink",
+          "baby blue",
+          "yellow",
+          "lilac"
+        ],
+        "controls": {
+          "fit": [
+            "fitted"
+          ]
+        }
+      }
+    },
+    {
+      "id": "preppy",
+      "name": "Preppy",
+      "aliases": [
+        "preppy",
+        "prep",
+        "ivy league",
+        "collegiate",
+        "varsity",
+        "private school",
+        "academia"
+      ],
+      "vibe": "Crisp collegiate: navy, white, kelly green and pink, oxford cotton, cable knits, quilted vests, cricket stripes, gold buttons, pleats and small embroidered motifs.",
+      "palette": {
+        "main": {
+          "navy": "#1F2A55",
+          "white": "#F7F5F0",
+          "kelly green": "#1F7A4A",
+          "pink": "#F28DB2"
+        },
+        "secondary": {
+          "red": "#C8102E",
+          "khaki": "#C2B280"
+        },
+        "accent": {
+          "gold": "#C9A44C",
+          "kelly green": "#1F7A4A"
+        },
+        "neutrals": {
+          "cream": "#F4EBD0"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "cotton",
+          "cable_knit",
+          "knit",
+          "rib_knit"
+        ],
+        "outerwear": [
+          "wool_suiting",
+          "cable_knit",
+          "quilted",
+          "tweed"
+        ],
+        "bottom": [
+          "cotton",
+          "corduroy"
+        ],
+        "skirt": [
+          "wool_suiting",
+          "corduroy",
+          "cotton"
+        ],
+        "dress": [
+          "cotton",
+          "knit"
+        ],
+        "bag": [
+          "canvas",
+          "leather"
+        ],
+        "jewelry": [
+          "metal_polished"
+        ],
+        "trim": [
+          "rib_knit"
+        ],
+        "strap": [
+          "leather"
+        ],
+        "stone": [
+          "pearl"
+        ]
+      },
+      "controls": {
+        "fit": [
+          "regular",
+          "fitted"
+        ],
+        "length": [
+          "regular",
+          "mini"
+        ],
+        "leg": [
+          "straight"
+        ],
+        "rise": [
+          "high",
+          "mid"
+        ],
+        "flare": [
+          "a_line"
+        ],
+        "size": [
+          "medium"
+        ],
+        "shape": [
+          "structured"
+        ],
+        "style": [
+          "stud"
+        ],
+        "thickness": [
+          "regular"
+        ],
+        "jewelry.size": [
+          "small"
+        ]
+      },
+      "hardware": "gold",
+      "tones": {
+        "trim": "secondary",
+        "accent": "secondary",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "rib_band",
+          "zone": [
+            "neckline",
+            "collar"
+          ],
+          "material": "trim",
+          "kinds": [
+            "top"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": "hem",
+          "material": "trim",
+          "kinds": [
+            "top"
+          ]
+        },
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "shank_dome",
+            "count": 3
+          },
+          "material": "hardware",
+          "kinds": [
+            "outerwear"
+          ],
+          "replace": true
+        },
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "flat4",
+            "count": 3
+          },
+          "material": {
+            "preset": "pearl",
+            "color": "#F1EBDD"
+          },
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "embroidery",
+          "zone": [
+            "chest_left",
+            "chest_right"
+          ],
+          "params": {
+            "motif": "star"
+          },
+          "material": "accent",
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress"
+          ]
+        },
+        {
+          "module": "patch_pocket",
+          "zone": "chest_right",
+          "params": {
+            "flap": "none",
+            "corner": "square"
+          },
+          "kinds": [
+            "top"
+          ]
+        },
+        {
+          "module": "welt_pocket",
+          "zone": "chest_left",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "patch_pocket",
+          "zone": "hip_*",
+          "params": {
+            "flap": "flap",
+            "corner": "square"
+          },
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "piping",
+          "zone": [
+            "collar",
+            "placket"
+          ],
+          "material": "trim",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "pleats",
+          "zone": [
+            "waistband",
+            "hem"
+          ],
+          "kinds": [
+            "skirt"
+          ]
+        },
+        {
+          "module": "welt_pocket",
+          "zone": "pocket_back_*",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "slash_pocket",
+          "zone": "pocket_front_*",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "embroidery",
+          "zone": [
+            "front_center",
+            "thigh_left"
+          ],
+          "params": {
+            "motif": "star"
+          },
+          "material": "accent",
+          "kinds": [
+            "skirt",
+            "bottom"
+          ]
+        },
+        {
+          "module": "leather_patch",
+          "zone": [
+            "front_panel",
+            "front_center"
+          ],
+          "material": {
+            "preset": "leather",
+            "color": "#8B5E3C"
+          },
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "handle_wrap",
+          "zone": "handle_*",
+          "material": {
+            "preset": "leather",
+            "color": "#8B5E3C"
+          },
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "strap_keeper",
+          "zone": "handle_left",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "foot_stud",
+          "zone": "base_corners",
+          "params": {
+            "count": 4
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "pearl",
+          "zone": "face",
+          "material": "stone",
+          "kinds": [
+            "jewelry"
+          ]
+        }
+      ],
+      "accessories": [
+        "pearl studs",
+        "penny loafers",
+        "headband",
+        "monogrammed tote"
+      ],
+      "avoid": {
+        "modules": [
+          "fringe",
+          "cargo_pocket",
+          "print_graphic",
+          "chain_strap",
+          "o_ring",
+          "lacing"
+        ],
+        "fabrics": [
+          "mesh_fabric",
+          "patent_leather",
+          "sherpa",
+          "leather_pebbled"
+        ],
+        "colors": [
+          "neon green",
+          "black"
+        ],
+        "controls": {
+          "leg": [
+            "baggy",
+            "flare"
+          ],
+          "fit": [
+            "oversized"
+          ]
+        }
+      },
+      "fabricColors": {
+        "denim": "#24365A",
+        "denim_light": "#AFC4DD"
+      }
+    },
+    {
+      "id": "coastal",
+      "name": "Coastal",
+      "aliases": [
+        "coastal",
+        "coastal grandmother",
+        "coastal granddaughter",
+        "beachy",
+        "beach",
+        "nautical",
+        "seaside",
+        "resort",
+        "vacation",
+        "european summer",
+        "mediterranean",
+        "hamptons"
+      ],
+      "vibe": "Breezy seaside: white, navy, sky blue and sand, linen and cotton, fisherman cable knits, mother-of-pearl buttons, drawstring waists, roomy canvas totes.",
+      "palette": {
+        "main": {
+          "white": "#F7F5F0",
+          "navy": "#1F2A55",
+          "sky blue": "#A9C8E6",
+          "sand": "#D8C3A0"
+        },
+        "secondary": {
+          "cream": "#F2EBDD",
+          "stripe blue": "#4A6FA5"
+        },
+        "accent": {
+          "seafoam": "#A8D5C2"
+        },
+        "neutrals": {
+          "oatmeal": "#D8CBB3",
+          "driftwood": "#A79F94"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "linen",
+          "cotton",
+          "cable_knit"
+        ],
+        "outerwear": [
+          "cable_knit",
+          "linen",
+          "canvas"
+        ],
+        "bottom": [
+          "linen",
+          "cotton",
+          "denim_light"
+        ],
+        "skirt": [
+          "linen",
+          "cotton"
+        ],
+        "dress": [
+          "linen",
+          "cotton"
+        ],
+        "bag": [
+          "canvas",
+          "leather"
+        ],
+        "jewelry": [
+          "metal_polished"
+        ],
+        "trim": [
+          "cotton",
+          "rib_knit"
+        ],
+        "strap": [
+          "leather"
+        ],
+        "stone": [
+          "pearl"
+        ]
+      },
+      "fabricColors": {
+        "denim_light": "#B9CCE0",
+        "denim": "#ECEDEA"
+      },
+      "controls": {
+        "fit": [
+          "regular",
+          "oversized"
+        ],
+        "length": [
+          "regular",
+          "long",
+          "maxi",
+          "midi"
+        ],
+        "leg": [
+          "wide",
+          "straight"
+        ],
+        "rise": [
+          "high"
+        ],
+        "flare": [
+          "a_line"
+        ],
+        "size": [
+          "large"
+        ],
+        "shape": [
+          "slouchy"
+        ],
+        "style": [
+          "hoop",
+          "drop"
+        ],
+        "thickness": [
+          "thin",
+          "regular"
+        ]
+      },
+      "hardware": "gold",
+      "tones": {
+        "trim": "secondary",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "flat4",
+            "count": 5
+          },
+          "material": {
+            "preset": "pearl",
+            "color": "#EEE8DC"
+          },
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress"
+          ],
+          "replace": true
+        },
+        {
+          "module": "patch_pocket",
+          "zone": [
+            "chest_left",
+            "chest_right"
+          ],
+          "params": {
+            "flap": "none",
+            "corner": "square"
+          },
+          "kinds": [
+            "top"
+          ]
+        },
+        {
+          "module": "patch_pocket",
+          "zone": "hip_*",
+          "params": {
+            "flap": "none",
+            "corner": "rounded"
+          },
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "drawstring",
+          "zone": [
+            "waist",
+            "neckline"
+          ],
+          "material": "trim",
+          "kinds": [
+            "dress",
+            "top"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": "hem",
+          "params": {
+            "rows": 1,
+            "weight": "regular"
+          },
+          "kinds": [
+            "top",
+            "outerwear",
+            "skirt",
+            "dress"
+          ]
+        },
+        {
+          "module": "rib_band",
+          "zone": "cuff_*",
+          "material": "shell",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "woven_label",
+          "zone": [
+            "neck_label",
+            "waistband"
+          ],
+          "material": "label",
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress",
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "drawstring",
+          "zone": "waistband",
+          "material": "trim",
+          "kinds": [
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "welt_pocket",
+          "zone": "pocket_back_*",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "slash_pocket",
+          "zone": "pocket_front_*",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "leather_patch",
+          "zone": [
+            "front_panel",
+            "front_center"
+          ],
+          "material": {
+            "preset": "leather",
+            "color": "#B98B57"
+          },
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "handle_wrap",
+          "zone": "handle_*",
+          "material": {
+            "preset": "leather",
+            "color": "#B98B57"
+          },
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "magnetic_snap",
+          "zone": "top_edge",
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "foot_stud",
+          "zone": "base_corners",
+          "params": {
+            "count": 4
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "pearl",
+          "zone": "drop_point",
+          "material": "stone",
+          "kinds": [
+            "jewelry"
+          ]
+        }
+      ],
+      "accessories": [
+        "straw sun hat",
+        "woven slides",
+        "pearl drop earrings",
+        "striped beach towel"
+      ],
+      "avoid": {
+        "modules": [
+          "print_graphic",
+          "brand_patch",
+          "chain_strap",
+          "cargo_pocket",
+          "buckle_belt",
+          "jeans_rivet",
+          "o_ring"
+        ],
+        "fabrics": [
+          "patent_leather",
+          "mesh_fabric",
+          "velvet",
+          "fleece",
+          "leather_pebbled"
+        ],
+        "colors": [
+          "black",
+          "neon pink",
+          "neon green"
+        ],
+        "controls": {
+          "fit": [
+            "fitted"
+          ],
+          "leg": [
+            "skinny"
+          ]
+        }
+      }
+    },
+    {
+      "id": "cottagecore",
+      "name": "Cottagecore",
+      "aliases": [
+        "cottagecore",
+        "cottage core",
+        "cottage",
+        "prairie",
+        "milkmaid",
+        "fairycore",
+        "garden party",
+        "picnic"
+      ],
+      "vibe": "Pastoral and handmade: sage, cream, butter and dusty rose, gingham, linen and lace, puff sleeves, ruffles, smocking, wooden buttons, floral and cherry embroidery.",
+      "palette": {
+        "main": {
+          "sage": "#9CAF88",
+          "cream": "#F4EBD0",
+          "butter": "#F3E3A1",
+          "dusty rose": "#D8A7A7"
+        },
+        "secondary": {
+          "white": "#FAF7F2",
+          "brown": "#7B4A2D"
+        },
+        "accent": {
+          "strawberry red": "#C8343E",
+          "lavender": "#B9A3F0"
+        },
+        "neutrals": {
+          "ivory": "#F6F1E1",
+          "oatmeal": "#D8CBB3"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "linen",
+          "cotton",
+          "gingham",
+          "lace"
+        ],
+        "outerwear": [
+          "knit",
+          "cable_knit",
+          "corduroy"
+        ],
+        "bottom": [
+          "linen",
+          "corduroy"
+        ],
+        "skirt": [
+          "gingham",
+          "linen",
+          "cotton"
+        ],
+        "dress": [
+          "gingham",
+          "linen",
+          "cotton"
+        ],
+        "bag": [
+          "canvas",
+          "knit"
+        ],
+        "jewelry": [
+          "metal_brushed"
+        ],
+        "trim": [
+          "lace",
+          "cotton"
+        ],
+        "stone": [
+          "pearl",
+          "gem"
+        ]
+      },
+      "controls": {
+        "fit": [
+          "regular"
+        ],
+        "length": [
+          "long",
+          "maxi",
+          "midi"
+        ],
+        "leg": [
+          "wide"
+        ],
+        "rise": [
+          "high"
+        ],
+        "flare": [
+          "full",
+          "a_line"
+        ],
+        "size": [
+          "medium"
+        ],
+        "shape": [
+          "slouchy"
+        ],
+        "style": [
+          "drop"
+        ],
+        "thickness": [
+          "thin"
+        ]
+      },
+      "hardware": "brass",
+      "tones": {
+        "trim": "secondary",
+        "accent": "accent",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "puff_band",
+          "zone": [
+            "cuff_*",
+            "armhole_*"
+          ],
+          "material": "shell",
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "ruffle",
+          "zone": [
+            "neckline",
+            "hem"
+          ],
+          "material": "shell",
+          "kinds": [
+            "top",
+            "dress",
+            "skirt"
+          ]
+        },
+        {
+          "module": "lace_trim",
+          "zone": [
+            "hem",
+            "cuff_*"
+          ],
+          "params": {
+            "style": "eyelet"
+          },
+          "material": "trim",
+          "kinds": [
+            "top",
+            "dress",
+            "skirt"
+          ]
+        },
+        {
+          "module": "ruching",
+          "zone": [
+            "chest_center",
+            "side_seam_*"
+          ],
+          "material": "shell",
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "flat4",
+            "count": 5
+          },
+          "material": {
+            "preset": "wood",
+            "color": "#9A6B43"
+          },
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress"
+          ],
+          "replace": true
+        },
+        {
+          "module": "embroidery",
+          "zone": [
+            "chest_left",
+            "chest_right",
+            "front_center",
+            "thigh_left"
+          ],
+          "params": {
+            "motif": "flower"
+          },
+          "material": "accent",
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress",
+            "skirt",
+            "bottom"
+          ]
+        },
+        {
+          "module": "patch_pocket",
+          "zone": "hip_*",
+          "params": {
+            "flap": "none",
+            "corner": "rounded"
+          },
+          "kinds": [
+            "outerwear",
+            "dress"
+          ]
+        },
+        {
+          "module": "bow",
+          "zone": [
+            "neckline",
+            "front_center",
+            "waist"
+          ],
+          "params": {
+            "style": "ribbon"
+          },
+          "material": "accent",
+          "kinds": [
+            "top",
+            "skirt"
+          ]
+        },
+        {
+          "module": "scallop_edge",
+          "zone": [
+            "collar",
+            "hem_*"
+          ],
+          "material": "trim",
+          "kinds": [
+            "outerwear",
+            "bottom"
+          ]
+        },
+        {
+          "module": "embroidery",
+          "zone": [
+            "front_center",
+            "front_panel"
+          ],
+          "params": {
+            "motif": "cherry"
+          },
+          "material": "accent",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "handle_wrap",
+          "zone": "handle_left",
+          "params": {
+            "print": "striped"
+          },
+          "material": "accent",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "bow",
+          "zone": [
+            "strap_anchor_left",
+            "front_center"
+          ],
+          "params": {
+            "style": "ribbon"
+          },
+          "material": "accent",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "charm",
+          "zone": "drop_point",
+          "params": {
+            "shape": "flower"
+          },
+          "material": "metal",
+          "kinds": [
+            "jewelry"
+          ]
+        },
+        {
+          "module": "pearl",
+          "zone": "face",
+          "material": "stone",
+          "kinds": [
+            "jewelry"
+          ]
+        }
+      ],
+      "accessories": [
+        "straw basket bag",
+        "ribbon in the hair",
+        "mary janes",
+        "floral headscarf"
+      ],
+      "avoid": {
+        "modules": [
+          "cargo_pocket",
+          "print_graphic",
+          "brand_patch",
+          "logo_plate",
+          "chain_strap",
+          "jeans_rivet",
+          "swivel_hook",
+          "d_ring"
+        ],
+        "fabrics": [
+          "patent_leather",
+          "mesh_fabric",
+          "nylon",
+          "leather_pebbled"
+        ],
+        "colors": [
+          "black",
+          "neon pink",
+          "neon green"
+        ],
+        "controls": {
+          "length": [
+            "cropped"
+          ],
+          "fit": [
+            "oversized"
+          ]
+        }
+      },
+      "fabricColors": {
+        "denim": "#7F97B5",
+        "denim_light": "#B7C8DB"
+      }
+    },
+    {
+      "id": "western",
+      "name": "Western",
+      "aliases": [
+        "western",
+        "cowgirl",
+        "cowboy",
+        "coastal cowgirl",
+        "rodeo",
+        "country",
+        "ranch",
+        "nashville",
+        "space cowboy"
+      ],
+      "vibe": "Rodeo heritage: tan suede, brown leather, cream and denim with turquoise, fringe, pearl snaps, pointed flap pockets, yoke piping, big belt buckles, silver.",
+      "palette": {
+        "main": {
+          "tan suede": "#B9875A",
+          "brown": "#6B4226",
+          "cream": "#EFE6D2",
+          "denim": "#3E5C82"
+        },
+        "secondary": {
+          "chocolate": "#4E2A1A",
+          "rust": "#A4492A"
+        },
+        "accent": {
+          "turquoise": "#30A9A3",
+          "red": "#A3262A"
+        },
+        "neutrals": {
+          "bone": "#E8E1D3"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "denim_light",
+          "cotton",
+          "suede"
+        ],
+        "outerwear": [
+          "suede",
+          "denim",
+          "leather"
+        ],
+        "bottom": [
+          "denim",
+          "suede"
+        ],
+        "skirt": [
+          "suede",
+          "denim"
+        ],
+        "dress": [
+          "cotton",
+          "denim_light"
+        ],
+        "bag": [
+          "leather",
+          "suede"
+        ],
+        "jewelry": [
+          "metal_brushed"
+        ],
+        "trim": [
+          "suede",
+          "leather"
+        ],
+        "strap": [
+          "leather"
+        ],
+        "stone": [
+          "gem"
+        ]
+      },
+      "controls": {
+        "fit": [
+          "regular",
+          "fitted"
+        ],
+        "length": [
+          "regular",
+          "cropped",
+          "midi"
+        ],
+        "leg": [
+          "flare",
+          "straight"
+        ],
+        "rise": [
+          "high",
+          "mid"
+        ],
+        "flare": [
+          "a_line"
+        ],
+        "size": [
+          "medium"
+        ],
+        "shape": [
+          "structured"
+        ],
+        "style": [
+          "drop",
+          "hoop"
+        ],
+        "thickness": [
+          "regular"
+        ]
+      },
+      "hardware": "silver",
+      "thread": "#E8DCC2",
+      "tones": {
+        "trim": "secondary",
+        "accent": "accent",
+        "thread": "contrast"
+      },
+      "modules": [
+        {
+          "module": "snap_button",
+          "zone": "placket",
+          "params": {
+            "count": 6
+          },
+          "material": {
+            "preset": "pearl",
+            "color": "#F1EBDD"
+          },
+          "kinds": [
+            "top",
+            "outerwear",
+            "dress"
+          ],
+          "replace": true
+        },
+        {
+          "module": "patch_pocket",
+          "zone": "chest_*",
+          "params": {
+            "flap": "flap_button",
+            "corner": "pointed",
+            "thread": "contrast"
+          },
+          "kinds": [
+            "top",
+            "outerwear"
+          ]
+        },
+        {
+          "module": "piping",
+          "zone": [
+            "back_yoke",
+            "collar"
+          ],
+          "material": "trim",
+          "kinds": [
+            "top",
+            "outerwear"
+          ]
+        },
+        {
+          "module": "fringe",
+          "zone": [
+            "back_yoke",
+            "hem",
+            "cuff_*"
+          ],
+          "params": {
+            "style": "suede"
+          },
+          "material": "shell",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "fringe",
+          "zone": "cuff_*",
+          "params": {
+            "style": "suede"
+          },
+          "material": "shell",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "embroidery",
+          "zone": [
+            "back_center",
+            "front_center"
+          ],
+          "params": {
+            "motif": "star"
+          },
+          "material": "accent",
+          "kinds": [
+            "top",
+            "dress",
+            "skirt"
+          ]
+        },
+        {
+          "module": "buckle_belt",
+          "zone": "waistband",
+          "material": "hardware",
+          "kinds": [
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "jeans_rivet",
+          "zone": "pocket_front_*",
+          "material": "hardware",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "jeans_back_pocket",
+          "zone": "pocket_back_*",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": "outseam_*",
+          "params": {
+            "rows": 2,
+            "weight": "heavy"
+          },
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "leather_patch",
+          "zone": "back_patch",
+          "material": {
+            "preset": "leather",
+            "color": "#8B5E3C"
+          },
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "fringe",
+          "zone": "hem",
+          "material": "shell",
+          "kinds": [
+            "skirt"
+          ]
+        },
+        {
+          "module": "fringe",
+          "zone": [
+            "flap_edge",
+            "edge_front",
+            "top_edge"
+          ],
+          "params": {
+            "style": "suede"
+          },
+          "material": "shell",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "tassel",
+          "zone": [
+            "strap_anchor_left",
+            "zip_top"
+          ],
+          "params": {
+            "material": "leather"
+          },
+          "material": "trim",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "turn_lock",
+          "zone": [
+            "front_center",
+            "front_panel"
+          ],
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "strap_keeper",
+          "zone": "handle_left",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "gem",
+          "zone": "face",
+          "material": "stone",
+          "kinds": [
+            "jewelry"
+          ]
+        },
+        {
+          "module": "drop",
+          "zone": "drop_point",
+          "params": {
+            "charm": "disc"
+          },
+          "material": "metal",
+          "kinds": [
+            "jewelry"
+          ]
+        }
+      ],
+      "accessories": [
+        "cowboy boots",
+        "turquoise cuff",
+        "silver concho belt",
+        "felt hat"
+      ],
+      "avoid": {
+        "modules": [
+          "bow",
+          "puff_band",
+          "print_graphic",
+          "cargo_pocket",
+          "chain_strap"
+        ],
+        "fabrics": [
+          "mesh_fabric",
+          "satin",
+          "patent_leather",
+          "fleece",
+          "nylon"
+        ],
+        "colors": [
+          "neon pink",
+          "neon green",
+          "lilac"
+        ],
+        "controls": {
+          "leg": [
+            "baggy",
+            "skinny"
+          ]
+        }
+      },
+      "fabricColors": {
+        "denim": "#3A5375",
+        "denim_light": "#9DB3CD"
+      }
+    },
+    {
+      "id": "mob_wife",
+      "name": "Mob wife",
+      "aliases": [
+        "mob wife",
+        "glam",
+        "glamorous",
+        "old hollywood",
+        "diva",
+        "bombshell"
+      ],
+      "vibe": "Maximal glamour: black, espresso, burgundy and gold, faux fur and leather, satin, velvet and lace, fur collars and cuffs, chunky gold hardware, big statement jewelry.",
+      "palette": {
+        "main": {
+          "black": "#1A1A1D",
+          "espresso": "#3B2418",
+          "burgundy": "#5E1A24"
+        },
+        "secondary": {
+          "deep red": "#7A1F2B",
+          "chocolate": "#4E2A1A"
+        },
+        "accent": {
+          "gold": "#C9A44C"
+        },
+        "neutrals": {
+          "cream": "#EDE6DA"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "satin",
+          "lace",
+          "velvet",
+          "mesh_fabric"
+        ],
+        "outerwear": [
+          "sherpa",
+          "leather",
+          "velvet",
+          "patent_leather"
+        ],
+        "bottom": [
+          "leather",
+          "satin"
+        ],
+        "skirt": [
+          "leather",
+          "satin"
+        ],
+        "dress": [
+          "satin",
+          "velvet",
+          "lace"
+        ],
+        "bag": [
+          "patent_leather",
+          "leather",
+          "leather_pebbled"
+        ],
+        "jewelry": [
+          "metal_polished"
+        ],
+        "lining": [
+          "satin"
+        ],
+        "trim": [
+          "sherpa",
+          "velvet"
+        ],
+        "strap": [
+          "leather"
+        ],
+        "stone": [
+          "gem"
+        ]
+      },
+      "controls": {
+        "fit": [
+          "oversized",
+          "fitted"
+        ],
+        "length": [
+          "long",
+          "midi",
+          "maxi"
+        ],
+        "leg": [
+          "wide",
+          "straight"
+        ],
+        "rise": [
+          "high"
+        ],
+        "flare": [
+          "straight"
+        ],
+        "size": [
+          "large"
+        ],
+        "shape": [
+          "structured"
+        ],
+        "style": [
+          "hoop",
+          "drop"
+        ],
+        "thickness": [
+          "chunky"
+        ],
+        "jewelry.size": [
+          "large"
+        ]
+      },
+      "hardware": "gold",
+      "tones": {
+        "trim": "neutral",
+        "lining": "secondary",
+        "thread": "tonal"
+      },
+      "modules": [
+        {
+          "module": "sherpa_band",
+          "zone": "collar",
+          "material": "trim",
+          "kinds": [
+            "outerwear",
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "sherpa_band",
+          "zone": "cuff_*",
+          "material": "trim",
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "shank_dome",
+            "count": 3
+          },
+          "material": "hardware",
+          "kinds": [
+            "outerwear"
+          ],
+          "replace": true
+        },
+        {
+          "module": "lace_trim",
+          "zone": [
+            "neckline",
+            "hem"
+          ],
+          "material": "shell",
+          "kinds": [
+            "top",
+            "dress"
+          ]
+        },
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "shank_dome",
+            "count": 4
+          },
+          "material": "hardware",
+          "kinds": [
+            "top"
+          ],
+          "replace": true
+        },
+        {
+          "module": "buckle_belt",
+          "zone": [
+            "waist",
+            "waistband"
+          ],
+          "material": "hardware",
+          "kinds": [
+            "outerwear",
+            "dress",
+            "bottom",
+            "skirt"
+          ]
+        },
+        {
+          "module": "zipper_path",
+          "zone": [
+            "side_seam_left",
+            "back_center"
+          ],
+          "material": "hardware",
+          "kinds": [
+            "skirt",
+            "dress"
+          ]
+        },
+        {
+          "module": "slash_pocket",
+          "zone": "pocket_front_*",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "chain_strap",
+          "zone": "handle_right",
+          "params": {
+            "style": "curb"
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "logo_plate",
+          "zone": [
+            "front_center",
+            "front_panel"
+          ],
+          "params": {
+            "shape": "rect",
+            "text": "maison"
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "foot_stud",
+          "zone": "base_corners",
+          "params": {
+            "count": 4
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "edge_paint",
+          "zone": "edge_front",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "gem",
+          "zone": "face",
+          "material": "stone",
+          "kinds": [
+            "jewelry"
+          ]
+        },
+        {
+          "module": "drop",
+          "zone": "drop_point",
+          "params": {
+            "charm": "gem"
+          },
+          "material": "metal",
+          "kinds": [
+            "jewelry"
+          ]
+        }
+      ],
+      "accessories": [
+        "oversized dark sunglasses",
+        "chunky gold hoops",
+        "red manicure",
+        "leopard scarf"
+      ],
+      "avoid": {
+        "modules": [
+          "cargo_pocket",
+          "print_graphic",
+          "patch_pocket",
+          "pompom",
+          "puff_band",
+          "rib_band",
+          "drawstring"
+        ],
+        "fabrics": [
+          "fleece",
+          "gingham",
+          "denim_light",
+          "nylon",
+          "linen",
+          "canvas"
+        ],
+        "colors": [
+          "pastel pink",
+          "baby blue",
+          "lime",
+          "sage"
+        ],
+        "controls": {
+          "length": [
+            "cropped"
+          ],
+          "thickness": [
+            "thin"
+          ]
+        }
+      },
+      "fabricColors": {
+        "denim": "#141416",
+        "denim_light": "#2A2A2E"
+      }
+    },
+    {
+      "id": "workwear",
+      "name": "Workwear",
+      "aliases": [
+        "workwear",
+        "work wear",
+        "utility",
+        "utilitarian",
+        "carpenter",
+        "chore",
+        "rugged",
+        "heritage",
+        "workman"
+      ],
+      "vibe": "Rugged utility: duck brown, khaki, navy and olive, heavy canvas and denim, corduroy collars, triple contrast topstitching, bar tacks, rivets, flap chest pockets, brass hardware.",
+      "palette": {
+        "main": {
+          "duck brown": "#A1703E",
+          "khaki": "#B8A27A",
+          "navy": "#1F2A44",
+          "olive": "#5B5E3A"
+        },
+        "secondary": {
+          "chocolate": "#4E3524",
+          "cream": "#EDE3CF"
+        },
+        "accent": {
+          "work orange": "#E36F1E"
+        },
+        "neutrals": {
+          "bone": "#E8E1D3",
+          "grey": "#8A8D93"
+        }
+      },
+      "fabrics": {
+        "top": [
+          "cotton",
+          "jersey",
+          "canvas"
+        ],
+        "outerwear": [
+          "canvas",
+          "denim",
+          "corduroy"
+        ],
+        "bottom": [
+          "canvas",
+          "denim"
+        ],
+        "skirt": [
+          "denim",
+          "canvas"
+        ],
+        "dress": [
+          "denim",
+          "canvas"
+        ],
+        "bag": [
+          "canvas",
+          "leather"
+        ],
+        "jewelry": [
+          "metal_brushed"
+        ],
+        "trim": [
+          "corduroy"
+        ],
+        "strap": [
+          "leather"
+        ]
+      },
+      "controls": {
+        "fit": [
+          "regular",
+          "oversized"
+        ],
+        "length": [
+          "regular"
+        ],
+        "leg": [
+          "straight",
+          "wide",
+          "baggy"
+        ],
+        "rise": [
+          "mid"
+        ],
+        "flare": [
+          "straight"
+        ],
+        "size": [
+          "large"
+        ],
+        "shape": [
+          "structured"
+        ],
+        "style": [
+          "hoop",
+          "stud"
+        ],
+        "thickness": [
+          "chunky"
+        ]
+      },
+      "hardware": "brass",
+      "thread": "#C8892E",
+      "tones": {
+        "trim": "secondary",
+        "thread": "contrast"
+      },
+      "modules": [
+        {
+          "module": "button",
+          "zone": "placket",
+          "params": {
+            "style": "jeans_tack",
+            "count": 5
+          },
+          "material": "hardware",
+          "kinds": [
+            "outerwear",
+            "top"
+          ],
+          "replace": true
+        },
+        {
+          "module": "patch_pocket",
+          "zone": "chest_left",
+          "params": {
+            "flap": "flap_button",
+            "corner": "square",
+            "stitch": "double",
+            "thread": "gold"
+          },
+          "kinds": [
+            "outerwear",
+            "top"
+          ]
+        },
+        {
+          "module": "patch_pocket",
+          "zone": "hip_*",
+          "params": {
+            "flap": "none",
+            "corner": "square",
+            "stitch": "double",
+            "thread": "gold"
+          },
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": "hem",
+          "params": {
+            "rows": 3,
+            "weight": "heavy"
+          },
+          "kinds": [
+            "outerwear",
+            "top",
+            "skirt",
+            "dress"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": [
+            "shoulder_*",
+            "placket"
+          ],
+          "params": {
+            "rows": 2,
+            "weight": "heavy"
+          },
+          "kinds": [
+            "outerwear",
+            "top"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": "cuff_*",
+          "params": {
+            "rows": 2,
+            "weight": "heavy"
+          },
+          "kinds": [
+            "outerwear"
+          ]
+        },
+        {
+          "module": "leather_patch",
+          "zone": [
+            "chest_right",
+            "sleeve_left"
+          ],
+          "material": {
+            "preset": "leather",
+            "color": "#6B4226"
+          },
+          "kinds": [
+            "outerwear",
+            "top"
+          ]
+        },
+        {
+          "module": "patch_pocket",
+          "zone": [
+            "thigh_right",
+            "thigh_left"
+          ],
+          "params": {
+            "flap": "none",
+            "corner": "square"
+          },
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "jeans_rivet",
+          "zone": "pocket_front_*",
+          "material": "hardware",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "bar_tack",
+          "zone": "fly",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": "outseam_*",
+          "params": {
+            "rows": 3,
+            "weight": "heavy"
+          },
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "jeans_back_pocket",
+          "zone": "pocket_back_*",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "leather_patch",
+          "zone": "back_patch",
+          "material": {
+            "preset": "leather",
+            "color": "#6B4226"
+          },
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "coin_pocket",
+          "zone": "coin_pocket",
+          "kinds": [
+            "bottom"
+          ]
+        },
+        {
+          "module": "leather_patch",
+          "zone": [
+            "front_center",
+            "front_panel"
+          ],
+          "material": {
+            "preset": "leather",
+            "color": "#6B4226"
+          },
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "topstitch",
+          "zone": "top_edge",
+          "params": {
+            "rows": 2,
+            "weight": "heavy"
+          },
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "d_ring",
+          "zone": [
+            "side_left",
+            "side_right"
+          ],
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "swivel_hook",
+          "zone": "strap_anchor_*",
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        },
+        {
+          "module": "foot_stud",
+          "zone": "base_corners",
+          "params": {
+            "count": 4
+          },
+          "material": "hardware",
+          "kinds": [
+            "bag"
+          ]
+        }
+      ],
+      "accessories": [
+        "beanie",
+        "leather work boots",
+        "canvas tool tote",
+        "bandana"
+      ],
+      "avoid": {
+        "modules": [
+          "bow",
+          "ruffle",
+          "lace_trim",
+          "pearl",
+          "puff_band",
+          "scallop_edge",
+          "ruching",
+          "chain_strap"
+        ],
+        "fabrics": [
+          "satin",
+          "lace",
+          "velvet",
+          "mesh_fabric",
+          "patent_leather"
+        ],
+        "colors": [
+          "pastel pink",
+          "lilac",
+          "baby blue"
+        ],
+        "controls": {
+          "fit": [
+            "fitted"
+          ],
+          "length": [
+            "cropped"
+          ]
+        }
+      },
+      "fabricColors": {
+        "denim": "#2B3A55",
+        "denim_light": "#7E93AE"
+      }
+    }
+  ]
+}

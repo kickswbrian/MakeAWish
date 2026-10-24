@@ -72,6 +72,9 @@ CREATE TABLE IF NOT EXISTS apify_cache (
 const cols = new Set((db.prepare("PRAGMA table_info(wishes)").all() as { name: string }[]).map((c) => c.name));
 if (!cols.has("product_json")) db.exec("ALTER TABLE wishes ADD COLUMN product_json TEXT");
 if (!cols.has("thumb")) db.exec("ALTER TABLE wishes ADD COLUMN thumb TEXT");
+// Match extras (rating, reviews, the one-line why) as JSON, so new fields need no migration.
+const matchCols = (db.prepare("PRAGMA table_info(matches)").all() as { name: string }[]).map((c) => c.name);
+if (!matchCols.includes("extra_json")) db.exec("ALTER TABLE matches ADD COLUMN extra_json TEXT");
 
 // Agent checkout (Visa Trusted Agent Protocol): which pledges the genie placed, and the shopper's
 // spending mandates (modelled on Visa Intelligent Commerce payment instructions).

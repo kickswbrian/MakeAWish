@@ -1,0 +1,198 @@
+{
+  "credit": "\"Black Sports Tank Top\" by Style3D CG (https://sketchfab.com/3d-models/black-sports-tank-top-16b544e3185a474a9e8e5f2c0fb8eb7d), CC-BY-4.0",
+  "height": 0.36,
+  "budget": 30000,
+  "fold": "uniform_1001",
+  "rules": [
+    {
+      "name": "_drop",
+      "when": "ptris < 4"
+    },
+    {
+      "name": "underband",
+      "when": "pcy < 0.04 and ph < 0.06"
+    },
+    {
+      "name": "side_panels",
+      "when": "abs(pcx) > 0.09 and pcy < 0.15 and ph > 0.09 and pw > 0.05"
+    },
+    {
+      "name": "armhole_binding",
+      "when": "abs(pcx) > 0.07 and pw < 0.13 and ph > 0.2"
+    },
+    {
+      "name": "binding",
+      "when": "ptris < 1000"
+    },
+    {
+      "name": "body",
+      "when": "True"
+    }
+  ],
+  "zones": {
+    "chest_left": {
+      "from": [
+        -0.07,
+        0.2,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.07,
+        0.06
+      ],
+      "bend": 0.1,
+      "label": "left chest"
+    },
+    "chest_right": {
+      "from": [
+        0.07,
+        0.2,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.07,
+        0.06
+      ],
+      "bend": 0.1,
+      "label": "right chest"
+    },
+    "chest_center": {
+      "from": [
+        0,
+        0.215,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.06,
+        0.035
+      ],
+      "bend": 0.15,
+      "label": "center front below the neckline (logo spot)"
+    },
+    "back_center": {
+      "from": [
+        0,
+        0.29,
+        -0.4
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.06,
+        0.04
+      ],
+      "bend": 0.15,
+      "label": "upper back between the racer straps"
+    },
+    "neck_label": {
+      "from": [
+        0,
+        0.315,
+        0
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.035,
+        0.018
+      ],
+      "label": "inside back neck",
+      "part": "body"
+    },
+    "hem": {
+      "kind": "ring",
+      "center": [
+        0,
+        0.015,
+        0
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "radius": 0.5,
+      "samples": 48,
+      "label": "hem (bottom edge of the underband)",
+      "part": "underband"
+    },
+    "side_seam_left": {
+      "kind": "line",
+      "from": [
+        -0.4,
+        0.118,
+        0.0
+      ],
+      "to": [
+        -0.4,
+        0.06,
+        0.0
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "samples": 10,
+      "label": "left side seam"
+    },
+    "side_seam_right": {
+      "kind": "line",
+      "from": [
+        0.4,
+        0.118,
+        0.0
+      ],
+      "to": [
+        0.4,
+        0.06,
+        0.0
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "samples": 10,
+      "label": "right side seam"
+    },
+    "waist": {
+      "kind": "ring",
+      "center": [
+        0,
+        0.04,
+        0
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "radius": 0.5,
+      "samples": 48,
+      "label": "top edge of the elastic underband",
+      "part": "underband"
+    }
+  }
+}
