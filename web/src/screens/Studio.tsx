@@ -53,7 +53,6 @@ export default function Studio() {
   const wishId = wish?.id ?? null;
   const modeRef = useRef(mode);
   modeRef.current = mode;
-  const announced = useRef(false);
   const voiceRef = useRef<ReturnType<typeof useVoice> | null>(null);
 
   // ---------- Wish lifecycle ----------
@@ -76,12 +75,10 @@ export default function Studio() {
         if (c) {
           setCampaign(c);
           setMode("campaign");
-          announced.current = true;
         }
       } else if (w.status === "locked") {
         setMode("results");
         setMatches(await api.matches(w.id).catch(() => null));
-        announced.current = true;
       }
     })();
     void getConfig().then((c) => setBrain(c.brain)).catch(() => {});
@@ -128,9 +125,12 @@ export default function Studio() {
       if (voice.timing.current && !voice.timing.current.patch) voice.timing.current.patch = performance.now();
       stopHum();
       voice.setThinking(false);
+      // The user tapped See matches while this turn was in flight: the voice session is over.
+      if (modeRef.current !== "voice") return;
       // The model has already changed (socket event); now the genie speaks.
       const speaking = voice.speak(r.say);
-      if (r.lock && modeRef.current === "voice") void lock();
+      // The genie decided the wish is done: let it finish this line, but stop listening.
+      if (r.lock) void lock({ finishLine: true });
       await speaking;
       if (debug) {
         const t = voice.timing.current;
@@ -140,7 +140,7 @@ export default function Studio() {
       stopHum();
       voice.setThinking(false);
       console.warn("[turn]", err);
-      void voice.speak("My magic flickered for a second. Could you say that again?");
+      if (modeRef.current === "voice") void voice.speak("My magic flickered for a second. Could you say that again?");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wishId]);
@@ -161,24 +161,23 @@ export default function Studio() {
 
   // ---------- Lock, results, campaign ----------
 
-  const lock = useCallback(async () => {
+  /** See matches: the voice session ends here (mic off, genie quiet), the results screen takes over. */
+  const lock = useCallback(async ({ finishLine = false }: { finishLine?: boolean } = {}) => {
     if (!wishId) return;
+    const voice = voiceRef.current!;
+    voice.stopListening();
+    if (!finishLine) voice.stopSpeaking();
+    stopHum();
+    voice.setThinking(false);
+    modeRef.current = "results";
     setMode("results");
     setMatches({ matches: [], searched: 0, total: 3, pending: true, sample: false });
-    announced.current = false;
     await api.lock(wishId).catch(() => {});
     // Fallback in case the socket event raced the room join.
     setTimeout(() => {
       void api.matches(wishId).then((m) => setMatches((cur) => (cur && !cur.pending ? cur : m))).catch(() => {});
     }, 2500);
   }, [wishId]);
-
-  useEffect(() => {
-    if (mode !== "results" || !matches || matches.pending || announced.current) return;
-    announced.current = true;
-    void voice.speak(summarize(matches).line);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matches, mode]);
 
   const launch = async (b: { priceCents: number; targetBackers: number; deadlineAt: number }) => {
     if (!wishId) return;
@@ -421,6 +420,7 @@ export default function Studio() {
           onTalk={() => {
             setLaunchOpen(false);
             setMode("voice");
+            void voice.start();
           }}
           onLaunch={launch}
         />
