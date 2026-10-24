@@ -18,7 +18,7 @@ const res = await fetch(`${base}/api/admin/demo/reset`, {
 });
 const body = (await res.json()) as any;
 if (!res.ok) {
-  console.error(`Reset failed (${res.status}): ${body.error ?? JSON.stringify(body)}`);
+  console.error(`Reset failed (${res.status}): ${body.error?.message ?? JSON.stringify(body)}`);
   process.exit(1);
 }
 
