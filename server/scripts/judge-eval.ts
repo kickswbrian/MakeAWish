@@ -7,10 +7,10 @@
  *   npm run judge -- --cases=path.json    another corpus (JSON array of JudgeCase)
  *   npm run judge -- --only=resize -v     filter by id or tag, print every case
  */
-import { spawn } from "node:child_process";
 import fs from "node:fs";
 import { applyPatch, check, defaultSpec, DEV_CASES, type JudgeCase, type ProductSpec } from "@wishit/shared";
-import { ruleBrain, SYSTEM, think, tool, ToolInput, turnMessage, undoOf, type BrainResult } from "../src/brain.ts";
+import { ruleBrain, think } from "../src/brain.ts";
+import { cliBrain } from "../src/brainCli.ts";
 import type { TranscriptTurn } from "../src/wishes.ts";
 
 const args = Object.fromEntries(process.argv.slice(2).map((a) => {
@@ -23,32 +23,8 @@ const concurrency = Number(args.j ?? (brain === "rules" ? 1 : 4));
 let cases: JudgeCase[] = args.cases ? JSON.parse(fs.readFileSync(args.cases, "utf8")) : DEV_CASES;
 if (args.only) cases = cases.filter((c) => c.id.includes(args.only) || c.tags?.includes(args.only));
 
-/** Claude through `claude -p`, with the server's exact system prompt, turn message and tool schema. */
-function cliBrain(spec: ProductSpec, transcript: TranscriptTurn[], text: string): Promise<BrainResult> {
-  const schema = JSON.stringify(tool.input_schema);
-  const prompt = turnMessage(spec, transcript, text);
-  return new Promise((resolve, reject) => {
-    const p = spawn("claude", ["-p", "--output-format", "json", "--json-schema", schema, "--system-prompt", SYSTEM, "--model", args.model ?? "claude-opus-5-5", "--effort", args.effort ?? "low", "--tools", ""], { shell: false });
-    let out = "";
-    let err = "";
-    p.stdout.on("data", (d) => (out += d));
-    p.stderr.on("data", (d) => (err += d));
-    p.on("error", reject);
-    p.on("close", (code) => {
-      try {
-        const res = JSON.parse(out);
-        const parsed = ToolInput.parse(res.structured_output);
-        resolve({ say: parsed.say, patch: parsed.undo ? {} : parsed.patch, lock: parsed.lock, undo: undoOf(parsed, text), brain: "llm" });
-      } catch (e) {
-        reject(new Error(`claude exited ${code}: ${(e as Error).message} ${err.slice(0, 300)} ${out.slice(0, 300)}`));
-      }
-    });
-    p.stdin.end(prompt);
-  });
-}
-
 const run = (spec: ProductSpec, transcript: TranscriptTurn[], text: string) =>
-  brain === "rules" ? Promise.resolve(ruleBrain(spec, transcript, text)) : brain === "cli" ? cliBrain(spec, transcript, text) : think(spec, transcript, text);
+  brain === "rules" ? Promise.resolve(ruleBrain(spec, transcript, text)) : brain === "cli" ? cliBrain(spec, transcript, text, { model: args.model, effort: args.effort }) : think(spec, transcript, text);
 
 async function runCase(c: JudgeCase) {
   const start = applyPatch(defaultSpec, c.start ?? {}).spec;

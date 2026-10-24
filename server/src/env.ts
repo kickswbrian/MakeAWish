@@ -61,12 +61,15 @@ export function assertSafeConfig() {
   }
 }
 
+/** Local testing without an API key: genie turns go through the logged-in `claude` CLI. */
+export const cliBrainOn = !(s("ANTHROPIC_API_KEY") ?? s("ANTHROPIC_AUTH_TOKEN")) && s("BRAIN_CLI") === "1" && !isProd;
+
 export function logConfig() {
   const on = (b: unknown) => (b ? "on " : "off");
   console.log(
     [
       `[wish-it] ${env.publicUrl}  demoMode=${env.demoMode}  ${isProd ? "PRODUCTION" : "development"}`,
-      `  brain    ${on(env.anthropicKey)} ${env.anthropicKey ? env.brainModel : "(rule-based fallback)"}`,
+      `  brain    ${on(env.anthropicKey || cliBrainOn)} ${env.anthropicKey ? env.brainModel : cliBrainOn ? `${env.brainModel} via claude CLI (BRAIN_CLI=1)` : "(rule-based fallback)"}`,
       `  cartesia ${on(env.cartesiaKey)} ${env.cartesiaKey ? "" : "(browser speech fallback)"}`,
       `  apify    ${on(env.apifyToken && env.apifyActor)} ${env.apifyToken && env.apifyActor ? env.apifyActor : "(sample matches)"}`,
       `  meshy    ${on(env.meshyKey)} ${env.meshyKey ? "" : "(parametric only)"}`,

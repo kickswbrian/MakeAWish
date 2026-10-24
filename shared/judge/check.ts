@@ -75,7 +75,8 @@ export function colorFamily(hex: string): ColorFamily {
   else h = (r - g) / d + 4;
   h = (h * 60 + 360) % 360;
   if (h < 15 || h >= 345) return l > 0.7 ? "pink" : "red";
-  if (h < 45) return l < 0.45 && s < 0.85 ? "brown" : "orange";
+  // Golds (hue ~40-46) read as yellow: "make it gold" and "yellow letters" both accept them.
+  if (h < 38) return l < 0.45 && s < 0.85 ? "brown" : "orange";
   if (h < 70) return l < 0.4 ? "brown" : "yellow";
   if (h < 170) return "green";
   if (h < 255) return "blue";

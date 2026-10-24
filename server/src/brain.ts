@@ -6,13 +6,16 @@ import {
   type ProductSpec, type SpecPatch,
 } from "@wishit/shared";
 import { z } from "zod";
-import { env } from "./env.ts";
+import { cliBrainOn, env } from "./env.ts";
+import { cliBrain } from "./brainCli.ts";
 import type { TranscriptTurn } from "./wishes.ts";
 
 export interface BrainResult { say: string; patch: SpecPatch; lock: boolean; brain: "llm" | "rules"; undo?: boolean }
 
 const client = env.anthropicKey ? new Anthropic({ maxRetries: 0 }) : null;
-export const brainKind: "llm" | "rules" = client ? "llm" : "rules";
+// Local testing without an API key: BRAIN_CLI=1 routes turns through your `claude` login (never in production).
+const useCli = !client && cliBrainOn;
+export const brainKind: "llm" | "rules" = client || useCli ? "llm" : "rules";
 
 export const SYSTEM = `You are the Wish it genie. A shopper describes a product they wish existed; you shape it with them and a 3D model updates live from the spec you write.
 
@@ -134,9 +137,9 @@ export const tool: Anthropic.Beta.BetaTool = {
 export const ToolInput = z.object({ say: z.string().min(1), patch: z.record(z.unknown()).default({}), lock: z.boolean().default(false), undo: z.boolean().default(false) });
 
 export async function think(spec: ProductSpec, transcript: TranscriptTurn[], text: string): Promise<BrainResult> {
-  if (!client) return ruleBrain(spec, transcript, text);
+  if (!client && !useCli) return ruleBrain(spec, transcript, text);
   try {
-    return await llmBrain(spec, transcript, text);
+    return useCli ? await cliBrain(spec, transcript, text, { model: env.brainModel }) : await llmBrain(spec, transcript, text);
   } catch (err) {
     console.warn("[brain] LLM failed, using rules:", (err as Error).message);
     return ruleBrain(spec, transcript, text);
