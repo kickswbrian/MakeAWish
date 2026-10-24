@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * The cinematic opening of UI variation 2:
- *   words  "Want it?" rises in, then "Wish it." in color
+ *   words  "Want it?" swipes in big from the right, then "Wish it." appears letter by letter in color
  *   swipe  the phrase blows up and sweeps off to the left
  *   ring   a circle draws itself where the bubble will be (rendered by the studio's orb slot)
  *   bubble the circle becomes the 3D bubble, with clouds and sparkles spinning in
@@ -12,7 +12,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
  */
 export type IntroPhase = "wait" | "words" | "swipe" | "ring" | "bubble" | "done";
 
-const TIMELINE: [IntroPhase, number][] = [["words", 0], ["swipe", 2150], ["ring", 2700], ["bubble", 3900], ["done", 5200]];
+const TIMELINE: [IntroPhase, number][] = [["words", 0], ["swipe", 2500], ["ring", 3050], ["bubble", 4250], ["done", 5550]];
+// "Wish it." in brand colors, one per letter (gold to pink to sage), so each letter can appear on its own.
+const WISH = [..."Wish it."];
+const WISH_COLORS = ["#D9A640", "#E39A6E", "#EA8CA6", "#E386B0", "#C99AB5", "#A2AFA6", "#7FAA98", "#6FA894"];
 const reduced = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 /** True once frames come at a steady rate (30 in a row under 34 ms), or after `maxMs` regardless. */
@@ -82,7 +85,11 @@ export function IntroWords({ phase, onSkip }: { phase: IntroPhase; onSkip: () =>
       {phase !== "wait" && (
         <div className="v2-words">
           <span className="v2-w1">Want&nbsp;it?</span>
-          <span className="v2-w2">Wish&nbsp;it.</span>
+          <span className="v2-w2" aria-label="Wish it.">
+            {WISH.map((ch, i) => (
+              <span key={i} className="v2-l" style={{ color: WISH_COLORS[i], ["--i" as string]: i }} aria-hidden="true">{ch === " " ? " " : ch}</span>
+            ))}
+          </span>
         </div>
       )}
     </div>

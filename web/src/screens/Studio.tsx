@@ -821,7 +821,7 @@ export default function Studio() {
             onShown={setShownId}
           />
         </Bubble>
-        {v2 && <Bubble3D revealed={phase === "bubble" || phase === "done"} dim={hasProduct} />}
+        {v2 && <Bubble3D revealed={phase === "bubble" || phase === "done"} />}
         {v2Landing && phase === "done" && (
           <button className="v2-tap" onClick={talk} aria-label={voice.active ? "Stop talking to the genie" : "Talk to the genie"} />
         )}
