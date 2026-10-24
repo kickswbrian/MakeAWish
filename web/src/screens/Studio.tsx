@@ -25,6 +25,10 @@ import { Waveform } from "../ui/Waveform.tsx";
 import { BackIcon, CategoryIcon, ChevronDown, HeartIcon, KeyboardIcon, MicIcon, MuteIcon, Sparkle } from "../ui/Icons.tsx";
 import { LaunchSheet, MatchGrid, summarize } from "../ui/Results.tsx";
 import { CampaignPanel, Celebration } from "../ui/Campaign.tsx";
+import Bubble3D from "../three/Bubble3D.tsx";
+import { IntroRing, IntroWords, useIntroPhase } from "../ui/v2/IntroV2.tsx";
+import { useUiVariant } from "../ui/v2/useUiVariant.ts";
+import { IdlePrompt, useIdle } from "../ui/v2/IdlePrompt.tsx";
 
 type Mode = "voice" | "results" | "campaign";
 
@@ -725,15 +729,46 @@ export default function Studio() {
   const selPart = selection ? product.parts[selection.partId] : undefined;
   const editing = mode === "voice" && !!selPart;
 
+  // ---------- UI variation 2 (press 2; 1 goes back) ----------
+  const { variant, introKey } = useUiVariant();
+  const v2 = variant === "2";
+  const [phase, skipIntro] = useIntroPhase(introKey, v2);
+  // The wish screen is just the bubble until there is a product; then the usual editor takes over.
+  const v2Landing = v2 && mode === "voice" && !hasProduct;
+  const [burstKey, setBurstKey] = useState(0);
+  useEffect(() => {
+    if (v2 && phase === "bubble") setBurstKey((k) => k + 1);
+  }, [v2, phase]);
+  const lastCaption = voice.captions[voice.captions.length - 1];
+  const idle = useIdle(
+    `${voice.interim}|${lastCaption?.id ?? ""}|${voice.state}|${voice.active}|${busy}|${typing}|${text}`,
+    v2Landing && phase === "done" && !busy && !voice.interim && (voice.state === "idle" || voice.state === "listening"),
+  );
+  // Nothing on screen to type into: start typing anywhere and the box opens with that letter.
+  useEffect(() => {
+    if (!v2Landing || phase !== "done" || typing) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || /[12 ]/.test(e.key)) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+      e.preventDefault();
+      setText(e.key);
+      setTyping(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [v2Landing, phase, typing]);
+
   return (
-    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${stagePending ? "stage-pending" : ""}`}>
+    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${stagePending ? "stage-pending" : ""} ${v2 ? `v2 v2-${phase}` : ""} ${v2Landing ? "v2-landing" : ""}`}>
+      {v2 && <IntroWords phase={phase} onSkip={skipIntro} />}
       <Glows />
       {showConfetti && <Celebration image={snapshot} line={campaign ? `Funded · ${campaign.captured || campaign.held} of ${campaign.targetBackers}` : undefined} onDone={() => setShowConfetti(false)} />}
       {debug && perf && <div className="perf">{perf}</div>}
       {mode === "voice" && <HoverTip name={hoverId && hoverId !== selection?.partId ? product.parts[hoverId]?.name ?? null : null} />}
 
       <div className="orb-slot">
-        <BubbleSparks />
+        {v2 && <IntroRing phase={phase} />}
+        {!v2 && <BubbleSparks />}
         <Bubble
           state={voice.state}
           robot={!hasProduct}
@@ -779,6 +814,10 @@ export default function Studio() {
             onShown={setShownId}
           />
         </Bubble>
+        {v2 && <Bubble3D revealed={phase === "bubble" || phase === "done"} burstKey={burstKey} dim={hasProduct} />}
+        {v2Landing && phase === "done" && (
+          <button className="v2-tap" onClick={talk} aria-label={voice.active ? "Stop talking to the genie" : "Talk to the genie"} />
+        )}
         {mode === "voice" && hasProduct && (
           <div className="edit-bar" role="toolbar" aria-label="Edit">
             <button className="ebtn" disabled={!canUndo || busy} onClick={() => undo()} aria-label="Undo">↶</button>
@@ -866,6 +905,16 @@ export default function Studio() {
               </div>
             )}
           </div>
+          {v2Landing && phase === "done" && (
+            <div className="v2-captions">
+              {idle ? <IdlePrompt listening={voice.active} /> : <SpeechLine captions={voice.captions} interim={voice.interim} />}
+              {status.some((s) => s.cls === "bad") && (
+                <div className="note-row">
+                  {status.filter((s) => s.cls === "bad").map((s) => <span key={s.text} className="note bad">{s.text}</span>)}
+                </div>
+              )}
+            </div>
+          )}
           {hasProduct && !editing && (
             <button className="pill dock-pill" onClick={() => void lock()}>
               <Sparkle size={18} color="#182825" /> See matches
