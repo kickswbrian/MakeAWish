@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * The cinematic opening of UI variation 2:
  *   words  "Want it?" slides in from the right, then "Wish it." traces itself in outline and fills in color
  *   swipe  the phrase sweeps off to the left (same size throughout)
- *   ring   a circle draws itself where the bubble will be (rendered by the studio's orb slot)
- *   bubble the circle becomes the 3D bubble
+ *   ring   a loop whips around and closes where the bubble will be, then turns edge-on like a coin
+ *   bubble it turns the rest of the way round as the 3D bubble
  *   done   the wish screen fades in
  * Click or press any key to skip ahead. With `hold` (press 3) it stays on the title until a click or a
  * key, then plays the rest. It starts on a blank screen ("wait") until the page renders smoothly:
@@ -144,7 +144,10 @@ export function IntroWords({ phase, onSkip }: { phase: IntroPhase; onSkip: () =>
   );
 }
 
-/** The circle that draws itself in the bubble's place, then flashes into the sphere. */
+/**
+ * The loop: a thick gradient arc whips around, growing until it closes into the full circle, with a thin
+ * arc counter-spinning just outside it. Then it turns edge-on like a coin, and the bubble turns in.
+ */
 export function IntroRing({ phase }: { phase: IntroPhase }) {
   if (phase !== "ring" && phase !== "bubble") return null;
   return (
@@ -156,12 +159,11 @@ export function IntroRing({ phase }: { phase: IntroPhase }) {
           <stop offset="1" stopColor="#9FBFB2" />
         </linearGradient>
       </defs>
-      <circle className="v2-ring-track" cx="50" cy="50" r="48.6" />
+      <g className="v2-ring-counter">
+        <circle className="v2-ring-thin" cx="50" cy="50" r="51.2" pathLength="100" />
+      </g>
       <g className="v2-ring-spin">
-        <circle className="v2-ring-draw" cx="50" cy="50" r="48.6" pathLength="100" />
-        <g className="v2-ring-headg">
-          <circle className="v2-ring-head" cx="98.6" cy="50" r="1.6" />
-        </g>
+        <circle className="v2-ring-arc" cx="50" cy="50" r="48.4" pathLength="100" />
       </g>
     </svg>
   );

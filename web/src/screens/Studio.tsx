@@ -756,19 +756,49 @@ export default function Studio() {
     // Right away until something's been said; after that, once the last caption has had a moment.
     lastCaption ? 8000 : 0,
   );
-  // Nothing on screen to type into: start typing anywhere and the box opens with that letter.
+  // Nothing on screen to type into: start typing anywhere and the box opens with that letter, centered
+  // on the mouse (bottom center when there's no mouse).
+  const pointer = useRef<{ x: number; y: number } | null>(null);
+  const [typeAt, setTypeAt] = useState<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    if (!v2Landing) return;
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") pointer.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener("pointermove", onMove);
+    return () => window.removeEventListener("pointermove", onMove);
+  }, [v2Landing]);
   useEffect(() => {
     if (!v2Landing || phase !== "done" || typing || voice.mode === "text") return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || /[12 ]/.test(e.key)) return;
+      if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || /[123 ]/.test(e.key)) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
       e.preventDefault();
+      const p = pointer.current;
+      if (p) {
+        // Keep the whole box on screen.
+        const half = Math.min(560, window.innerWidth - 32) / 2;
+        setTypeAt({ x: Math.min(Math.max(p.x, half + 16), window.innerWidth - half - 16), y: Math.min(Math.max(p.y, 44), window.innerHeight - 44) });
+      } else setTypeAt(null);
       setText(e.key);
       setTyping(true);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [v2Landing, phase, typing, voice.mode]);
+  // The mic stays off while typing, until the wish is sent (or the box is closed).
+  const mutedForTyping = useRef(false);
+  useEffect(() => {
+    if (!v2) return;
+    const vc = voiceRef.current!;
+    if (typing && vc.active && !vc.muted) {
+      vc.toggleMute();
+      mutedForTyping.current = true;
+    } else if (!typing && mutedForTyping.current) {
+      mutedForTyping.current = false;
+      if (vc.muted) vc.toggleMute();
+    }
+  }, [v2, typing]);
 
   return (
     <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${stagePending ? "stage-pending" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""}`}>
@@ -936,15 +966,36 @@ export default function Studio() {
           {(typing || voice.mode === "text" || (v2Landing && (voice.micStatus === "denied" || voice.micStatus === "failed"))) && (
             <form
               className="typebox"
+              style={v2Landing && typing && typeAt ? { position: "fixed", left: typeAt.x, top: typeAt.y, bottom: "auto", transform: "none", translate: "-50% -50%" } : undefined}
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!text.trim()) return;
                 voice.submit(text.trim());
                 setText("");
+                // v2: sent, so the box goes away and the mic comes back.
+                if (v2) setTyping(false);
               }}
             >
-              <input autoFocus aria-label="Type your wish" placeholder={selPart ? `Change the ${selPart.name.toLowerCase()}…` : hasProduct ? "Change anything…" : "Type your wish…"} value={text} onChange={(e) => setText(e.target.value)} />
-              <button className="pill" type="submit">Send</button>
+              <input
+                autoFocus
+                onKeyDown={(e) => {
+                  if (v2 && e.key === "Escape") {
+                    setText("");
+                    setTyping(false);
+                  }
+                }}
+                aria-label="Type your wish" placeholder={selPart ? `Change the ${selPart.name.toLowerCase()}…` : hasProduct ? "Change anything…" : "Type your wish…"} value={text} onChange={(e) => setText(e.target.value)} />
+              {v2 ? (
+                // Enter sends; the return arrow says so.
+                <button className="pill send-icon" type="submit" aria-label="Send (Enter)" title="Send (Enter)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M19 5v6a3 3 0 0 1-3 3H6" />
+                    <path d="M10 10l-4 4 4 4" />
+                  </svg>
+                </button>
+              ) : (
+                <button className="pill" type="submit">Send</button>
+              )}
             </form>
           )}
           <div className="dock">
