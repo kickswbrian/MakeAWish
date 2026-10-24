@@ -22,13 +22,15 @@ test("toPrice reads USD prices", () => {
   assert.equal(toPrice("$.99"), 0.99);
   assert.equal(toPrice("USD 15"), 15);
   assert.equal(toPrice("2 for $10"), 10); // the number after "$", not the first number
+  assert.equal(toPrice("RSVP $5"), 5); // words that merely start like a currency code aren't one
+  assert.equal(toPrice("Mrs $5"), 5);
   assert.equal(toPrice("$ 1,000"), 1000);
   assert.equal(toPrice({ value: 145.5, currency: "$" }), 145.5);
   assert.equal(toPrice(12.5), 12.5);
 });
 
 test("toPrice returns null for other currencies, other number formats and non-prices", () => {
-  for (const v of ["€45,00", "£12.00", "45,00 €", "CA$30", "A$ 20", "EUR 10", "¥1200", "Rs. 500", "Rs500", "₨500", "$1.299,00", "$1.299", "$12.500", "45,00", "$45,00", "Free", "", 0, -3]) {
+  for (const v of ["€45,00", "£12.00", "45,00 €", "CA$30", "A$ 20", "EUR 10", "¥1200", "Rs. 500", "Rs500", "Rs,500", "Rs:500", "(Rs) 500", "INR500", "EUR10", "₨500", "$1.299,00", "$1.299", "$12.500", "45,00", "$45,00", "Free", "", 0, -3]) {
     assert.equal(toPrice(v), null, JSON.stringify(v));
   }
   assert.equal(toPrice({ value: 45, currency: "EUR" }), null);

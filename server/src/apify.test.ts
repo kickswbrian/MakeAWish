@@ -10,15 +10,19 @@ process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "wishit-apify-test-
 process.env.APIFY_TOKEN = "test-token";
 process.env.APIFY_ACTOR = "someone~wish-matcher";
 delete process.env.DEMO_MODE;
+// env.ts reads these once on import (payment mode, Meshy): simulated payments, no Meshy calls.
+for (const k of ["STRIPE_SECRET_KEY", "STRIPE_PUBLISHABLE_KEY", "STRIPE_WEBHOOK_SECRET", "MESHY_API_KEY"]) delete process.env[k];
 let runs = 0;
 // Per-call knobs: how long the actor "takes", the title it returns, and how it scored.
 let delayMs = 20;
 let title = "Convertible Midi Dress";
 let scoredBy = "llm";
+let failNext = false;
 globalThis.fetch = (async () => {
   runs++;
-  const [wait, t, by] = [delayMs, title, scoredBy];
+  const [wait, t, by, fail] = [delayMs, title, scoredBy, failNext];
   await new Promise((r) => setTimeout(r, wait));
+  if (fail) return new Response(JSON.stringify({ error: { type: "run-failed", message: "boom" } }), { status: 400 });
   const items = [
     { source: "etsy", title: t, url: "https://www.etsy.com/listing/1", price: 74, image: null, score: 62, missing: [] },
     { _meta: { searched: 2, total: 2, listings: 12, scoredBy: by } },
@@ -116,12 +120,54 @@ test("a re-lock with a changed spec isn't overwritten by the older search finish
   assert.equal(getMatches(w.id).pending, false);
 });
 
+test("spec patched without re-lock ends with pending:false", async () => {
+  // A "make it blue" turn landing right after See matches changes the spec but starts no search, so
+  // the running search must still close the row (with its result, or labelled samples on failure).
+  for (const fail of [false, true]) {
+    // A different product each time, so the second run isn't a cache hit from the first.
+    const w = createWish({ category: "backpack", color: fail ? "#F28C28" : "#D7263D", features: ["laptop_stand"] } as any);
+    delayMs = 200;
+    failNext = fail;
+    const search = findMatches(w.id);
+    await new Promise((r) => setTimeout(r, 20));
+    patchWish(w.id, { color: "#3A6FD8" });
+    await search;
+    failNext = false;
+    delayMs = 20;
+    const m = getMatches(w.id);
+    assert.equal(m.pending, false, `actor ${fail ? "failed" : "succeeded"}`);
+    assert.equal(m.sample, fail);
+  }
+});
+
+test("spec A -> B -> A with re-locks keeps the A result whichever search finishes last", async () => {
+  for (const bFinishesLast of [false, true]) {
+    const w = createWish({ category: "skirt", color: "#D7263D", features: ["converts_to_skirt"] } as any);
+    delayMs = bFinishesLast ? 100 : 400;
+    title = "A result";
+    const a = findMatches(w.id);
+    await new Promise((r) => setTimeout(r, 10));
+    patchWish(w.id, { color: "#3A6FD8" });
+    delayMs = bFinishesLast ? 400 : 100;
+    title = "B result";
+    const b = findMatches(w.id);
+    await new Promise((r) => setTimeout(r, 10));
+    patchWish(w.id, { color: "#D7263D" });
+    await findMatches(w.id); // back to A: joins the A search already running, starts nothing
+    await Promise.all([a, b]);
+    delayMs = 20;
+    title = "Convertible Midi Dress";
+    const m = getMatches(w.id);
+    assert.equal(m.matches[0]?.title, "A result", `B finishes ${bFinishesLast ? "last" : "first"}`);
+    assert.equal(m.pending, false);
+  }
+});
+
 test("demo reset says whether the demo wish was actually cached", async () => {
-  delete process.env.STRIPE_SECRET_KEY;
   const { resetDemo } = await import("./demo.ts");
   scoredBy = "keywords";
   const degraded = await resetDemo(120);
-  assert.match(degraded.apifyCache, /NOT cached/);
+  assert.match(degraded.apifyCache, /^NOT warmed.*searched but not cached: scored by keywords, not Claude/);
   scoredBy = "llm";
   const live = await resetDemo(120);
   assert.equal(live.apifyCache, "warmed live");

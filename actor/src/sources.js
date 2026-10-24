@@ -63,7 +63,9 @@ export function fill(template, vars) {
 export const first = (...vals) => vals.find((v) => v !== undefined && v !== null && v !== "");
 
 // Prices are shown as USD, so a listing priced in another currency gets no price rather than a wrong one.
-const FOREIGN_CURRENCY = /[€£¥₹₨₩₽₺₫₪]|\bRs\.?(?=\s|\d|$)|\b(?:EUR|GBP|JPY|INR|CAD|AUD|NZD|CHF|SEK|NOK|DKK|PLN|MXN|BRL|KRW|CNY|RMB|HKD|SGD|ZAR|TRY|RUB)\b|\b(?:CA|AU|A|C|NZ|HK|S|R|MX)\$/i;
+// Codes may sit right before the digits ("INR500", "Rs,500"); `(?![a-z])` instead of \b catches those
+// without matching words like "RSVP" or "Euro-style".
+const FOREIGN_CURRENCY = /[€£¥₹₨₩₽₺₫₪]|\bRs(?![a-z])|\b(?:EUR|GBP|JPY|INR|CAD|AUD|NZD|CHF|SEK|NOK|DKK|PLN|MXN|BRL|KRW|CNY|RMB|HKD|SGD|ZAR|TRY|RUB)(?![a-z])|\b(?:CA|AU|A|C|NZ|HK|S|R|MX)\$/i;
 // US number formats only: "1,299.99", "1299", ".99". "1.299,00" and "45,00" are another locale's, and
 // so is "1.299" (a dot before exactly three digits reads as a thousands separator, not cents).
 const US_NUMBER = /^(?:\d{1,3}(?:,\d{3})+|\d+)?(?:\.\d+)?$/;

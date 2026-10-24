@@ -186,13 +186,28 @@ export function resumePendingMatches(now = Date.now()): void {
   }
 }
 
-/** False when the wish has been re-locked with a different product since this search started. */
-function stillCurrent(wishId: string, spec: ProductSpec): boolean {
+/**
+ * Whether this search's result should be saved for the wish. Yes when the wish still describes the
+ * same product. If the spec changed meanwhile, drop the result only when something else will close
+ * the row: another search for this wish is still running (a re-lock), or a newer one already saved.
+ * A spec edit without a re-lock (a "make it blue" turn landing after See matches) starts no search,
+ * so this result has to close the row, or the UI would wait forever.
+ */
+function shouldSave(wishId: string, spec: ProductSpec): boolean {
   const now = getWish(wishId);
-  if (now && keyFor(now.spec) === keyFor(spec)) return true;
-  console.log(`[apify] wish ${wishId} changed while searching; dropping the older result`);
+  if (!now) return false;
+  if (keyFor(now.spec) === keyFor(spec)) return true;
+  const mine = `${wishId}:${keyFor(spec)}`;
+  const otherRunning = [...inflight].some((k) => k.startsWith(`${wishId}:`) && k !== mine);
+  const row = db.prepare("SELECT pending FROM match_runs WHERE wish_id = ?").get(wishId) as { pending: number } | undefined;
+  if (row?.pending && !otherRunning) return true;
+  console.log(`[apify] wish ${wishId} was re-locked with a different product while searching; dropping the older result`);
   return false;
 }
+
+// How each wish's latest search ended, in words (for the demo reset report).
+const outcomes = new Map<string, string>();
+export const lastOutcome = (wishId: string) => outcomes.get(wishId);
 
 async function searchAndSave(wishId: string, spec: ProductSpec, resumeOf?: number): Promise<void> {
   db.prepare("INSERT OR REPLACE INTO match_runs (wish_id, searched, total, pending, sample, started_at, resumed) VALUES (?, 0, ?, 1, 0, ?, ?)")
@@ -202,10 +217,13 @@ async function searchAndSave(wishId: string, spec: ProductSpec, resumeOf?: numbe
   const cached = readCache(spec);
   if (cached) {
     console.log(`[apify] cache hit "${matchQuery(spec)}"`);
+    outcomes.set(wishId, "cache hit");
     return save(wishId, cached.matches, cached.searched, cached.total, false);
   }
   if (!env.apifyToken || !env.apifyActor || env.demoMode || !spend("apifySearches")) {
-    console.log(`[apify] ${env.demoMode ? "DEMO_MODE cache miss" : env.apifyToken && env.apifyActor ? "daily search cap reached" : "no APIFY_TOKEN/APIFY_ACTOR"}, serving sample matches`);
+    const why = env.demoMode ? "DEMO_MODE cache miss" : env.apifyToken && env.apifyActor ? "daily search cap reached" : "no APIFY_TOKEN/APIFY_ACTOR";
+    console.log(`[apify] ${why}, serving sample matches`);
+    outcomes.set(wishId, why);
     return save(wishId, sampleMatches(spec), SOURCES.length, SOURCES.length, true);
   }
 
@@ -216,12 +234,19 @@ async function searchAndSave(wishId: string, spec: ProductSpec, resumeOf?: numbe
     // No store answered: that's an outage, not "nothing like it exists", so don't present it as a result.
     if (searched === 0) throw new Error(`no store answered (0 of ${total})`);
     // The result is right for this spec either way, so cache it even if the wish has moved on.
-    if (shouldCache(matches.length, listings, scoredBy, searched, total)) writeCache(spec, matches, searched, total);
-    else console.log(`[apify] not cached: ${scoredBy !== "llm" ? `scored by ${scoredBy ?? "unknown"}, not Claude` : searched < total ? `only ${searched} of ${total} stores answered` : "no listings to judge"}`);
-    if (stillCurrent(wishId, spec)) save(wishId, matches, searched, total, false);
+    if (shouldCache(matches.length, listings, scoredBy, searched, total)) {
+      writeCache(spec, matches, searched, total);
+      outcomes.set(wishId, "searched and cached");
+    } else {
+      const why = scoredBy !== "llm" ? `scored by ${scoredBy ?? "unknown"}, not Claude` : searched < total ? `only ${searched} of ${total} stores answered` : "no listings to judge";
+      console.log(`[apify] not cached: ${why}`);
+      outcomes.set(wishId, `searched but not cached: ${why}`);
+    }
+    if (shouldSave(wishId, spec)) save(wishId, matches, searched, total, false);
   } catch (err) {
     console.warn("[apify] failed, serving sample matches:", (err as Error).message);
-    if (stillCurrent(wishId, spec)) save(wishId, sampleMatches(spec), 0, SOURCES.length, true);
+    outcomes.set(wishId, `search failed: ${(err as Error).message}`);
+    if (shouldSave(wishId, spec)) save(wishId, sampleMatches(spec), 0, SOURCES.length, true);
   }
 }
 

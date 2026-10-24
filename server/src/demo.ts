@@ -1,7 +1,7 @@
 import type { ProductSpec } from "@wishit/shared";
 import { db } from "./db.ts";
 import { env, paymentMode } from "./env.ts";
-import { findMatches, readCache } from "./apify.ts";
+import { findMatches, lastOutcome, readCache } from "./apify.ts";
 import { startMeshy } from "./meshy.ts";
 import { mockConfirm, provider, stripe } from "./payments.ts";
 import { _internal, createCampaign, createPledge } from "./campaigns.ts";
@@ -97,7 +97,9 @@ export async function resetDemo(planterDeadlineSecs = 120) {
         ? "sample matches (no live Apify)"
         : warmed
           ? "warmed live"
-          : "searched but NOT cached (partial, keyword-scored or failed; see server log), re-run reset",
+          : lastOutcome(demo.id) === "daily search cap reached"
+            ? "NOT warmed: daily Apify search cap reached (DAILY_APIFY_SEARCHES); the demo wish will show sample matches"
+            : `NOT warmed, the demo wish will show sample matches (${lastOutcome(demo.id) ?? "see server log"}); re-run reset`,
     demoWishId: demo.id,
     planterCampaignId: campaign.id,
     planterDeadlineAt: campaign.deadlineAt,
