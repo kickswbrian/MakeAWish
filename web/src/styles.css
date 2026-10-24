@@ -904,14 +904,14 @@ p { margin: 0; }
 
 /* ---------- Page transition between the wish and its matches ---------- */
 /* The bubble's flight is a FLIP in Studio; around it the new screen slides in. */
-.mode-results .res-head, .mode-results .res-sub, .mode-results .chips, .mode-results .scroll, .mode-results .res-wish, .mode-results .bottom-cta {
-  animation: resIn .6s cubic-bezier(.2, .8, .2, 1) backwards;
+.entering.mode-results .res-head, .entering.mode-results .res-sub, .entering.mode-results .chips, .entering.mode-results .scroll, .entering.mode-results .res-wish, .entering.mode-results .bottom-cta {
+  animation: resIn .6s cubic-bezier(.2, .8, .2, 1) .45s backwards;
 }
-.mode-results .res-sub { animation-delay: .06s; }
-.mode-results .chips { animation-delay: .12s; }
-.mode-results .scroll { animation-delay: .18s; }
-.mode-results .bottom-cta { animation-delay: .3s; }
-.mode-results .res-wish { animation: resWishIn .6s cubic-bezier(.2, .8, .2, 1) .35s backwards; }
+.entering.mode-results .res-sub { animation-delay: .5s; }
+.entering.mode-results .chips { animation-delay: .55s; }
+.entering.mode-results .scroll { animation-delay: .6s; }
+.entering.mode-results .bottom-cta { animation-delay: .75s; }
+.entering.mode-results .res-wish { animation: resWishIn .6s cubic-bezier(.2, .8, .2, 1) .8s backwards; }
 @keyframes resIn { from { opacity: 0; transform: translateX(32px); } }
 @keyframes resWishIn { from { opacity: 0; translate: 0 12px; } }
 .mode-voice.has-product .hdr, .mode-voice.has-product .title-product, .mode-voice.has-product .product-size,
@@ -920,3 +920,7 @@ p { margin: 0; }
 .mode-voice.has-product .wavebox { animation-delay: .1s; }
 .mode-voice.has-product .speech { animation-delay: .15s; }
 @keyframes voiceIn { from { opacity: 0; transform: translateX(-24px); } }
+/* Going to the matches: everything but the bubble fades out first (Studio's lock()). */
+.app.leaving > :not(.orb-slot):not(.glows) { opacity: 0 !important; transition: opacity .35s ease !important; pointer-events: none; }
+/* !important: the edit bar's own entrance animation would otherwise hold it visible. */
+.app.leaving .edit-bar, .app.leaving .tap-hint, .app.leaving .b-overlay { opacity: 0 !important; transition: opacity .25s ease; pointer-events: none; }
