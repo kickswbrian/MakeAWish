@@ -9,7 +9,7 @@
  */
 import fs from "node:fs";
 import { applyPatch, check, defaultSpec, DEV_CASES, type JudgeCase, type ProductSpec } from "@wishit/shared";
-import { ruleBrain, think } from "../src/brain.ts";
+import { ruleBrain, starterTurn, think } from "../src/brain.ts";
 import { cliBrain } from "../src/brainCli.ts";
 import type { TranscriptTurn } from "../src/wishes.ts";
 
@@ -23,8 +23,10 @@ const concurrency = Number(args.j ?? (brain === "rules" ? 1 : 4));
 let cases: JudgeCase[] = args.cases ? JSON.parse(fs.readFileSync(args.cases, "utf8")) : DEV_CASES;
 if (args.only) cases = cases.filter((c) => c.id.includes(args.only) || c.tags?.includes(args.only));
 
-const run = (spec: ProductSpec, transcript: TranscriptTurn[], text: string) =>
-  brain === "rules" ? Promise.resolve(ruleBrain(spec, transcript, text)) : brain === "cli" ? cliBrain(spec, transcript, text, { model: args.model, effort: args.effort }) : think(spec, transcript, text);
+// Same order as the server's turn route: a starter wish first, then the brain.
+const run = async (spec: ProductSpec, transcript: TranscriptTurn[], text: string) =>
+  starterTurn(spec, transcript, text, brain === "rules" ? "rules" : "llm")
+  ?? (brain === "rules" ? ruleBrain(spec, transcript, text) : brain === "cli" ? await cliBrain(spec, transcript, text, { model: args.model, effort: args.effort }) : await think(spec, transcript, text));
 
 async function runCase(c: JudgeCase) {
   const start = applyPatch(defaultSpec, c.start ?? {}).spec;
@@ -48,7 +50,7 @@ async function runCase(c: JudgeCase) {
     patch = r.undo ? "undo" : r.patch;
   }
   // Undo cases compare against the spec before the earlier turns; everything else against the turn's own start.
-  const fails = check(spec, c.before?.length ? start : before, c.expect);
+  const fails = check(spec, c.before?.length ? start : before, c.expect, say);
   return { c, fails, say, patch, spec };
 }
 

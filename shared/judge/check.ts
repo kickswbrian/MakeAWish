@@ -36,7 +36,15 @@ export type Expect =
   | { noAddon: AddonMatch }
   /** The part is hidden, or (for feature-backed parts like pockets) its feature is gone. */
   | { partGone: string }
-  | { partShown: string };
+  | { partShown: string }
+  /** The spoken reply mentions at least one of these (case-insensitive substrings). For Q&A turns. */
+  | { say: string[] }
+  /** The reply mentions none of these. */
+  | { sayNot: string[] }
+  /** Something real is on the pedestal: a parametric category, or a generic body (not just the orb). */
+  | { renders: true }
+  /** At least this many add-ons (a composed generic product, e.g. a skateboard with wheels). */
+  | { minAddons: number };
 
 export interface DecalMatch {
   kind?: Decal["kind"] | Decal["kind"][];
@@ -123,7 +131,7 @@ function addonMatches(a: Addon, m: AddonMatch): boolean {
 }
 
 /** Returns the failed expectations (empty = pass). `start` is the spec before the judged utterance. */
-export function check(spec: ProductSpec, start: ProductSpec, expects: Expect[]): string[] {
+export function check(spec: ProductSpec, start: ProductSpec, expects: Expect[], say = ""): string[] {
   const fails: string[] = [];
   const show = (v: unknown) => JSON.stringify(v);
   for (const e of expects) {
@@ -142,6 +150,17 @@ export function check(spec: ProductSpec, start: ProductSpec, expects: Expect[]):
       const m = "addon" in e ? e.addon : e.noAddon;
       const hit = (spec.addons ?? []).some((a) => addonMatches(a, m));
       ok = "addon" in e ? hit : !hit;
+      got = spec.addons ?? [];
+    } else if ("say" in e || "sayNot" in e) {
+      const reply = say.toLowerCase();
+      const hit = ("say" in e ? e.say : e.sayNot).some((w) => reply.includes(w.toLowerCase()));
+      ok = "say" in e ? hit : !hit;
+      got = say;
+    } else if ("renders" in e) {
+      ok = spec.category !== "generic" || !!spec.body;
+      got = { category: spec.category, body: spec.body };
+    } else if ("minAddons" in e) {
+      ok = (spec.addons?.length ?? 0) >= e.minAddons;
       got = spec.addons ?? [];
     } else if ("partGone" in e || "partShown" in e) {
       const name = "partGone" in e ? e.partGone : e.partShown;

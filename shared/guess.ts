@@ -23,6 +23,25 @@ export function guessPatch(text: string, current?: ProductSpec): SpecPatch {
   return patch;
 }
 
+/** "A robot vacuum that empties itself" -> "Robot Vacuum" with a body that suits it. */
+function freshProduct(t: string): { name: string; body: NonNullable<ProductSpec["body"]> } | null {
+  const m = t.match(/\b(?:a|an|some|wish for|want|need)\s+((?:[a-z-]+\s+){0,3}?[a-z-]+?)(?=\s+(?:that|which|with|for|made|in|to|so|shaped|and|but|like|where|who)\b|\s*[.!?]?\s*$)/);
+  if (!m) return null;
+  const skip = new Set(["big", "small", "little", "tiny", "huge", "cool", "new", "nice", "cute", "really", "very", "super", "kind", "of", "sort", "the", "my", "built-in", "custom"]);
+  const words = m[1].split(/\s+/).filter((w) => w && !skip.has(w) && !COLOR_NAMES[w]);
+  if (!words.length || /^(it|one|thing|something|product|wish|idea)$/.test(words[words.length - 1])) return null;
+  const name = words.map((w) => w[0].toUpperCase() + w.slice(1)).join(" ").slice(0, 60);
+  const n = words.join(" ");
+  const body: NonNullable<ProductSpec["body"]> =
+    /\b(vacuum|roomba|puck|coaster|clock|plate|disc|disk|frisbee|pad|scale)\b/.test(n) ? { shape: "cylinder", width: 0.6, height: 0.12 }
+      : /\b(tower|tree|post|pole|column|stand|rack)\b/.test(n) ? { shape: "cylinder", width: 0.35, height: 1.0 }
+      : /\b(ball|globe|orb|egg|bubble|sphere)\b/.test(n) ? { shape: "sphere", width: 0.55, height: 0.55 }
+      : /\b(board|mat|tray|panel|tablet|laptop|book|card)\b/.test(n) ? { shape: "box", width: 0.8, height: 0.06, depth: 0.5 }
+      : /\b(pillow|cushion|bed|bag|pouch|purse)\b/.test(n) ? { shape: "capsule", width: 0.8, height: 0.3, depth: 0.5 }
+      : { shape: shapeHint(t) ?? "box", width: 0.5, height: 0.55, depth: 0.45 };
+  return { name, body };
+}
+
 /** Category words. Order matters: "a dress that turns into a skirt" is checked before "skirt". */
 const CATEGORY_WORDS: [Category, string][] = [
   ["dress", "dress|gown|sundress|jumpsuit|romper"],
@@ -95,6 +114,14 @@ export function interpret(text: string, current?: ProductSpec): Interpretation {
       const carried = reframe ? edits.patch.addons ?? [] : patch.addons ?? spec.addons ?? [];
       if (g.addons) patch.addons = [...g.addons, ...carried.filter((a) => !g.addons!.some((b) => b.name === a.name))];
       else if (reframe) patch.addons = carried;
+    }
+    // Any other product on a blank wish still renders: its own name and a simple body.
+    if (!g && !spec.body && !patch.body && newCat === "generic") {
+      const fresh = freshProduct(full);
+      if (fresh) {
+        patch.name = fresh.name;
+        patch.body = fresh.body;
+      }
     }
     const hint = /\b(shaped like|in the shape of|make it|round|cube|boxy|cylinder|cone|pyramid|donut)\b/.test(full) ? shapeHint(full) : null;
     if (hint) patch.body = { ...(patch.body ?? spec.body ?? { width: 0.5, height: 0.6 }), shape: hint };

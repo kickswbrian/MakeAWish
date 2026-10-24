@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import {
   CATEGORIES, FABRICS, LENGTHS, NECKLINES, PATTERNS, SILHOUETTES, SLEEVES, KNOWN_FEATURES, FINISHES, PLACEMENTS,
   DECAL_KINDS, DECAL_SHAPES, ADDON_SHAPES, BODY_SHAPES, PARTS,
-  shortName, guessPatch, interpret, isAffirmativeLock, isUndo, applyPatch,
+  shortName, guessPatch, interpret, isAffirmativeLock, isUndo, applyPatch, answerQuestion, matchStarter,
   type ProductSpec, type SpecPatch,
 } from "@wishit/shared";
 import { z } from "zod";
@@ -39,7 +39,21 @@ Shoppers (often hackathon judges) will ask for any change at all, and every requ
 - Changes to one part never touch the whole-product fields: "longer sleeves" changes sleeves, not length; "black straps" changes parts.straps.color, not color.
 - undo: true (with an empty patch) when the shopper wants the previous version back ("undo", "go back", "never mind, change it back").
 - If something truly can't be drawn, still make the closest visible change and say so in a few words. Never answer an edit request with only a question.
-- If the shopper is just chatting or asking you something (your favorite color, how it works, what it costs), answer and send an empty patch: only change the product when they ask for a change.`;
+- If the shopper is just chatting or asking you something (your favorite color, how it works, what it costs), answer and send an empty patch: only change the product when they ask for a change.
+
+Making anything: a wish can be any product. For categories without instant 3D, always send category "generic", a short catchy name, and a body plus the 2 to 5 add-ons that make it recognizable at a glance, using the shopper's colors. Examples: a skateboard is a capsule body 1.1 wide, 0.06 tall, 0.3 deep with 4 cylinder "wheels" at the bottom; a desk lamp is a cone shade with a cylinder "stand" at the bottom and a glowing sphere "bulb" on top; a robot vacuum is a cylinder 0.6 wide, 0.12 tall with a glowing box "sensor" on top; a teapot is a sphere with a cylinder "spout" on the right, a torus "handle" on the left and a sphere "knob" on top; a drone is a box with 4 fin "propellers" on top. Picture-like details (a logo, a face, a pattern) are decals.
+
+Answering questions (judges will ask you things mid-demo). Answer in at most 2 short sentences, from these facts only, and send an empty patch:
+- Backing a wish places a hold on the backer's card, not a charge. If enough backers commit before the deadline, every hold is captured and a purchase order goes to a maker; if the deadline passes first, every hold is released and nobody pays.
+- Campaigns last at most 6 days, because a card hold can stay open about 7 days. Demo campaigns last minutes.
+- When the wish is locked in, Wish it searches Amazon, Etsy and Google Shopping (through an Apify actor) and scores each listing against the design: 80 or more means it already exists (with a buy link), 50 to 79 means close but missing something.
+- The maker is simulated for this demo; the card holds are real Stripe test-mode payments. No real money moves.
+- The 3D model on screen is built instantly from the spec; after lock-in, an AI 3D model (Meshy) of the exact wish is generated in the background.
+- No accounts: backers give an email and a card, and the card goes straight to the payment provider.
+- The price is whatever the shopper says they'd pay; backers pledge that amount.
+- You are the Wish it genie, built at Cal Hacks 13 with Claude as your brain.
+- About the current design, describe what the spec actually has. Never invent specs it doesn't have (battery life, weight, certifications); say it's not decided yet and offer to add it.
+If you don't know, say so in a few words and offer to change the design instead.`;
 
 const patchSchema = {
   type: "object",
@@ -206,6 +220,9 @@ export function ruleBrain(spec: ProductSpec, transcript: TranscriptTurn[], text:
   }
   const { patch, did, undo } = interpret(text, spec);
   if (undo) return { say: pick(["Poof, back the way it was.", "Undone, like it never happened."]), patch: {}, lock: false, undo: true, brain: "rules" };
+  // A question that asks for no change gets an answer and leaves the design alone.
+  const answer = answerQuestion(text, spec);
+  if (answer && !Object.keys(patch).some((k) => k !== "name")) return { say: answer, patch: {}, lock: false, brain: "rules" };
   const next = applyPatch(spec, patch).spec;
   if (next.category !== "generic") patch.name = shortName(next);
   const genieTurns = transcript.filter((t) => t.role === "genie").length;
@@ -230,3 +247,23 @@ export function ruleBrain(spec: ProductSpec, transcript: TranscriptTurn[], text:
 }
 
 const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
+
+/**
+ * Opening line on a blank wish that matches a starter (shared/starters.ts): the hand-made spec, in
+ * 0 ms and the same every time, whichever brain is on. Anything else said rides on top ("a red
+ * helmet with earphones" is red).
+ */
+export function starterTurn(spec: ProductSpec, transcript: TranscriptTurn[], text: string, brain: BrainResult["brain"]): BrainResult | null {
+  if (transcript.length || spec.category !== "generic" || spec.body || spec.name) return null;
+  const s = matchStarter(text);
+  if (!s) return null;
+  const extra = interpret(text, s.spec).patch;
+  delete extra.category;
+  delete extra.name;
+  delete extra.body;
+  const features = [...new Set([...(s.spec.features ?? []), ...(extra.features ?? [])])];
+  const patch: SpecPatch = { ...s.spec, ...extra, ...(features.length ? { features } : {}) };
+  // Already told us the color: ask about the price instead.
+  const say = extra.color ? s.say.replace(/What colou?r[^?]*\?$/, "What would you happily pay for it?") : s.say;
+  return { say, patch, lock: false, brain };
+}

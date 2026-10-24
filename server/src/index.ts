@@ -8,7 +8,8 @@ import {
   type ConfigResponse, type MatchesResponse, type PledgeResponse, type TurnResponse,
 } from "@wishit/shared";
 import { setIo, emit } from "./bus.ts";
-import { brainKind, ruleBrain, think } from "./brain.ts";
+import { brainKind, ruleBrain, starterTurn, think } from "./brain.ts";
+import { cachedTurn, storeTurn } from "./brainCache.ts";
 import { listVoices, mintToken } from "./cartesia.ts";
 import {
   createCampaign, createPledge, expireCampaign, getCampaign, getPledge, listCampaigns,
@@ -107,8 +108,14 @@ app.post("/api/wish/:id/turn", ...limits.turn, wrap(async (req, res) => {
   const run = prev.catch(() => {}).then(async () => {
     const started = Date.now();
     const w = getWish(id)!;
-    // Past the daily Claude cap, the rule-based genie answers instead.
-    const result = brainKind === "llm" && spend("llmTurns") ? await think(w.spec, w.transcript, text) : ruleBrain(w.spec, w.transcript, text);
+    // Starter wishes and rehearsed lines answer instantly; past the daily Claude cap, the
+    // rule-based genie answers instead.
+    const genieTurns = w.transcript.filter((t) => t.role === "genie").length;
+    let result = starterTurn(w.spec, w.transcript, text, brainKind) ?? (brainKind === "llm" ? cachedTurn(w.spec, text, genieTurns) : null);
+    if (!result) {
+      result = brainKind === "llm" && spend("llmTurns") ? await think(w.spec, w.transcript, text) : ruleBrain(w.spec, w.transcript, text);
+      storeTurn(w.spec, text, genieTurns, result);
+    }
     const { spec, changed, dropped } = result.undo ? { ...undoWish(id), dropped: [] as string[] } : patchWish(id, result.patch);
     if (dropped.length) console.log(`[brain] dropped invalid fields: ${dropped.join(", ")}`);
     // 3D updates now, before the client starts speaking the reply.
