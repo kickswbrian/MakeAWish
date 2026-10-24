@@ -662,3 +662,22 @@ p { margin: 0; }
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: xlabelIn .45s .25s ease both;
 }
 @keyframes xlabelIn { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
+
+/* ---------- Agent checkout (Visa Trusted Agent Protocol) ---------- */
+.agent-box { display: grid; gap: 10px; padding: 14px; border-radius: 18px; background: var(--glass); box-shadow: var(--glass-shadow); }
+.agent-head { display: flex; align-items: center; gap: 8px; font-weight: 700; flex-wrap: wrap; }
+.agent-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.agent-form input { min-width: 0; flex: 1 1 160px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--ink-08); background: #fff; font: inherit; color: var(--ink); }
+.agent-limit { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-70); }
+.agent-limit input { flex: 0 0 72px; width: 72px; }
+.agent-attacks { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.agent-attacks .chip { font-size: 13px; padding: 6px 10px; }
+.trust-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.trust-log li { border-radius: 12px; background: rgba(255, 255, 255, 0.7); }
+.trust-row { all: unset; box-sizing: border-box; cursor: pointer; display: flex; gap: 8px; align-items: center; width: 100%; padding: 8px 10px; flex-wrap: wrap; }
+.trust-outcome { color: var(--ink-70); font-size: 13px; flex: 1 1 200px; }
+.trust-checks { list-style: none; margin: 0; padding: 0 10px 10px; display: grid; gap: 3px; font-size: 13px; }
+.trust-checks li.ok span:first-child { color: #2E7D5B; }
+.trust-checks li.bad { color: #B0102D; }
+.trust-checks li span:last-child { color: var(--ink-70); overflow-wrap: anywhere; }
+.agent-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #F2D88A; color: var(--ink); margin-left: 6px; }

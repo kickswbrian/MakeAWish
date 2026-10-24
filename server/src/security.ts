@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { isInternal } from "./internal.ts";
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
@@ -60,6 +61,8 @@ function limiter(name: string, windowMs: number, limit: number, message: string,
     standardHeaders: "draft-7",
     legacyHeaders: false,
     skipSuccessfulRequests: opts.skipSuccessfulRequests,
+    // The genie's own loopback calls to the merchant endpoint (see internal.ts) aren't public traffic.
+    skip: (req) => isInternal(req),
     // Separate counters per tier, so a busy poller doesn't eat the turn budget.
     keyGenerator: (req) => `${name}:${req.ip}`,
     handler: (req, res, _next, options) => {
@@ -91,6 +94,10 @@ export const limits = {
   search: limiter("search", 10 * MIN, 6, "Too many store searches. Try again in a few minutes."),
   createCampaign: limiter("create-campaign", 10 * MIN, 5, "Too many wishes launched. Try again in a few minutes."),
   pledge: limiter("pledge", 10 * MIN, 5, "Too many pledge attempts. Try again in a few minutes."),
+  /** Agent checkout (Visa TAP): the genie's signed requests and the rejection demo. Every request
+   * is signature-checked before anything is held, so this only bounds load. */
+  agent: limiter("agent", MIN, 40, "Too many agent requests. Slow down a little."),
+  agentPledge: limiter("agent-pledge", 10 * MIN, 10, "Too many genie pledges. Try again in a few minutes."),
   confirm: limiter("confirm", 10 * MIN, 10, "Too many card attempts. Try again in a few minutes."),
   voiceToken: limiter("voice-token", 10 * MIN, 20, "Voice is busy. Try again in a few minutes."),
   /** Failed admin attempts only, against token guessing. */
