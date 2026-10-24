@@ -17,7 +17,7 @@ Built for [Wish it](../README.md) (Cal Hacks 13.0): if nothing scores 80+, the w
   "spec": { "category": "dress", "color": "#1F8A5B", "features": ["converts_to_skirt", "phone_pockets"] },
   "sources": ["amazon", "etsy", "google_shopping"],
   "maxPerSource": 5,
-  "timeoutSecs": 40
+  "timeoutSecs": 35
 }
 ```
 
@@ -31,7 +31,7 @@ Up to 6 dataset items, best first:
 { "source": "etsy", "title": "Convertible Wrap Midi Dress", "url": "https://...", "price": 74, "image": "https://...", "score": 62, "missing": ["phone-sized pockets"] }
 ```
 
-plus one metadata row: `{ "_meta": { "searched": 3, "total": 3, "costUsd": 0.021, "ms": 18400, "listings": 15 } }`.
+plus one metadata row: `{ "_meta": { "searched": 3, "total": 3, "costUsd": 0.021, "ms": 18400, "listings": 15, "scoredBy": "llm" } }`. `scoredBy` is `llm`, `keywords` (no key, no time left, or the Claude call failed) or `none` (no listings to score).
 
 Call it synchronously:
 
@@ -42,9 +42,9 @@ curl -X POST "https://api.apify.com/v2/acts/<username>~wish-matcher/run-sync-get
 
 ## How it works
 
-1. One existing Store actor per store, called in parallel with `Actor.call` and a per-store timeout. A store that fails is skipped, and one that times out keeps whatever it found before the cut-off, so you get partial results instead of an error.
+1. One existing Store actor per store, started in parallel with a per-store wait (35 s by default, counted from the start request). A store that fails is skipped; one still running at the limit is aborted and keeps whatever it already found, so you get partial results instead of an error.
 2. Listings are normalized to `{ source, title, url, price, image }`, whatever field names the store actor uses.
-3. **One** Claude call (structured output) scores all listings at once. With no `ANTHROPIC_API_KEY` set, it falls back to keyword overlap.
+3. **One** Claude call (structured output) scores all listings at once. It gets whatever time the run has left (at most 35 s, retry included). With no `ANTHROPIC_API_KEY`, no time left or a failed call, it falls back to keyword overlap.
 
 ## Configuration
 
@@ -90,3 +90,9 @@ cd actor && apify push
 ```
 
 Then set `ANTHROPIC_API_KEY` as a secret env var in the Actor's settings, publish it to the Store, and set `APIFY_ACTOR=<username>~wish-matcher` on the Wish it server.
+
+Wish it's cache key changed with this version of the search (`v: 2` in `server/src/apify.ts`), so rows cached by the old pipeline are no longer read, including the pre-warmed demo wish. Order matters:
+
+1. `apify push` this actor first (the server now sends `searchQuery` and reads `_meta.scoredBy`).
+2. Start the server with `DEMO_MODE=0` and live `APIFY_TOKEN`/`APIFY_ACTOR`, then run `npm run demo:reset` once (add `--remote=<url>` for the deploy). It waits for a live search of the demo wish and caches it. It prints `apify: warmed live` based on config alone, so open the demo wish and check it shows real listings, not the "Sample matches" chip.
+3. Then switch to `DEMO_MODE=1` for rehearsals and the demo. With DEMO_MODE on and no warmed row, the demo wish shows labelled sample matches.

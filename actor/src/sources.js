@@ -1,5 +1,9 @@
 /** Store actor configs and the pure helpers that turn their output into listings (no Apify runtime here, so it is unit-testable). */
 
+// zodOutputFormat (SDK 1.x) builds the JSON schema with zod/v4's toJSONSchema; a schema made with the
+// classic `zod` import throws inside it ("Cannot read properties of undefined (reading 'def')").
+import { z } from "zod/v4";
+
 // Default Store actors, checked against each actor's published input schema and sample output on
 // 2026-10-24. Swap any of them via the `sourceActors` input without redeploying.
 // `memory` is the sub-run's memory in MB (CPU scales with it); `base` resolves relative listing URLs.
@@ -25,7 +29,8 @@ export const DEFAULT_SOURCES = {
       maxItems: "{{max}}",
       endPage: 1,
       includeDescription: false,
-      proxy: { useApifyProxy: true, apifyProxyGroups: ["RESIDENTIAL"] },
+      // Pin the exit country: Etsy prices in the visitor's local currency ("€45,00") otherwise.
+      proxy: { useApifyProxy: true, apifyProxyGroups: ["RESIDENTIAL"], apifyProxyCountry: "US" },
     },
     memory: 2048,
     base: "https://www.etsy.com",
@@ -55,13 +60,28 @@ export function fill(template, vars) {
 
 export const first = (...vals) => vals.find((v) => v !== undefined && v !== null && v !== "");
 
-/** Numbers, { value }, or strings like "$1,299.99", "$49.00+", "From $24.99", "$20 - $30" (takes the first). */
+// Prices are shown as USD, so a listing priced in another currency gets no price rather than a wrong one.
+const FOREIGN_CURRENCY = /[€£¥₹₩₽₺₫₪]|\b(?:EUR|GBP|JPY|INR|CAD|AUD|NZD|CHF|SEK|NOK|DKK|PLN|MXN|BRL|KRW|CNY|RMB|HKD|SGD|ZAR|TRY|RUB)\b|\b(?:CA|AU|A|C|NZ|HK|S|R|MX)\$/i;
+
+/**
+ * USD amount from numbers, { value, currency }, or strings like "$1,299.99", "$49.00+", "From $24.99",
+ * "$.99", "$20 - $30" (takes the first). Non-USD prices ("€45,00", "£12", "CA$30") return null.
+ */
 export function toPrice(v) {
   if (v == null) return null;
   if (typeof v === "number") return Number.isFinite(v) && v > 0 ? v : null;
-  if (typeof v === "object") return toPrice(first(v.value, v.amount, v.current, v.price, v.extracted_value));
-  const m = String(v).match(/\d[\d,]*(?:\.\d+)?/);
-  const n = m ? Number(m[0].replace(/,/g, "")) : NaN;
+  if (typeof v === "object") {
+    const cur = first(v.currency, v.currencyCode, v.symbol);
+    if (cur != null && !/^(\$|usd|us\$)$/i.test(String(cur).trim())) return null;
+    return toPrice(first(v.value, v.amount, v.current, v.price, v.extracted_value));
+  }
+  const s = String(v);
+  if (FOREIGN_CURRENCY.test(s)) return null;
+  const m = s.match(/(?:\d[\d,]*)?\.\d+|\d[\d,]*/);
+  if (!m) return null;
+  // "45,00" is a decimal comma; "1,299" and "1,299.99" are thousands separators.
+  const raw = /^\d+,\d{1,2}$/.test(m[0]) ? m[0].replace(",", ".") : m[0].replace(/,/g, "");
+  const n = Number(raw);
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
@@ -119,3 +139,14 @@ export function runCostUsd(run) {
   if (platformPaidByUser) usd += run?.usageTotalUsd ?? 0;
   return usd;
 }
+
+/** Claude's structured output for scoring: one entry per listing index. */
+export const Scores = z.object({
+  results: z.array(
+    z.object({
+      index: z.number().int(),
+      score: z.number().int(),
+      missing: z.array(z.string()),
+    }),
+  ),
+});

@@ -51,8 +51,8 @@
     "timeoutSecs": {
       "title": "Timeout per store (seconds)",
       "type": "integer",
-      "description": "A store that doesn't answer in time is skipped, not fatal. Includes the store actor's start-up time.",
-      "default": 40,
+      "description": "How long to wait for each store, counted from when its run is requested (so start-up time is included). A store still running at the limit is aborted and whatever it found so far is kept; a store that fails is skipped, not fatal. Lowered automatically when the run itself has less time left.",
+      "default": 35,
       "minimum": 5,
       "maximum": 120
     },
