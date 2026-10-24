@@ -120,10 +120,11 @@ app.post("/api/wish/:id/turn", ...limits.turn, wrap(async (req, res) => {
     // Starter wishes and rehearsed lines answer instantly; past the daily Claude cap, the
     // rule-based genie answers instead.
     const genieTurns = w.transcript.filter((t) => t.role === "genie").length;
-    let result = starterTurn(w.spec, w.transcript, text, brainKind) ?? (brainKind === "llm" ? cachedTurn(w.spec, text, genieTurns) : null);
+    const lastGenie = [...w.transcript].reverse().find((t) => t.role === "genie")?.text ?? "";
+    let result = starterTurn(w.spec, w.transcript, text, brainKind) ?? (brainKind === "llm" ? cachedTurn(w.spec, text, genieTurns, lastGenie) : null);
     if (!result) {
       result = brainKind === "llm" && spend("llmTurns") ? await think(w.spec, w.transcript, text) : ruleBrain(w.spec, w.transcript, text);
-      storeTurn(w.spec, text, genieTurns, result);
+      storeTurn(w.spec, text, genieTurns, result, lastGenie);
     }
     const { spec, changed, dropped } = result.undo ? { ...undoWish(id), dropped: [] as string[] } : patchWish(id, result.patch);
     if (dropped.length) console.log(`[brain] dropped invalid fields: ${dropped.join(", ")}`);

@@ -116,7 +116,7 @@ export function interpret(text: string, current?: ProductSpec): Interpretation {
       else if (reframe) patch.addons = carried;
     }
     // Any other product on a blank wish still renders: its own name and a simple body.
-    if (!g && !spec.body && !patch.body && newCat === "generic") {
+    if (!g && !spec.body && !patch.body && !spec.name && (newCat === "generic" || (!newCat && spec.category === "generic"))) {
       const fresh = freshProduct(full);
       if (fresh) {
         patch.name = fresh.name;
@@ -145,6 +145,21 @@ function guessFeatures(text: string, category: Category): string[] {
   if (has("laptop stand", "laptop-stand", "stand") && category === "backpack") out.push("laptop_stand");
   if (has("headphones", "headphone", "speakers", "earphones", "audio") && category === "helmet") out.push("headphones");
   return out;
+}
+
+/**
+ * Product-wide details from a whole sentence (color, cut, length, fabric, pattern, finish, price),
+ * with no edit parsing. Starter wishes use it so "a matte helmet with headphones for $80" keeps
+ * matte and $80; the color is the one said before "with" (the product's, not a part's).
+ */
+export function productDetails(text: string, current: ProductSpec): SpecPatch {
+  const p = guessRest(text, current, current.category);
+  const head = text.split(/\b(?:with|that|which|and|but)\b|,/i)[0];
+  const c = findColor(" " + head.toLowerCase() + " ");
+  if (c) p.color = c;
+  else delete p.color;
+  delete p.addons;
+  return p;
 }
 
 /** Keyword guess for whatever the edit pass didn't claim: whole-product color, cut, fabric, price. */

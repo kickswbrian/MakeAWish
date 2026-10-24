@@ -2,7 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import {
   CATEGORIES, FABRICS, LENGTHS, NECKLINES, PATTERNS, SILHOUETTES, SLEEVES, KNOWN_FEATURES, FINISHES, PLACEMENTS,
   DECAL_KINDS, DECAL_SHAPES, ADDON_SHAPES, BODY_SHAPES, PARTS,
-  shortName, guessPatch, interpret, isAffirmativeLock, isUndo, applyPatch, answerQuestion, matchStarter,
+  shortName, guessPatch, interpret, isAffirmativeLock, isUndo, applyPatch, answerQuestion, matchStarter, isQuestion, defaultSpec,
+  interpretEdits, productDetails, COLOR_NAMES, type Starter,
   type ProductSpec, type SpecPatch,
 } from "@wishit/shared";
 import { z } from "zod";
@@ -46,8 +47,8 @@ Making anything: a wish can be any product. For categories without instant 3D, a
 Answering questions (judges will ask you things mid-demo). Answer in at most 2 short sentences, from these facts only, and send an empty patch:
 - Backing a wish places a hold on the backer's card, not a charge. If enough backers commit before the deadline, every hold is captured and a purchase order goes to a maker; if the deadline passes first, every hold is released and nobody pays.
 - Campaigns last at most 6 days, because a card hold can stay open about 7 days. Demo campaigns last minutes.
-- When the wish is locked in, Wish it searches Amazon, Etsy and Google Shopping (through an Apify actor) and scores each listing against the design: 80 or more means it already exists (with a buy link), 50 to 79 means close but missing something.
-- The maker is simulated for this demo; the card holds are real Stripe test-mode payments. No real money moves.
+- When the wish is locked in, Wish it searches Amazon and Google Shopping (through an Apify actor) and scores each listing against the design: 80 or more means it already exists (with a buy link), 50 to 79 means close but missing something.
+- The maker is simulated for this demo. The card holds are test-mode payments (Stripe test mode, or a built-in simulator when Stripe isn't set up); no real money moves.
 - The 3D model on screen is built instantly from the spec; after lock-in, an AI 3D model (Meshy) of the exact wish is generated in the background.
 - No accounts: backers give an email and a card, and the card goes straight to the payment provider.
 - The price is whatever the shopper says they'd pay; backers pledge that amount. The wisher also picks the goal (how many backers it needs, e.g. 5) and the deadline when launching the campaign.
@@ -216,7 +217,7 @@ export function clampSay(s: string) {
 /** Offline brain: keyword patch + a scripted follow-up. Keeps the demo alive with no LLM. */
 export function ruleBrain(spec: ProductSpec, transcript: TranscriptTurn[], text: string): BrainResult {
   const offered = transcript.some((t) => t.role === "genie" && /make your wish real/i.test(t.text));
-  if ((offered && isAffirmativeLock(text)) || /\b(lock it|wish it|make it real)\b/i.test(text)) {
+  if ((offered && isAffirmativeLock(text)) || /\b(lock it|make it real)\b/i.test(text) || (/\bwish it\b/i.test(text) && !isQuestion(text))) {
     return { say: "Your wish is sealed. Let's see if anyone has made it already.", patch: {}, lock: true, brain: "rules" };
   }
   const { patch, did, undo } = interpret(text, spec);
@@ -225,7 +226,11 @@ export function ruleBrain(spec: ProductSpec, transcript: TranscriptTurn[], text:
   const answer = answerQuestion(text, spec);
   // "How many backers does it need?" is a question even though "need" looks like an add.
   // ("How about a sun on the front" is a suggestion, and the catch-all answer doesn't count.)
-  const whQuestion = /^\s*(?:(?:so|ok|okay|wait|and|but|hey|um|uh)[, ]+)*(how|why|who|when|where|which)\b(?! about\b)/i.test(text) && !answer?.startsWith("Good question!");
+  // A how/why/who/when/where question is answered, even when a word in it looks like an edit
+  // ("how many days does the battery last?"), unless it really asks for one ("why don't you add a
+  // card holder?", "how would a rocket look on top?", "how about a sun on the front?").
+  const whQuestion = /^\s*(?:(?:so|ok|okay|wait|and|but|hey|um|uh)[, ]+)*(how|why|who|when|where|which)\b(?! about\b| would\b| could\b)/i.test(text)
+    && !/\b(add|put|make|give|draw|change|paint|attach|remove|turn)\b/i.test(text);
   if (answer && (whQuestion || !Object.keys(patch).some((k) => k !== "name"))) return { say: answer, patch: {}, lock: false, brain: "rules" };
   const next = applyPatch(spec, patch).spec;
   if (next.category !== "generic") patch.name = shortName(next);
@@ -259,18 +264,54 @@ const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
  */
 export function starterTurn(spec: ProductSpec, transcript: TranscriptTurn[], text: string, brain: BrainResult["brain"]): BrainResult | null {
   if (transcript.length || spec.category !== "generic" || spec.body || spec.name) return null;
+  // Questions and negations ("a helmet without headphones") need the brain, not a canned answer.
+  if (isQuestion(text) || /\b(no|not|without|never|instead|nor|minus)\b|n['’]t\b/i.test(text)) return null;
   const s = matchStarter(text);
   if (!s) return null;
-  const extra = interpret(text, s.spec).patch;
-  const partColor = Object.values(extra.parts ?? {}).find((p) => p?.color)?.color;
-  if (!extra.color && partColor) extra.color = partColor;
-  delete extra.parts;
-  delete extra.category;
-  delete extra.name;
-  delete extra.body;
-  const features = [...new Set([...(s.spec.features ?? []), ...(extra.features ?? [])])];
-  const patch: SpecPatch = { ...s.spec, ...extra, ...(features.length ? { features } : {}) };
-  // Already told us the color: ask about the price instead.
-  const say = extra.color ? s.say.replace(/What colou?r[^?]*\?$/, "What would you happily pay for it?") : s.say;
-  return { say, patch, lock: false, brain };
+  // Claude handles anything richer than the starter itself ("a matte helmet with big headphones for
+  // $80"): in LLM mode the starter only answers lines made of its own words, filler and a color.
+  if (brain === "llm" && extraWords(text, s).length) return null;
+  const details = productDetails(text, s.spec);
+  const edits = interpretEdits(text, s.spec, s.spec.category).patch;
+  // Things the starter already draws ("LED lights" on the glow skateboard) aren't added twice.
+  const words = s.match.flat().map((w) => w.toLowerCase());
+  const own = new Set((s.spec.addons ?? []).map((a) => a.name));
+  const addons = edits.addons?.filter((a) => own.has(a.name) || !words.some((w) => a.name.toLowerCase().includes(w) || w.includes(a.name.toLowerCase())));
+  // Part colors equal to the product color were the product's ("a red helmet with headphones").
+  const parts = Object.fromEntries(Object.entries(edits.parts ?? {}).filter(([, p]) => !(p?.color && p.color === details.color && !p.scale && !p.hidden)));
+  const features = [...new Set([...(s.spec.features ?? []), ...(edits.features ?? [])])];
+  const patch: SpecPatch = {
+    ...s.spec, ...details,
+    ...(features.length ? { features } : {}),
+    ...(addons && addons.length !== (s.spec.addons ?? []).length ? { addons } : {}),
+    ...(edits.decals?.length ? { decals: edits.decals } : {}),
+    ...(Object.keys(parts).length ? { parts } : {}),
+  };
+  const next = applyPatch(defaultSpec, patch).spec;
+  if (next.category !== "generic" && (details.length || details.fabric || details.silhouette || features.length !== (s.spec.features ?? []).length)) patch.name = shortName(next);
+  return { say: starterSay(s.say, s.spec, next, !!details.color), patch, lock: false, brain };
+}
+
+const STARTER_FILLER = new Set(("a an the i i'd id want would like love need wish for make me my some of with that which has have having built in built-in builtin " +
+  "integrated inside into its it it's one please just really so kind sort to and is be can could you we thing something like um uh hey genie " +
+  "bike bicycle cycling biking school travel everyday daily little cute cool new nice idea of where").split(/\s+/));
+
+/** Words in the line that neither the starter, filler nor a color explain. */
+function extraWords(text: string, s: Starter): string[] {
+  const known = new Set(s.match.flat().flatMap((w) => w.toLowerCase().split(/\s+/)));
+  return text.toLowerCase().replace(/[^a-z0-9' -]+/g, " ").split(/[\s-]+/).filter((w) => w && !known.has(w) && !STARTER_FILLER.has(w) && !COLOR_NAMES[w]
+    && !(w.endsWith("s") && known.has(w.slice(0, -1))));
+}
+
+/** The starter's line about the product, then the next question from what's still missing. */
+function starterSay(line: string, base: ProductSpec, spec: ProductSpec, toldColor: boolean): string {
+  let lead = line.split(/(?<=[.!])\s+/)[0];
+  if (base.length && spec.length && spec.length !== base.length) lead = lead.replace(new RegExp(`\\b${base.length}\\b`), spec.length);
+  const features = spec.features ?? [];
+  const ask =
+    spec.category === "dress" && features.includes("converts_to_skirt") && !features.includes("phone_pockets") ? "Should it have pockets that actually fit a phone?"
+      : !toldColor ? "What color are you dreaming of?"
+      : !spec.target_price_usd ? "What would you happily pay for it?"
+      : "Shall I make your wish real?";
+  return `${lead} ${ask}`;
 }

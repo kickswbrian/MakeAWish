@@ -32,20 +32,20 @@ const TOPICS: Topic[] = [
     answer: () => "You choose the goal when you launch the campaign, say five backers. When that many holds are in, every hold is captured and it goes to a maker.",
   },
   {
-    re: /\b(charge|charged|pay|paying|payment|card|credit|hold|holds|money|refund|refunded|cost me|billed|bill me|stripe|visa)\b/,
+    re: /\b(charge|charged|charges|pay|paying|payment|payments|credit card|my card|the card|card hold|holds? on (?:my|the) card|hold works|holds work|money|refund|refunded|cost me|billed|bill me|stripe|visa)\b/,
     answer: () => "Backing a wish only places a hold on your card, it isn't a charge. If enough people commit before the deadline every hold is captured; if not, every hold is released and nobody pays.",
   },
   {
-    re: /\b(deadline|how long|expire|expires|expiry|time limit|days|when does it end|what if (?:nobody|no one|not enough)|not enough (?:people|backers)|doesn'?t (?:get|reach|hit))\b/,
+    re: /\b(deadline|how long (?:does|do|will|is|are) (?:the |a |my |this )?(?:campaign|campaigns|it run|it last|it stay open|funding|the wish stay)|how long do (?:i|people|backers) have|expire|expires|expiry|time limit|when does it end|what (?:if|happens if) (?:nobody|no one|not enough)|not enough (?:people|backers)|doesn'?t (?:get|reach|hit))\b/,
     answer: () => "Campaigns last at most six days, inside the window a card hold can stay open. If the goal isn't reached by then, every hold is released and nobody is charged.",
   },
   {
     re: /\b(already exist|exists|exist already|out there|for sale|on amazon|amazon|etsy|google shopping|search|apify|find it|buy it|someone (?:already )?(?:made|sells))\b/,
-    answer: () => "When you lock it in, I search Amazon, Etsy and Google Shopping and score every listing against your design. If something close is out there, I show you where to buy it.",
+    answer: () => "When you lock it in, I search Amazon and Google Shopping and score every listing against your design. If something close is out there, I show you where to buy it.",
   },
   {
     re: /\b(who makes|who will make|who'?d make|manufactur\w*|factory|maker|makers|produce|produced|production|build it|built for real|actually made)\b/,
-    answer: () => "When a campaign is funded, a purchase order with your spec and 3D model goes to a maker. In this demo the maker is simulated, but the card holds are real test-mode payments.",
+    answer: () => "When a campaign is funded, a purchase order with your spec and 3D model goes to a maker. In this demo the maker is simulated, and the card holds are test-mode payments, so no real money moves.",
   },
   {
     re: /\b(ship|shipping|deliver|delivery|arrive|when (?:do|will) i get)\b/,

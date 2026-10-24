@@ -10,6 +10,8 @@ export interface Starter {
   id: string;
   /** Every group must match: one of its words or phrases appears in the utterance. */
   match: string[][];
+  /** Any of these means it's a different wish ("a backpack with a cat print" isn't a pet carrier). */
+  not?: string[];
   spec: ProductSpec;
   say: string;
 }
@@ -23,13 +25,14 @@ export const STARTERS: Starter[] = [
   },
   {
     id: "stand-backpack",
-    match: [["backpack", "bag", "rucksack", "bookbag", "book bag", "knapsack"], ["laptop stand", "stand", "kickstand", "desk", "standing desk"]],
+    match: [["backpack", "bag", "rucksack", "bookbag", "book bag", "knapsack"], ["laptop stand", "laptop-stand", "stand for my laptop", "kickstand", "laptop desk", "standing desk"]],
     spec: { category: "backpack", name: "Stand-Up Backpack", color: "#7FB7A4", features: ["laptop_stand", "phone_pockets"] },
     say: "Ooh, a backpack whose front folds out into a laptop stand. What color should it be?",
   },
   {
     id: "convertible-dress",
     match: [["dress", "gown", "sundress"], ["skirt", "convert", "converts", "convertible", "turns into", "zip off", "zips off", "detachable", "two in one", "2 in 1"]],
+    not: ["backpack", "bag", "skirt that", "skirt which", "top that", "turns into a dress", "into a dress", "becomes a dress"],
     spec: {
       category: "dress", name: "Convertible Midi", length: "midi", silhouette: "a_line", sleeves: "cap", neckline: "v",
       color: "#1F8A5B", fabric: "satin", features: ["converts_to_skirt"],
@@ -58,7 +61,7 @@ export const STARTERS: Starter[] = [
   },
   {
     id: "led-skateboard",
-    match: [["skateboard", "skate board", "longboard"], ["led", "light", "lights", "light up", "lit", "glow", "glowing", "neon"]],
+    match: [["skateboard", "skate board", "longboard"], ["led", "leds", "lights", "light up", "lights up", "lit up", "glow", "glowing", "glows", "neon"]],
     spec: {
       category: "generic", name: "Glow Skateboard", color: "#1A1A1D", finish: "glossy",
       body: { shape: "capsule", width: 1.1, height: 0.06, depth: 0.3 },
@@ -68,7 +71,8 @@ export const STARTERS: Starter[] = [
   },
   {
     id: "cat-backpack",
-    match: [["backpack", "bag"], ["cat", "kitten", "pet", "dog", "puppy"], ["carry", "carrier", "window", "bubble", "for my", "for a"]],
+    match: [["backpack", "bag"], ["cat", "kitten", "pet", "dog", "puppy"], ["carry my", "carrier", "bubble", "window", "for my cat", "for my dog", "for my pet", "for my puppy", "for my kitten", "for cats", "for dogs", "for pets"]],
+    not: ["print", "pattern", "design", "picture", "drawing", "logo", "sticker", "embroider"],
     spec: {
       category: "backpack", name: "Pet Bubble Backpack", color: "#F6D44A",
       addons: [{ name: "bubble window", shape: "dome", placement: "back", size: 1.6, color: "#C0C4CC" }, { name: "air vents", shape: "box", placement: "left", size: 0.7 }],
@@ -87,6 +91,7 @@ export function matchStarter(text: string): Starter | null {
   let best: Starter | null = null;
   for (const s of STARTERS) {
     if (!s.match.every((group) => group.some((w) => t.includes(norm(w))))) continue;
+    if (s.not?.some((w) => t.includes(norm(w)))) continue;
     // Prefer the more specific starter (the pet backpack over the plain stand backpack).
     if (!best || s.match.length > best.match.length) best = s;
   }
