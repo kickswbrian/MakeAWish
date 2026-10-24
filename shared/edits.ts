@@ -292,7 +292,7 @@ function amount(t: string): number {
 }
 
 const UP = /\b(bigger|larger|huge|giant|enormous|massive|wider|thicker|chunkier|taller|longer|lengthen|enlarge|grow|scale (?:it |them )?up|double|twice|biggest|beefier|beef (?:it |them )?up|bulk (?:it |them )?up|bulkier|heftier|puffier|fuller|deeper|roomier|more room|more space|spacious|extend|supersize|blow (?:it |them )?up)\b/;
-const DOWN = /\b(smaller|tiny|tinier|thinner|narrower|shorter|shorten|shrink|scale (?:it |them )?(?:down|back)|slimmer|slim (?:it |them )?down|in half|half the size|halve|half as (?:big|large|long|tall|wide|thick|full|high|bulky|heavy looking)|half (?:the|its) (?:size|length|width|height)|half size|less bulky|more compact|skinnier|smallest|lower profile|cut (?:it |them )?(?:way )?down|trim (?:it |them )?down|tone (?:it |them )?down|dial (?:it |them )?back|less big|not so big|take (?:it|them) up)\b/;
+const DOWN = /\b(smaller|tiny|tinier|thinner|narrower|shorter|shorten|shrink|scale (?:it |them )?(?:down|back)|slimmer|slim (?:it |them )?down|in half|half the size|halve|half as (?:big|large|long|tall|wide|thick|full|high|bulky|heavy looking)|half (?:the|its) (?:size|length|width|height)|half size|(?:cut|reduce)(?: \w+){0,3} by half|less bulky|more compact|skinnier|smallest|lower profile|cut (?:it |them )?(?:way )?down|trim (?:it |them )?down|tone (?:it |them )?down|dial (?:it |them )?back|less big|not so big|take (?:it|them) up)\b/;
 const REMOVE = /\b(remove|delete|take (?:it |them )?(?:off|away|out)|get rid of|lose|ditch|drop|no more|don'?t (?:want|need)|do not (?:want|need)|never use|won'?t (?:use|need)|no need for|leave (?:off|out)|nix|erase|without|cut (?:off|out)|scrap|kill|skip the)\b/;
 const MOVE = /\b(move|shift|relocate|put (?:it|them) on|switch (?:it|them) to|instead|rather have|should be on|would look better on|to the other side)\b/;
 // "print" only as a verb: "leopard print" is a pattern.
@@ -815,7 +815,7 @@ export function interpretEdits(text: string, spec: ProductSpec, category: Catego
       // "No pull chain" with nothing to remove must not fall through to adding a chain.
       // Only when the remove word leads: "add a hook so I don't lose my keys" still adds the hook.
       const rm = REMOVE.exec(t) ?? /\bno (?:more )?/.exec(t);
-      const leads = !!rm && !ADD.test(t.slice(0, rm.index)) && !DRAW.test(t.slice(0, rm.index)) && !/["“”']/.test(raw);
+      const leads = !!rm && !ADD.test(t.slice(0, rm.index)) && !DRAW.test(t.slice(0, rm.index)) && !/["“”]|(?<![a-z])['‘’]|['‘’](?![a-z])/i.test(raw);
       if (!done && leads && (findWord(t, ADDON_KEYS) || decalContent(raw, t))) done = true;
     }
     if (!done && (MOVE.test(t) || /\b(it|them)\b.*\bto the (front|back|left|right|top|bottom|side|other side)\b/.test(t)) && !draws) done = moveClause(t, ctx);
@@ -885,7 +885,7 @@ export function isUndo(text: string): boolean {
   if (/\b(scrap|scratch|undo|cancel|forget|drop) (that|the) last (thing|change|edit|one)\b/.test(t)) return true;
   // "Can you go back", "never mind, put it back the way it was", "I liked the old shape better, go back":
   // only when the phrase ends the request. "The hem should go back further" and "put it back up top" are edits.
-  if (/(?:^|\b(?:you|we|let'?s|just|mind|that|so|ok|okay|no|nope|actually|wait|better|it|back|please)\s+)(?:go back|put it back|change it back|set it back)(?: (?:please|then|now|again|one|a step|one step|actually|the way it was(?: before)?|how it was(?: before)?|to (?:how|the way) it was(?: before)?))*$/.test(t)) return true;
+  if (/(?:^|\b(?:you|we|let'?s|just|mind|that|so|ok|okay|no|nope|actually|wait|better|it|back|please)\s+)(?:go back|put it back|change it back|set it back)(?: (?:please|then|now|again|one|a step|one step|actually|the way it was(?: before)?|how it was(?: before)?|like it was(?: before)?|to before|to (?:how|what|the way) it was(?: before)?))*$/.test(t)) return true;
   if (/(?:^|\b(?:back|make it|leave it|keep it|want it|have it|like)\s+)(?:to )?(?:the way|how) it was(?: before)?$/.test(t)) return true;
   // "Never mind" / "scratch that" only when that is the whole request.
   return /^(?:(?:oh|um|uh|wait|actually|no|nah|nope|hmm|ok|okay|ugh|oops|eh) )*(?:never ?mind|scratch that|undo that|i liked it better before)(?: (?:please|then|that|that one|that change|actually|go back|put it back|undo(?: that)?))*$/.test(t);
