@@ -134,7 +134,13 @@ const ADDON_WORDS: Record<string, AddonWord> = {
   "phone holder": { name: "phone holder", shape: "box", at: side }, "phone mount": { name: "phone mount", shape: "box", at: "front" },
   "laptop sleeve": { name: "laptop sleeve", shape: "box", at: "back" }, hook: { name: "hook", shape: "torus", at: side, size: 0.6 },
   "carry handle": { name: "handle", shape: "torus", at: "top" }, knob: { name: "knob", shape: "sphere", at: "top", size: 0.6 },
-  switch: { name: "switch", shape: "box", at: "front", size: 0.5 }, screen: { name: "screen", shape: "box", at: "front", glow: true },
+  screen: { name: "screen", shape: "box", at: "front", glow: true },
+  holder: { name: "holder", shape: "cylinder", at: side }, kickstand: { name: "kickstand", shape: "box", at: "back" },
+  "ring grip": { name: "ring grip", shape: "torus", at: "back" }, "grip ring": { name: "ring grip", shape: "torus", at: "back" },
+  "finger ring": { name: "ring grip", shape: "torus", at: "back" }, popsocket: { name: "grip", shape: "cylinder", at: "back" },
+  "pop socket": { name: "grip", shape: "cylinder", at: "back" }, grip: { name: "grip", shape: "box", at: "back" },
+  visor: { name: "visor", shape: "fin", at: "front" }, "bottle opener": { name: "bottle opener", shape: "torus", at: side, size: 0.6 },
+  "sun shade": { name: "sun shade", shape: "fin", at: "front" }, pocket: { name: "pocket", shape: "box", at: "front" },
   display: { name: "display", shape: "box", at: "front", glow: true }, "touch screen": { name: "screen", shape: "box", at: "front", glow: true },
   propeller: { name: "propeller", shape: "fin", at: "top" }, "jet pack": { name: "jet pack", shape: "cylinder", at: "back", count: 2 },
   jetpack: { name: "jet pack", shape: "cylinder", at: "back", count: 2 }, rocket: { name: "rockets", shape: "cylinder", at: "back", count: 2 },
@@ -232,11 +238,31 @@ function findWord(t: string, keys: string[]): { key: string; at: number } | null
   return best;
 }
 
-export function findColor(t: string): string | null {
+/**
+ * The color a clause asks for. With several, the one closest to `near` (the target's word) wins,
+ * else the first one said. A color right before a pattern word ("white polka dots") is the
+ * pattern's, not the product's.
+ */
+export function findColor(t: string, near?: string): string | null {
   const hexm = t.match(/#[0-9a-f]{6}\b/i);
   if (hexm) return hexm[0].toUpperCase();
-  for (const n of COLOR_KEYS) if (new RegExp(`(?:^|[^a-z])${esc(n)}(?=$|[^a-z])`).test(t)) return COLOR_NAMES[n];
-  return null;
+  const hits: { at: number; hex: string }[] = [];
+  const taken: [number, number][] = [];
+  for (const n of COLOR_KEYS) {
+    const re = new RegExp(`(?:^|[^a-z])(${esc(n)})(?=$|[^a-z])`, "g");
+    for (let m; (m = re.exec(t)); ) {
+      const at = m.index + m[0].indexOf(m[1]);
+      if (taken.some(([a, b]) => at >= a && at < b)) continue; // "forest green" already claimed "green"
+      taken.push([at, at + n.length]);
+      const after = t.slice(at + n.length, at + n.length + 16);
+      if (/^\s*(polka|dots|spots|stripes|pinstripes|checks|plaid|florals)\b/.test(after)) continue;
+      hits.push({ at, hex: COLOR_NAMES[n] });
+    }
+  }
+  if (!hits.length) return null;
+  const anchor = near ? t.indexOf(near) : -1;
+  hits.sort((a, b) => (anchor >= 0 ? Math.abs(a.at - anchor) - Math.abs(b.at - anchor) : a.at - b.at));
+  return hits[0].hex;
 }
 
 const PLACEMENT_RES: [RegExp, Placement][] = [
@@ -264,14 +290,19 @@ function amount(t: string): number {
   return 1.3;
 }
 
-const UP = /\b(bigger|larger|huge|giant|enormous|massive|wider|thicker|chunkier|taller|longer|enlarge|grow|scale (?:it )?up|double|twice|biggest|beefier|puffier|fuller|deeper)\b/;
-const DOWN = /\b(smaller|tiny|tinier|thinner|narrower|shorter|shrink|scale (?:it )?down|slimmer|half|less bulky|more compact|skinnier|smallest|lower profile)\b/;
-const REMOVE = /\b(remove|delete|take (?:off|away|out)|get rid of|lose|ditch|drop|no more|don'?t want|nix|erase|without|cut|scrap|kill)\b/;
-const MOVE = /\b(move|shift|relocate|put (?:it|them) on|switch (?:it|them) to|instead)\b/;
-const DRAW = /\b(draw|paint|print|write|spell|stamp|embroider|engrave|sketch|doodle|letter|monogram|airbrush|emblazon)\b/;
-const ADD = /\b(add|put|attach|stick|place|give (?:it|me)|include|with|needs?|want|like|have|slap|throw on|mount|install|plus|can (?:it|you) (?:have|get)|should have|got)\b/;
+const UP = /\b(bigger|larger|huge|giant|enormous|massive|wider|thicker|chunkier|taller|longer|lengthen|enlarge|grow|scale (?:it |them )?up|double|twice|biggest|beefier|beef (?:it |them )?up|bulk (?:it |them )?up|bulkier|heftier|puffier|fuller|deeper|roomier|more room|more space|spacious|extend|supersize|blow (?:it |them )?up)\b/;
+const DOWN = /\b(smaller|tiny|tinier|thinner|narrower|shorter|shorten|shrink|scale (?:it |them )?(?:down|back)|slimmer|slim (?:it |them )?down|half|less bulky|more compact|skinnier|smallest|lower profile|cut (?:it |them )?(?:way )?down|trim (?:it |them )?down|tone (?:it |them )?down|dial (?:it |them )?back|less big|not so big|take (?:it|them) up)\b/;
+const REMOVE = /\b(remove|delete|take (?:it |them )?(?:off|away|out)|get rid of|lose|ditch|drop|no more|don'?t (?:want|need)|do not (?:want|need)|never use|won'?t (?:use|need)|no need for|leave (?:off|out)|nix|erase|without|cut (?:off|out)|scrap|kill|skip the)\b/;
+const MOVE = /\b(move|shift|relocate|put (?:it|them) on|switch (?:it|them) to|instead|rather have|should be on|would look better on|to the other side)\b/;
+// "print" only as a verb: "leopard print" is a pattern.
+const DRAW = /\b(draw|paint|write|spell|stamp|embroider|engrave|sketch|doodle|monogram|airbrush|emblazon|scribble|graffiti)\b|\bprint (?:a|an|the|my|our|some|on|out|it|them)\b/;
+const ADD = /\b(add|put|attach|stick|place|give (?:it|me)|include|with|needs?|want|like|have|slap|throw on|mount|install|plus|can (?:it|you) (?:have|get)|should have|got|be cool if|be nice if|would love)\b/;
 const DECAL_NOUN = /\b(design|decal|drawing|graphic|picture|image|sticker|patch|emblem|icon|symbol|logo|print of|illustration|art|artwork|motif|silhouette)\b/;
-const WHOLE = /\b(it|the whole thing|whole thing|everything|overall|the (?:dress|top|skirt|backpack|bag|helmet|product|thing|shirt|mug|bottle|lamp))\b/;
+const WHOLE = /\b(it|everything|overall|all of it|whole|entire|the (?:thing|product|dress|top|skirt|backpack|bag|helmet|shirt|gown))\b/;
+const PRONOUN = /\b(it|them|they|those|that one|this one|that|this)\b/;
+/** "the pockets are tiny" asks for bigger pockets; "the visor is huge" for a smaller one. */
+const COMPLAINT_SMALL = /\b(?:is|are|'s|'re|looks?|feels?|seems?|kinda|kind of)\s+(?:a (?:bit|little) |kind of |kinda |way |so |really |too |pretty |super |very )*(?:tiny|small|little|short|thin|skinny|narrow|cramped|puny|weak|flimsy)\b|\btoo (?:small|tiny|short|thin|skinny|narrow)\b/;
+const COMPLAINT_BIG = /\b(?:is|are|'s|'re|looks?|feels?|seems?|kinda|kind of)\s+(?:a (?:bit|little) |kind of |kinda |way |so |really |too |pretty |super |very )*(?:huge|big|large|long|bulky|thick|wide|massive|giant|enormous|overwhelming)\b|\btoo (?:big|large|long|bulky|thick|wide|much)\b|\bsticks? out\b/;
 
 interface Ctx {
   spec: ProductSpec;
@@ -323,11 +354,19 @@ function decalContent(raw: string, t0: string): Pick<Decal, "kind" | "content"> 
   const t = product ? t0.slice(0, product.at + 1) + " ".repeat(product.key.length) + t0.slice(product.at + 1 + product.key.length) : t0;
   const quoted = raw.match(/["“”']([^"“”']{1,24})["“”']/);
   if (quoted && /\w/.test(quoted[1]) && !/^(s|re|ll|ve|d|m|t)\b/i.test(quoted[1])) return { kind: "text", content: quoted[1].trim() };
-  const says = raw.match(/\b(?:that|which) (?:says|reads|spells)\s+(.+?)(?=\s+(?:on|across|along|onto|in|at|over)\s+(?:the|it|its|my)\b|$)/i)
-    ?? raw.match(/\b(?:saying|reading|with the words?|the words?|the text|the phrase|the slogan)\s+(.+?)(?=\s+(?:on|across|along|onto|in|at|over)\s+(?:the|it|its|my)\b|$)/i);
-  if (says) return { kind: "text", content: says[1].trim().slice(0, 24) };
+  const says = raw.match(/\b(?:that|which|to|it|so it) (?:says?|reads?|spells?)\s+(.+?)(?=\s+(?:on|across|along|onto|in|at|over)\s+(?:the|it|its|my|big|bold)\b|$)/i)
+    ?? raw.match(/\b(?:saying|reading|with the words?|the words?|the text|the phrase|the slogan)\s+(.+?)(?=\s+(?:on|across|along|onto|in|at|over)\s+(?:the|it|its|my|big|bold)\b|$)/i);
+  if (says) return { kind: "text", content: says[1].replace(/^["“']|["”']$/g, "").trim().slice(0, 24) };
   const num = t.match(/\b(?:number|no\.?|jersey number|#)\s*(\d{1,3})\b/);
   if (num) return { kind: "text", content: num[1] };
+  // A bare number to put on it: "a big 99 on the back". Prices and sizes are not decals.
+  const bare = t.match(/\b(?:put|add|print|stick|write|stamp|slap|with|want|have)\s+(?:a |an |the )?(?:big |large |huge |giant |small |little |tiny |bold |red |white |black |gold )*(\d{1,3})\b(?!\s*(?:dollars|bucks|usd|%|percent|inch|inches|cm|mm|pockets?|of|more|x\b))/);
+  if (bare && !/\$|\b(pay|price|cost|budget|size)\b/.test(t)) return { kind: "text", content: bare[1] };
+  // Words said in capitals ("put CAL HACKS on it") or "in big letters" are text to print.
+  const caps = raw.match(/\b([A-Z][A-Z0-9'!&]+(?:\s+[A-Z0-9][A-Z0-9'!&]*){0,3})\b/);
+  if (caps && !/^(I|A|LED|LEDS|USB|GPS|UV|XL|XXL|XS|TV|AI|OK|S|M|L|DIY|UFO|USA)$/.test(caps[1]) && caps[1].replace(/[^A-Z]/g, "").length >= 2) return { kind: "text", content: caps[1].slice(0, 24) };
+  const lettered = raw.match(/\b(?:put|add|print|write|stick|stamp|with)\s+(?:the (?:word|words|text)\s+)?(.+?)\s+(?:on (?:it|the \w+)\s+)?in (?:big |bold |small |huge |giant |block |bubble |cursive |gold |white |black )*(?:letters|lettering|font|caps|capitals|type)\b/i);
+  if (lettered) return { kind: "text", content: lettered[1].replace(/\s+on (?:it|the \w+)$/i, "").replace(/^(a|an|the)\s+/i, "").trim().slice(0, 24) };
   const letter = raw.match(/\bthe letters? ([a-z](?:\s*(?:and\s+)?[a-z]){0,3})\b/i);
   if (letter) return { kind: "text", content: letter[1].replace(/\s|and/gi, "").toUpperCase() };
   const initials = raw.match(/\binitials?\s+(?:are\s+)?((?:[a-z]\.?\s*){1,3})(?=\s|$)/i);
@@ -457,19 +496,61 @@ function removeClause(t: string, ctx: Ctx): boolean {
   return false;
 }
 
-function moveClause(t: string, ctx: Ctx): boolean {
-  const p = findPlacement(t.replace(/^.*?\b(?:to|onto|on)\b/, " on ")) ?? findPlacement(t);
-  if (!p) return false;
+/** The word for whatever the clause points at (a decal, an add-on or a part), for resolving "it" later. */
+function targetWord(t: string, ctx: Ctx): string | null {
   const di = findDecal(t, ctx.decals);
   if (di >= 0) {
-    ctx.decals = ctx.decals.map((d, i) => (i === di ? { ...d, placement: p } : d));
+    const d = ctx.decals[di];
+    if (d.kind === "text") return d.content.toLowerCase();
+    const keys = d.kind === "shape" ? SHAPE_KEYS.filter((k) => SHAPE_WORDS[k] === d.content) : EMOJI_KEYS.filter((k) => EMOJI_WORDS[k] === d.content);
+    return keys.find((k) => new RegExp(`\\b${esc(k)}\\b`).test(t)) ?? keys[keys.length - 1] ?? null;
+  }
+  const ai = findAddon(t, ctx.addons);
+  if (ai >= 0) return ctx.addons[ai].name.toLowerCase();
+  const words = PART_WORDS[ctx.category];
+  const hit = findWord(t, sortedKeys(words));
+  return hit ? hit.key : null;
+}
+
+/** "Change the text to say GO BEARS": rewrite an existing text decal instead of adding another. */
+function retextClause(raw: string, t: string, ctx: Ctx): boolean {
+  const texts = ctx.decals.map((d, i) => [d, i] as const).filter(([d]) => d.kind === "text");
+  if (!texts.length || !/\b(change|replace|swap|edit|update|make|switch|instead)\b/.test(t)) return false;
+  if (!/\b(text|words?|writing|lettering|name|says?|slogan|number|letters|initials|it)\b/.test(t)) return false;
+  const c = decalContent(raw, t);
+  if (!c || c.kind !== "text") return false;
+  const [, i] = texts.find(([d]) => t.includes(d.content.toLowerCase())) ?? texts[texts.length - 1];
+  if (ctx.decals[i].content === c.content) return false;
+  ctx.decals = ctx.decals.map((d, k) => (k === i ? { ...d, content: c.content } : d));
+  ctx.touched.add("decals");
+  ctx.did.push(`"${c.content}" instead`);
+  return true;
+}
+
+function moveClause(t: string, ctx: Ctx): boolean {
+  let p = findPlacement(t.replace(/^.*?\b(?:to|onto|on)\b/, " on ")) ?? findPlacement(t);
+  if (/\bother side\b/.test(t)) p = null;
+  let di = findDecal(t, ctx.decals);
+  let ai = di < 0 ? findAddon(t, ctx.addons) : -1;
+  // "Move it to the side" on a later turn: the newest design, else the newest add-on.
+  if (di < 0 && ai < 0 && PRONOUN.test(t)) {
+    if (ctx.decals.length) di = ctx.decals.length - 1;
+    else if (ctx.addons.length) ai = ctx.addons.length - 1;
+  }
+  const cur = di >= 0 ? ctx.decals[di].placement : ai >= 0 ? ctx.addons[ai].placement : null;
+  const flip: Record<string, Placement> = { left: "right", right: "left", front: "back", back: "front", top: "bottom", bottom: "top", waist: "front" };
+  if (!p && /\bother side\b/.test(t) && cur) p = flip[cur];
+  // "to the side" from the left/right is the other side; from anywhere else it's the right.
+  if (p === "right" && /\bto the side\b/.test(t) && cur === "right") p = "left";
+  if (!p) return false;
+  if (di >= 0) {
+    ctx.decals = ctx.decals.map((d, i) => (i === di ? { ...d, placement: p! } : d));
     ctx.touched.add("decals");
     ctx.did.push(`moved to the ${p}`);
     return true;
   }
-  const ai = findAddon(t, ctx.addons);
   if (ai >= 0) {
-    ctx.addons = ctx.addons.map((a, i) => (i === ai ? { ...a, placement: p } : a));
+    ctx.addons = ctx.addons.map((a, i) => (i === ai ? { ...a, placement: p! } : a));
     ctx.touched.add("addons");
     ctx.did.push(`moved to the ${p}`);
     return true;
@@ -477,12 +558,20 @@ function moveClause(t: string, ctx: Ctx): boolean {
   return false;
 }
 
-function resizeClause(t: string, ctx: Ctx): boolean {
+/** +1 bigger, -1 smaller, 0 no size request. Complaints point the other way ("too small" means bigger). */
+function sizeDir(t: string): 1 | -1 | 0 {
+  const small = COMPLAINT_SMALL.test(t), big = COMPLAINT_BIG.test(t);
+  if (small !== big) return small ? 1 : -1;
   const up = UP.test(t), down = DOWN.test(t);
-  if (up === down) return false;
-  const dir: 1 | -1 = up ? 1 : -1;
+  return up === down ? 0 : up ? 1 : -1;
+}
+const isComplaint = (t: string) => COMPLAINT_SMALL.test(t) || COMPLAINT_BIG.test(t);
+
+function resizeClause(t: string, ctx: Ctx): boolean {
+  const dir = sizeDir(t);
+  if (!dir) return false;
   const f = Math.pow(amount(t), dir);
-  const lengthy = /\b(longer|shorter)\b/.test(t);
+  const lengthy = /\b(longer|shorter|shorten|lengthen|long|short|hem|take (?:it|them) up)\b/.test(t);
   const di = findDecal(t, ctx.decals);
   if (di >= 0 && !/\b(text|writing|letters|font)\b.*\b(longer|shorter)\b/.test(t)) {
     ctx.decals = ctx.decals.map((d, i) => (i === di ? { ...d, size: clamp((d.size ?? 1) * f, 0.3, 3) } : d));
@@ -579,6 +668,9 @@ function decalClause(raw: string, t: string, ctx: Ctx, color: string | null): bo
     const emojiHit = findWord(t, EMOJI_KEYS), shapeHit = findWord(t, SHAPE_KEYS);
     const contentLen = Math.max(emojiHit?.key.length ?? 0, shapeHit?.key.length ?? 0);
     if (addonHit.key.length >= contentLen) return false;
+    // In a compound the last noun is the thing: a "unicorn horn" is a horn, a "coffee cup holder" a holder.
+    const pic = [emojiHit, shapeHit].filter((h) => h && h.key.length === contentLen)[0];
+    if (pic && addonHit.at > pic.at && addonHit.at - (pic.at + pic.key.length) <= 12) return false;
   }
   if (!content && !DRAW.test(t)) return false;
   const placed = !!findPlacement(t) || ALL_OVER.test(t) || /\bon (it|them)\b/.test(t);
@@ -624,7 +716,14 @@ function addonClause(t: string, ctx: Ctx, color: string | null): boolean {
     ctx.did.push(pretty(part));
     return true;
   }
+  // The model already has this part (a helmet's visor): nothing to add.
+  if (hit && PART_WORDS[ctx.category][hit.key] && !gone) return false;
   let entry: AddonWord | null = hit ? ADDON_WORDS[hit.key] : null;
+  // "a holder for my coffee cup" -> "cup holder".
+  if (entry && hit!.key === "holder") {
+    const what = t.match(/\b(cup|coffee|drink|bottle|water|phone|pen|pencil|umbrella|key|keys|card|cards|snack|can)\b/)?.[1];
+    if (what) entry = { ...entry, name: `${what === "coffee" || what === "drink" ? "cup" : what} holder`, shape: /phone|card/.test(what) ? "box" : "cylinder" };
+  }
   if (!entry) {
     if (!/\b(add|attach|put|stick|give it|install|mount|needs?|include|can (?:it|you) (?:have|get)|should have)\b/.test(t)) return false;
     const noun = nounAfterAdd(t);
@@ -673,7 +772,7 @@ const clamp = (v: number, lo: number, hi: number) => Math.round(Math.min(hi, Mat
 // ---------- Entry point ----------
 
 const FILLERS = /\b(um+|uh+|uhm+|erm+|hmm+|you know|i mean|kinda|sort of|maybe|just|actually|basically|please|pls|okay|ok|alright|so|oh|wait|hey genie|genie|hey)\b/gi;
-const OP_START = "(?:then\\s+)?(?:make|add|put|draw|paint|write|remove|take|get rid|give|change|turn|move|lose|ditch|drop|stick|print|attach|i want|i'd like|can you|could you|also|and)\\b";
+const OP_START = "(?:then\\s+)?(?:make|add|put|draw|paint|write|remove|take|get rid|give|change|turn|move|lose|ditch|drop|stick|print|attach|keep|leave|swap|replace|shrink|i want|i'd like|can you|could you|also|and)\\b";
 
 export function splitClauses(text: string): string[] {
   let s = text.replace(/\s+/g, " ").replace(FILLERS, " ").replace(/,\s*like\s*,/gi, " ").replace(/\blike,\s*/gi, " ");
@@ -695,14 +794,27 @@ export function interpretEdits(text: string, spec: ProductSpec, category: Catego
     touched: new Set(), patch: {}, did: [],
   };
   const rest: string[] = [];
-  for (const raw of splitClauses(text)) {
-    const t = lower(raw);
-    const color = findColor(t);
+  const clauses = splitClauses(text);
+  // "The pockets are tiny, make them twice as big": the complaint only names the target.
+  const explicitSize = clauses.some((c) => !isComplaint(lower(c)) && (UP.test(lower(c)) || DOWN.test(lower(c))));
+  let lastRef: string | null = null;
+  for (const raw of clauses) {
+    let t = lower(raw);
+    // "it" / "them" after naming something earlier in the sentence means that thing.
+    if (lastRef && !targetWord(t, ctx) && /\b(it|them|they|those)\b/.test(t)) t = t.replace(/\b(it|them|they|those)\b/, `the ${lastRef}`);
+    const mention = targetWord(t, ctx);
+    const color = findColor(t, mention ?? undefined);
     const draws = DRAW.test(t);
     let done = false;
     if (REMOVE.test(t) || /\bno (?:more )?\w+|\w+less\b/.test(t)) done = removeClause(t, ctx);
-    if (!done && MOVE.test(t) && !draws) done = moveClause(t, ctx);
-    if (!done && (UP.test(t) || DOWN.test(t)) && !(ADD.test(t) && (decalContent(raw, t) || findWord(t, ADDON_KEYS)) && findDecal(t, ctx.decals) < 0 && findAddon(t, ctx.addons) < 0)) done = resizeClause(t, ctx);
+    if (!done && (MOVE.test(t) || /\b(it|them)\b.*\bto the (front|back|left|right|top|bottom|side|other side)\b/.test(t)) && !draws) done = moveClause(t, ctx);
+    if (!done) done = retextClause(raw, t, ctx);
+    const sizeAsk = sizeDir(t) !== 0 && !(isComplaint(t) && explicitSize);
+    // "Add a big star" is an add with a size; "I want a huge front pocket" resizes a part the model has.
+    const newThing = decalContent(raw, t) || findWord(t, ADDON_KEYS.filter((k) => !PART_WORDS[ctx.category][k]));
+    if (!done && sizeAsk && !(ADD.test(t) && newThing && !findPart(t, ctx.category) && findDecal(t, ctx.decals) < 0 && findAddon(t, ctx.addons) < 0)) done = resizeClause(t, ctx);
+    if (mention) lastRef = mention;
+    if (!done && isComplaint(t) && explicitSize) done = !!mention;
     // "paint the visor gold" recolors; "paint a star on the visor" draws.
     const paintsPart = /\b(paint|color|colour|dye|spray|coat)\b/.test(t) && !decalContent(raw, t);
     if (!done && color && (!draws || paintsPart) && !/\b(add|attach|put|stick|draw)\b/.test(t)) done = recolorClause(t, ctx, color);

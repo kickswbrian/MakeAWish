@@ -35,7 +35,8 @@ Shoppers (often hackathon judges) will ask for any change at all, and every requ
 - decals and addons are full lists, like features: to add one, send all existing ones plus the new one; to remove or move one, send the list without it or with its new placement.
 - Changes to one part never touch the whole-product fields: "longer sleeves" changes sleeves, not length; "black straps" changes parts.straps.color, not color.
 - undo: true (with an empty patch) when the shopper wants the previous version back ("undo", "go back", "never mind, change it back").
-- If something truly can't be drawn, still make the closest visible change and say so in a few words. Never answer an edit request with only a question.`;
+- If something truly can't be drawn, still make the closest visible change and say so in a few words. Never answer an edit request with only a question.
+- If the shopper is just chatting or asking you something (your favorite color, how it works, what it costs), answer and send an empty patch: only change the product when they ask for a change.`;
 
 const patchSchema = {
   type: "object",

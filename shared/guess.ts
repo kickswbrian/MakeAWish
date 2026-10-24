@@ -1,5 +1,5 @@
 import { COLOR_NAMES, LENGTHS, type Category, type ProductSpec, type SpecPatch } from "./spec.ts";
-import { GENERIC_WORDS, genericBody, interpretEdits, isUndo, shapeHint } from "./edits.ts";
+import { findColor, GENERIC_WORDS, genericBody, interpretEdits, isUndo, shapeHint } from "./edits.ts";
 
 /**
  * Cheap keyword matcher. Runs on interim captions in the browser (instant guess, so particles
@@ -33,10 +33,14 @@ const CATEGORY_WORDS: [Category, string][] = [
 ];
 
 /** Which product the utterance names. Once a product exists, switching needs framing like "make it a ...". */
-function detectCategory(t: string, current: ProductSpec | undefined): { category?: Category; noun?: string } {
-  const fresh = !current || current.category === "generic";
-  const framed = (words: string) =>
-    new RegExp(`\\b(?:an?|make it(?: into)?(?: an?)?|turn it into(?: an?)?|change it (?:to|into)(?: an?)?|switch (?:it )?to(?: an?)?|want(?: an?)?|instead of)\\s+(?:[a-z-]+\\s+){0,3}(${words})s?\\b`).exec(t);
+function detectCategory(t: string, current: ProductSpec | undefined): { category?: Category; noun?: string; reframe?: boolean } {
+  // A blank wish takes any product noun; once something exists, switching needs framing.
+  const fresh = !current || (current.category === "generic" && !current.body);
+  // Up to three describing words between the framing and the noun, but never a preposition:
+  // "a unicorn horn on top" does not frame "top".
+  const filler = "(?:(?!on |in |at |to |of |with |for |from |onto |into |by )[a-z-]+\\s+){0,3}";
+  const framed = (words: string, strong = false) =>
+    new RegExp(`\\b(?:${strong ? "" : "an?|"}make it(?: into)?(?: an?)?|turn it into(?: an?)?|change it (?:to|into)(?: an?)?|switch (?:it )?to(?: an?)?|(?:i )?want(?: an?)?|how about(?: an?)?|what about(?: an?)?|instead of(?: an?)?|(?:it )?should be(?: an?)?|let'?s do(?: an?)?|actually(?: an?)?)\\s+${filler}(${words})s?\\b(?!\\s+(?:of|half|part|side))`).exec(t);
   const loose = (words: string) => {
     const m = new RegExp(`\\b(${words})s?\\b`).exec(t);
     if (!m) return null;
@@ -49,7 +53,9 @@ function detectCategory(t: string, current: ProductSpec | undefined): { category
     if (m) return { category: cat, noun: m[1] };
   }
   const body = genericBody(t);
-  if (body && (fresh || framed(GENERIC_WORDS))) return { category: "generic", noun: body.name };
+  // Generic nouns double as parts and add-ons ("a ring grip", "a cup holder"), so switching to one needs strong framing.
+  if (body && fresh) return { category: "generic", noun: body.name };
+  if (body && framed(GENERIC_WORDS, true)) return { category: "generic", noun: body.name, reframe: true };
   if (fresh && /\b(lamp|planter|chair|desk|gadget|device|toy)\b/.test(t)) return { category: "generic" };
   return {};
 }
@@ -59,7 +65,7 @@ export function interpret(text: string, current?: ProductSpec): Interpretation {
   if (isUndo(text)) return { patch: {}, did: [], undo: true };
   const spec = current ?? { category: "generic" as const };
   const full = " " + text.toLowerCase().replace(/[^a-z0-9$#\s.-]/g, " ") + " ";
-  const { category: newCat, noun } = detectCategory(full, current);
+  const { category: newCat, noun, reframe } = detectCategory(full, current);
   const category = newCat ?? spec.category;
   const switching = !!newCat && newCat !== spec.category;
   // A new product starts clean: its parts, decals and add-ons don't carry over.
@@ -76,7 +82,8 @@ export function interpret(text: string, current?: ProductSpec): Interpretation {
   // Generic products get a body so they render instantly; their starter add-ons come along once.
   if (category === "generic") {
     const g = genericBody(full);
-    if (g && (switching || !spec.body || (current?.name ?? "") !== g.name)) {
+    // Mentioning the lamp while editing it keeps its body; "make it a mug instead" swaps it.
+    if (g && (switching || !spec.body || reframe)) {
       patch.body = g.body;
       patch.name = g.name;
       if (g.addons) patch.addons = [...g.addons, ...(patch.addons ?? spec.addons ?? []).filter((a) => !g.addons!.some((b) => b.name === a.name))];
@@ -107,7 +114,10 @@ function guessFeatures(text: string, category: Category): string[] {
 
 /** Keyword guess for whatever the edit pass didn't claim: whole-product color, cut, fabric, price. */
 function guessRest(text: string, current: ProductSpec, category: Category, noun?: string): SpecPatch {
-  const t = " " + text.toLowerCase().replace(/[^a-z0-9$#\s.\/-]/g, " ") + " ";
+  // "Switch the denim for leather", "leather instead of denim": drop the thing being replaced.
+  const t = (" " + text.toLowerCase().replace(/[^a-z0-9$#\s.\/-]/g, " ") + " ")
+    .replace(/\b(switch|swap|replace|trade|change|ditch)\s+(?:the\s+|its\s+)?(?:[a-z]+\s+){0,2}?([a-z]+)\s+(?:for|with|to|into)\b/g, " ")
+    .replace(/\b(?:instead of|rather than|not)\s+(?:the\s+)?[a-z]+\b/g, " ");
   const has = (...words: string[]) => words.some((w) => new RegExp(`\\b${w}\\b`).test(t));
   const patch: SpecPatch = {};
   const clothing = category === "dress" || category === "top" || category === "skirt";
@@ -120,23 +130,20 @@ function guessRest(text: string, current: ProductSpec, category: Category, noun?
     if (/hoodie/.test(noun)) patch.addons = [{ name: "hood", shape: "dome", placement: "back" }];
   }
 
-  // Colors: longest name first so "forest green" beats "green".
-  const names = Object.keys(COLOR_NAMES).sort((a, b) => b.length - a.length);
-  for (const n of names) {
-    if (t.includes(` ${n} `) || t.includes(` ${n}.`) || t.includes(` ${n},`)) {
-      patch.color = COLOR_NAMES[n];
-      break;
-    }
-  }
-  const hex = t.match(/#[0-9a-f]{6}\b/);
-  if (hex) patch.color = hex[0].toUpperCase();
+  // Color: the first one said ("forest green" beats "green"); "white polka dots" is the pattern's.
+  const color = findColor(t);
+  if (color) patch.color = color;
 
 
-  // Length, including relative "shorter"/"longer" (only for clothing; "taller" etc. are edits).
-  if (has("mini", "micro")) patch.length = "mini";
-  else if (has("knee", "knee-length", "knee length")) patch.length = "knee";
-  else if (has("midi", "mid-length", "calf length", "tea length")) patch.length = "midi";
-  else if (has("maxi", "floor-length", "floor length", "full-length", "ankle length", "ankle-length")) patch.length = "maxi";
+  // Sleeve lengths first, then strip them so "full-length sleeves" doesn't also make a maxi.
+  if (has("full length sleeves", "full-length sleeves", "wrist length sleeves", "long sleeved", "long-sleeved", "long sleeves", "long sleeve", "full sleeves", "sleeves to the wrist", "sleeves down to the wrist")) patch.sleeves = "long";
+  const tl = t.replace(/\b(?:full|floor|wrist|elbow|three quarter|3\/4)[- ]length sleeves?\b/g, " ");
+  const hasL = (...words: string[]) => words.some((w) => new RegExp(`\\b${w}\\b`).test(tl));
+  // Length, by name or by where it ends ("to the floor", "above the knee"), or relative.
+  if (hasL("mini", "micro", "above the knee", "above my knees?", "mid thigh", "mid-thigh", "thigh length", "super short")) patch.length = "mini";
+  else if (hasL("maxi", "floor-length", "floor length", "full-length", "full length", "ankle length", "ankle-length", "to the floor", "the floor", "to my ankles", "to the ankles", "ankles", "ground", "floor")) patch.length = "maxi";
+  else if (hasL("knee", "knee-length", "knee length", "knees")) patch.length = "knee";
+  else if (hasL("midi", "mid-length", "calf length", "tea length", "mid calf", "mid-calf", "calf", "calves")) patch.length = "midi";
   else if (clothing && category !== "top" && (has("shorter") || has("longer"))) {
     const i = LENGTHS.indexOf(current.length ?? "midi");
     const j = has("shorter") ? Math.max(0, i - 1) : Math.min(LENGTHS.length - 1, i + 1);
@@ -148,7 +155,8 @@ function guessRest(text: string, current: ProductSpec, category: Category, noun?
   else if (has("wrap")) patch.silhouette = "wrap";
   else if (has("flowy", "loose", "billowy", "floaty", "flowing", "swishy")) patch.silhouette = "flowy";
 
-  if (has("sleeveless", "strapless", "no sleeves", "without sleeves")) patch.sleeves = "none";
+  if (patch.sleeves) { /* set above */ }
+  else if (has("sleeveless", "strapless", "no sleeves", "without sleeves")) patch.sleeves = "none";
   else if (has("three quarter", "three-quarter", "3/4", "elbow length", "elbow sleeves")) patch.sleeves = "three_quarter";
   else if (has("puff sleeve", "puff sleeves", "puffy sleeves", "puffed sleeves", "balloon sleeves")) patch.sleeves = "puff";
   else if (has("cap sleeve", "cap sleeves")) patch.sleeves = "cap";

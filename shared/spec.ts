@@ -83,9 +83,9 @@ export type Addon = z.infer<typeof Addon>;
 export const Body = z.object({
   shape: z.enum(BODY_SHAPES),
   /** Scene units; the pedestal is ~1.1 wide and the camera frames ~1.5 tall. */
-  width: z.number().min(0.1).max(1.2).default(0.5),
-  height: z.number().min(0.1).max(1.4).default(0.6),
-  depth: z.number().min(0.1).max(1.2).optional(),
+  width: z.number().min(0.02).max(1.2).default(0.5),
+  height: z.number().min(0.02).max(1.4).default(0.6),
+  depth: z.number().min(0.02).max(1.2).optional(),
 });
 export type Body = z.infer<typeof Body>;
 
@@ -164,6 +164,13 @@ export function applyPatch(spec: ProductSpec, patch: unknown): { spec: ProductSp
     if (field === "target_price_usd" && typeof value === "string") value = Number(value.replace(/[^0-9.]/g, ""));
     if (field === "features" && Array.isArray(value)) value = [...new Set(value.map((f) => String(f).trim().toLowerCase().replace(/\s+/g, "_")))];
     if (field === "scale" && typeof value === "number") value = Math.min(1.8, Math.max(0.5, value));
+    // A body slightly out of range (a 6 mm phone case, a 2 m lamp) is clamped, not dropped.
+    if (field === "body" && value && typeof value === "object" && !Array.isArray(value)) {
+      const b = { ...(value as Record<string, unknown>) };
+      for (const [k, max] of [["width", 1.2], ["height", 1.4], ["depth", 1.2]] as const) if (typeof b[k] === "number") b[k] = Math.min(max, Math.max(0.02, b[k] as number));
+      if (typeof b.shape === "string") b.shape = b.shape.trim().toLowerCase();
+      value = b;
+    }
     // Lists of edits: keep the valid items, drop the rest (an empty list clears them all).
     if ((field === "decals" || field === "addons") && Array.isArray(value)) {
       const schema = field === "decals" ? Decal : Addon;

@@ -1,0 +1,4060 @@
+[
+  {
+    "id": "h2-001-addon-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "ok so i bike to class a lot and it'd be really nice if there was like a little light on the front so people can see me",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "light",
+            "lamp",
+            "led",
+            "lantern",
+            "beacon",
+            "reflector"
+          ],
+          "placement": "front"
+        }
+      }
+    ],
+    "tags": [
+      "addon",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-002-addon-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "can you stick something to hold a water bottle on the left side of it",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "bottle",
+            "holder",
+            "cup",
+            "flask",
+            "sleeve"
+          ],
+          "placement": "left"
+        }
+      }
+    ],
+    "tags": [
+      "addon",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-003-addon-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "for night rides i want some glowing reflective strips on it",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "strip",
+            "reflect",
+            "light",
+            "led",
+            "band"
+          ],
+          "glow": true
+        }
+      }
+    ],
+    "tags": [
+      "addon",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-004-addon-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte"
+    },
+    "say": "give it a row of spikes going down the top kind of like a dinosaur",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "spike",
+            "dino",
+            "ridge",
+            "fin",
+            "mohawk"
+          ],
+          "placement": "top"
+        }
+      }
+    ],
+    "tags": [
+      "addon",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-005-addon-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte"
+    },
+    "say": "i really want a tail light on the back of my head so cars don't run me over",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "light",
+            "lamp",
+            "led",
+            "lantern",
+            "beacon",
+            "reflector"
+          ],
+          "placement": "back"
+        }
+      }
+    ],
+    "tags": [
+      "addon",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-006-addon-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte"
+    },
+    "say": "it would be so sick if it had little cat ears sticking up on top",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "ear",
+            "cat"
+          ],
+          "placement": "top"
+        }
+      }
+    ],
+    "tags": [
+      "addon",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-007-addon-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "tie a big bow around the waist",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "bow"
+          ],
+          "placement": "waist"
+        }
+      },
+      {
+        "unchanged": [
+          "color",
+          "length"
+        ]
+      }
+    ],
+    "tags": [
+      "addon",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-008-addon-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "it needs a little sparkle, maybe like a brooch pinned right on the chest",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "brooch",
+            "pin",
+            "gem",
+            "jewel",
+            "crystal"
+          ],
+          "placement": "front"
+        }
+      }
+    ],
+    "tags": [
+      "addon",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-009-addon-top",
+    "start": {
+      "category": "top",
+      "name": "everyday top",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "go kinda punk with it, little metal spikes on both shoulders",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "spike",
+            "stud"
+          ],
+          "placement": "top"
+        }
+      }
+    ],
+    "tags": [
+      "addon",
+      "top"
+    ]
+  },
+  {
+    "id": "h2-010-addon-skirt",
+    "start": {
+      "category": "skirt",
+      "name": "a-line skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1A1A1D",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "a chain belt hanging around the middle would look so good with this",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "chain",
+            "belt"
+          ],
+          "placement": "waist"
+        }
+      }
+    ],
+    "tags": [
+      "addon",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h2-011-addon-skirt",
+    "start": {
+      "category": "skirt",
+      "name": "a-line skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1A1A1D",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "what if there were a few tiny bells dangling off the hem so it jingles when i walk",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "bell"
+          ],
+          "placement": "bottom"
+        }
+      }
+    ],
+    "tags": [
+      "addon",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h2-012-addon-generic",
+    "start": {
+      "category": "generic",
+      "name": "travel mug",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.45,
+        "height": 0.6
+      }
+    },
+    "say": "it needs a handle on the right side otherwise how am i supposed to hold it",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "handle"
+          ],
+          "placement": "right"
+        }
+      }
+    ],
+    "tags": [
+      "addon",
+      "generic"
+    ]
+  },
+  {
+    "id": "h2-013-addon-generic",
+    "start": {
+      "category": "generic",
+      "name": "desk lamp",
+      "color": "#F6D44A",
+      "finish": "glossy",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.4,
+        "height": 0.7
+      }
+    },
+    "say": "pop a lampshade on top of it",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "shade"
+          ],
+          "placement": "top"
+        }
+      }
+    ],
+    "tags": [
+      "addon",
+      "generic"
+    ]
+  },
+  {
+    "id": "h2-014-resize-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "the front pocket is honestly tiny i can't fit anything in there",
+    "expect": [
+      {
+        "path": "parts.front_pocket.scale",
+        "grew": true
+      },
+      {
+        "unchanged": [
+          "scale"
+        ]
+      }
+    ],
+    "tags": [
+      "resize",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-015-resize-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "those straps look like they'd dig into my shoulders, can they be chunkier",
+    "expect": [
+      {
+        "path": "parts.straps.scale",
+        "grew": true
+      },
+      {
+        "unchanged": [
+          "scale"
+        ]
+      }
+    ],
+    "tags": [
+      "resize",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-016-resize-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "the whole bag is kind of a lot, can we shrink the entire thing down a bit",
+    "expect": [
+      {
+        "path": "scale",
+        "shrank": true
+      }
+    ],
+    "tags": [
+      "resize",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-017-resize-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte"
+    },
+    "say": "the visor barely sticks out at all, it should come out further to block the sun",
+    "expect": [
+      {
+        "path": "parts.visor.scale",
+        "grew": true
+      },
+      {
+        "unchanged": [
+          "scale"
+        ]
+      }
+    ],
+    "tags": [
+      "resize",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-018-resize-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte"
+    },
+    "say": "lol this helmet would fit a toddler, it needs to be a lot bigger",
+    "expect": [
+      {
+        "path": "scale",
+        "grew": true
+      }
+    ],
+    "tags": [
+      "resize",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-019-resize-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "the pockets look really small, would my phone even fit in there",
+    "expect": [
+      {
+        "path": "parts.pockets.scale",
+        "grew": true
+      },
+      {
+        "partShown": "pockets"
+      }
+    ],
+    "tags": [
+      "resize",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-020-resize-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "the sleeves look too small for the rest of it",
+    "expect": [
+      {
+        "path": "parts.sleeves.scale",
+        "grew": true
+      },
+      {
+        "unchanged": [
+          "scale"
+        ]
+      }
+    ],
+    "tags": [
+      "resize",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-021-resize-skirt",
+    "start": {
+      "category": "skirt",
+      "name": "a-line skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1A1A1D",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "the pockets could be like half the size, they're kinda bulky",
+    "expect": [
+      {
+        "path": "parts.pockets.scale",
+        "shrank": true
+      },
+      {
+        "unchanged": [
+          "scale"
+        ]
+      }
+    ],
+    "tags": [
+      "resize",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h2-022-resize-generic",
+    "start": {
+      "category": "generic",
+      "name": "desk lamp",
+      "color": "#F6D44A",
+      "finish": "glossy",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.4,
+        "height": 0.7
+      }
+    },
+    "say": "stretch it up so it's way taller",
+    "expect": [
+      {
+        "path": "body.height",
+        "grew": true
+      },
+      {
+        "unchanged": [
+          "category"
+        ]
+      }
+    ],
+    "tags": [
+      "resize",
+      "generic"
+    ]
+  },
+  {
+    "id": "h2-023-resize-generic",
+    "start": {
+      "category": "generic",
+      "name": "bluetooth speaker",
+      "color": "#1A1A1D",
+      "finish": "matte",
+      "body": {
+        "shape": "box",
+        "width": 0.6,
+        "height": 0.45,
+        "depth": 0.35
+      }
+    },
+    "say": "it's too chunky, slim it down",
+    "expect": [
+      {
+        "path": "body.width",
+        "shrank": true
+      }
+    ],
+    "tags": [
+      "resize",
+      "generic"
+    ]
+  },
+  {
+    "id": "h2-024-resize-addon-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "addons": [
+        {
+          "name": "bow",
+          "shape": "bow",
+          "placement": "waist",
+          "size": 1
+        }
+      ]
+    },
+    "say": "that bow is enormous it's eating the whole dress",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "bow"
+          ],
+          "sizeLt": 1
+        }
+      }
+    ],
+    "tags": [
+      "resize",
+      "addon",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-025-resize-decal-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ],
+      "decals": [
+        {
+          "kind": "text",
+          "content": "wanderlust",
+          "placement": "front",
+          "size": 1
+        }
+      ]
+    },
+    "say": "i can barely read the wanderlust thing, crank it up",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "wanderlust"
+          ],
+          "sizeGt": 1
+        }
+      }
+    ],
+    "tags": [
+      "resize",
+      "decal",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-026-resize-decal-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "decals": [
+        {
+          "kind": "shape",
+          "content": "star",
+          "placement": "front",
+          "size": 1.5
+        }
+      ]
+    },
+    "say": "the star is way too in your face, scale it down",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "star",
+            "⭐",
+            "★",
+            "☆",
+            "✨",
+            "🌟",
+            "✩"
+          ],
+          "sizeLt": 1.5
+        }
+      }
+    ],
+    "tags": [
+      "resize",
+      "decal",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-027-recolor-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "i'm not feeling the gray, can the whole bag be forest green",
+    "expect": [
+      {
+        "path": "color",
+        "family": "green"
+      }
+    ],
+    "tags": [
+      "recolor",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-028-recolor-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "keep the bag itself the same but do the straps in like a bright orange",
+    "expect": [
+      {
+        "path": "parts.straps.color",
+        "family": "orange"
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "recolor",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-029-recolor-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "do the whole thing in navy with a yellow zipper so it pops",
+    "expect": [
+      {
+        "path": "color",
+        "family": "blue"
+      },
+      {
+        "path": "parts.zipper.color",
+        "family": "yellow"
+      }
+    ],
+    "tags": [
+      "recolor",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-030-recolor-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "everything white except the front pocket, that one should be sky blue",
+    "expect": [
+      {
+        "path": "color",
+        "family": "white"
+      },
+      {
+        "path": "parts.front_pocket.color",
+        "family": "blue"
+      }
+    ],
+    "tags": [
+      "recolor",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-031-recolor-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte"
+    },
+    "say": "the visor should be black like tinted sunglasses",
+    "expect": [
+      {
+        "path": "parts.visor.color",
+        "family": "black"
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "recolor",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-032-recolor-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte"
+    },
+    "say": "can the whole helmet be hot pink but the vents black",
+    "expect": [
+      {
+        "path": "color",
+        "family": "pink"
+      },
+      {
+        "path": "parts.vents.color",
+        "family": "black"
+      }
+    ],
+    "tags": [
+      "recolor",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-033-recolor-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "i want the sleeves to be a different color from the rest, maybe white",
+    "expect": [
+      {
+        "path": "parts.sleeves.color",
+        "family": "white"
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "recolor",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-034-recolor-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#D7263D",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "give it an ocean kind of color",
+    "expect": [
+      {
+        "path": "color",
+        "family": "blue"
+      }
+    ],
+    "tags": [
+      "recolor",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-035-recolor-top",
+    "start": {
+      "category": "top",
+      "name": "everyday top",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "red sleeves on a white body would look so clean",
+    "expect": [
+      {
+        "path": "parts.sleeves.color",
+        "family": "red"
+      },
+      {
+        "path": "color",
+        "family": "white"
+      }
+    ],
+    "tags": [
+      "recolor",
+      "top"
+    ]
+  },
+  {
+    "id": "h2-036-recolor-skirt",
+    "start": {
+      "category": "skirt",
+      "name": "a-line skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1A1A1D",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "the pockets should be brown like little leather patches",
+    "expect": [
+      {
+        "path": "parts.pockets.color",
+        "family": "brown"
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "recolor",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h2-037-recolor-generic",
+    "start": {
+      "category": "generic",
+      "name": "desk lamp",
+      "color": "#F6D44A",
+      "finish": "glossy",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.4,
+        "height": 0.7
+      }
+    },
+    "say": "flip it to a matte black",
+    "expect": [
+      {
+        "path": "color",
+        "family": "black"
+      },
+      {
+        "path": "finish",
+        "equals": "matte"
+      }
+    ],
+    "tags": [
+      "recolor",
+      "generic"
+    ]
+  },
+  {
+    "id": "h2-038-recolor-addon-generic",
+    "start": {
+      "category": "generic",
+      "name": "desk lamp",
+      "color": "#F6D44A",
+      "finish": "glossy",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.4,
+        "height": 0.7
+      },
+      "addons": [
+        {
+          "name": "lampshade",
+          "shape": "cone",
+          "placement": "top",
+          "color": "#F4F4F2"
+        }
+      ]
+    },
+    "say": "the shade should be green, leave the base alone",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "shade"
+          ],
+          "family": "green"
+        }
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "recolor",
+      "addon",
+      "generic"
+    ]
+  },
+  {
+    "id": "h2-039-recolor-decal-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ],
+      "decals": [
+        {
+          "kind": "emoji",
+          "content": "💀",
+          "placement": "back",
+          "color": "#F4F4F2"
+        }
+      ]
+    },
+    "say": "turn the skull red",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "skull",
+            "💀",
+            "☠"
+          ],
+          "family": "red"
+        }
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "recolor",
+      "decal",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-040-decal-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "can you put a little red heart right on the chest",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "heart",
+            "❤",
+            "♥",
+            "💖",
+            "💗",
+            "💕",
+            "💓",
+            "🧡",
+            "💛",
+            "💚",
+            "💙",
+            "💜",
+            "🖤",
+            "🤍"
+          ],
+          "placement": "front",
+          "family": "red"
+        }
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "decal",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-041-decal-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "i want my name across the back, it's priya",
+    "expect": [
+      {
+        "decal": {
+          "kind": "text",
+          "content": [
+            "priya"
+          ],
+          "placement": "back"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-042-decal-top",
+    "start": {
+      "category": "top",
+      "name": "everyday top",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "go bears across the front in yellow letters",
+    "expect": [
+      {
+        "decal": {
+          "kind": "text",
+          "content": [
+            "go bears"
+          ],
+          "placement": "front",
+          "family": "yellow"
+        }
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "decal",
+      "top"
+    ]
+  },
+  {
+    "id": "h2-043-decal-top",
+    "start": {
+      "category": "top",
+      "name": "everyday top",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "slap a big 23 on the back like a basketball jersey",
+    "expect": [
+      {
+        "decal": {
+          "kind": "text",
+          "content": [
+            "23"
+          ],
+          "placement": "back"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "top"
+    ]
+  },
+  {
+    "id": "h2-044-decal-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "i'd love a mountain range on the outside of the bag",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "mountain",
+            "⛰",
+            "🏔",
+            "🗻"
+          ],
+          "placement": "front"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-045-decal-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "on the side that touches my back put the word fragile lol",
+    "expect": [
+      {
+        "decal": {
+          "kind": "text",
+          "content": [
+            "fragile"
+          ],
+          "placement": "back"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-046-decal-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte"
+    },
+    "say": "a skull on the back of it would be hard",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "skull",
+            "💀",
+            "☠"
+          ],
+          "placement": "back"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-047-decal-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte"
+    },
+    "say": "my initials are j m, can those go on the side",
+    "expect": [
+      {
+        "decal": {
+          "kind": "text",
+          "content": [
+            "jm",
+            "j m",
+            "j.m",
+            "j. m"
+          ],
+          "placement": [
+            "left",
+            "right"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-048-decal-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte"
+    },
+    "say": "a smiley face right above where my forehead goes",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "smil",
+            "🙂",
+            "😊",
+            "😀",
+            "😃",
+            "😄",
+            "☺"
+          ],
+          "placement": "front"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-049-decal-skirt",
+    "start": {
+      "category": "skirt",
+      "name": "a-line skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1A1A1D",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "little stars all over it",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "star",
+            "⭐",
+            "★",
+            "☆",
+            "✨",
+            "🌟",
+            "✩"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h2-050-decal-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "tiny butterflies scattered all over the whole dress",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "butterfl",
+            "🦋"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-051-decal-skirt",
+    "start": {
+      "category": "skirt",
+      "name": "a-line skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1A1A1D",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "stitch the word brat near the hem in pink",
+    "expect": [
+      {
+        "decal": {
+          "kind": "text",
+          "content": [
+            "brat"
+          ],
+          "placement": "bottom",
+          "family": "pink"
+        }
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "decal",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h2-052-decal-top",
+    "start": {
+      "category": "top",
+      "name": "everyday top",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "peace sign on the chest, very seventies",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "peace",
+            "☮"
+          ],
+          "placement": "front"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "top"
+    ]
+  },
+  {
+    "id": "h2-053-decal-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "a sun on the front and a moon on the back",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "sun",
+            "☀",
+            "🌞"
+          ],
+          "placement": "front"
+        }
+      },
+      {
+        "decal": {
+          "content": [
+            "moon",
+            "🌙",
+            "☾",
+            "🌕",
+            "🌛",
+            "🌜"
+          ],
+          "placement": "back"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-054-decal-generic",
+    "start": {
+      "category": "generic",
+      "name": "bluetooth speaker",
+      "color": "#1A1A1D",
+      "finish": "matte",
+      "body": {
+        "shape": "box",
+        "width": 0.6,
+        "height": 0.45,
+        "depth": 0.35
+      }
+    },
+    "say": "print our logo on the front, it's just the letters acme",
+    "expect": [
+      {
+        "decal": {
+          "kind": "text",
+          "content": [
+            "acme"
+          ],
+          "placement": "front"
+        }
+      }
+    ],
+    "tags": [
+      "decal",
+      "generic"
+    ]
+  },
+  {
+    "id": "h2-055-remove-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "honestly the pockets ruin the line of the dress, lose them",
+    "expect": [
+      {
+        "partGone": "pockets"
+      },
+      {
+        "unchanged": [
+          "category",
+          "length"
+        ]
+      }
+    ],
+    "tags": [
+      "remove",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-056-remove-skirt",
+    "start": {
+      "category": "skirt",
+      "name": "a-line skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1A1A1D",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "no pockets on this one please",
+    "expect": [
+      {
+        "partGone": "pockets"
+      }
+    ],
+    "tags": [
+      "remove",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h2-057-remove-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "i don't need the laptop stand thing, take that off",
+    "expect": [
+      {
+        "partGone": "stand"
+      }
+    ],
+    "tags": [
+      "remove",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-058-remove-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "ditch the side pocket it just snags on stuff",
+    "expect": [
+      {
+        "partGone": "side_pocket"
+      }
+    ],
+    "tags": [
+      "remove",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-059-remove-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "features": [
+        "headphones"
+      ]
+    },
+    "say": "the headphones are kinda dangerous on a bike actually, get rid of em",
+    "expect": [
+      {
+        "partGone": "headphones"
+      }
+    ],
+    "tags": [
+      "remove",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-060-remove-decal-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ],
+      "decals": [
+        {
+          "kind": "emoji",
+          "content": "💀",
+          "placement": "back"
+        },
+        {
+          "kind": "text",
+          "content": "wanderlust",
+          "placement": "front"
+        }
+      ]
+    },
+    "say": "lose the skull but keep the writing",
+    "expect": [
+      {
+        "noDecal": {
+          "content": [
+            "skull",
+            "💀",
+            "☠"
+          ]
+        }
+      },
+      {
+        "decal": {
+          "content": [
+            "wanderlust"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "remove",
+      "decal",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-061-remove-decal-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "decals": [
+        {
+          "kind": "text",
+          "content": "priya",
+          "placement": "back"
+        },
+        {
+          "kind": "shape",
+          "content": "heart",
+          "placement": "front"
+        }
+      ]
+    },
+    "say": "erase whatever's on the back",
+    "expect": [
+      {
+        "noDecal": {
+          "placement": "back"
+        }
+      },
+      {
+        "decal": {
+          "content": [
+            "heart",
+            "❤",
+            "♥",
+            "💖",
+            "💗",
+            "💕",
+            "💓",
+            "🧡",
+            "💛",
+            "💚",
+            "💙",
+            "💜",
+            "🖤",
+            "🤍"
+          ],
+          "placement": "front"
+        }
+      }
+    ],
+    "tags": [
+      "remove",
+      "decal",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-062-remove-addon-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "addons": [
+        {
+          "name": "cat ears",
+          "shape": "cone",
+          "placement": "top",
+          "count": 2
+        },
+        {
+          "name": "mirror",
+          "shape": "sphere",
+          "placement": "left"
+        }
+      ]
+    },
+    "say": "the cat ears were a mistake, take those off",
+    "expect": [
+      {
+        "noAddon": {
+          "name": [
+            "ear"
+          ]
+        }
+      },
+      {
+        "addon": {
+          "name": [
+            "mirror"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "remove",
+      "addon",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-063-remove-decal-top",
+    "start": {
+      "category": "top",
+      "name": "everyday top",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "decals": [
+        {
+          "kind": "text",
+          "content": "23",
+          "placement": "back"
+        },
+        {
+          "kind": "shape",
+          "content": "star",
+          "placement": "front"
+        }
+      ]
+    },
+    "say": "clear off all the graphics i want it plain",
+    "expect": [
+      {
+        "noDecal": {}
+      }
+    ],
+    "tags": [
+      "remove",
+      "decal",
+      "top"
+    ]
+  },
+  {
+    "id": "h2-064-undo-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "before": [
+      "can it be red"
+    ],
+    "say": "ew no go back to what it was before",
+    "expect": [
+      {
+        "path": "color",
+        "equals": "#3A6FD8"
+      }
+    ],
+    "tags": [
+      "undo",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-065-undo-decal-top",
+    "start": {
+      "category": "top",
+      "name": "everyday top",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "before": [
+      "i want a dragon breathing fire on the back"
+    ],
+    "say": "hmm nevermind scrap that last thing",
+    "expect": [
+      {
+        "noDecal": {
+          "content": [
+            "dragon",
+            "🐉",
+            "🐲"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "undo",
+      "decal",
+      "top"
+    ]
+  },
+  {
+    "id": "h2-066-undo-addon-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "before": [
+      "throw a cup holder on the side"
+    ],
+    "say": "wait no undo, i don't want that",
+    "expect": [
+      {
+        "noAddon": {
+          "name": [
+            "cup",
+            "holder",
+            "bottle"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "undo",
+      "addon",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-067-undo-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "before": [
+      "make it a mini"
+    ],
+    "say": "actually put the length back how it was",
+    "expect": [
+      {
+        "path": "length",
+        "equals": "midi"
+      }
+    ],
+    "tags": [
+      "undo",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-068-undo-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "parts": {
+        "visor": {
+          "scale": 1.2
+        }
+      }
+    },
+    "before": [
+      "the visor needs to be way bigger"
+    ],
+    "say": "eh that looks weird, revert it",
+    "expect": [
+      {
+        "path": "parts.visor.scale",
+        "equals": 1.2
+      }
+    ],
+    "tags": [
+      "undo",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-069-undo-skirt",
+    "start": {
+      "category": "skirt",
+      "name": "a-line skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1A1A1D",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "before": [
+      "leopard print"
+    ],
+    "say": "no no no take that back",
+    "expect": [
+      {
+        "path": "pattern",
+        "equals": "solid"
+      }
+    ],
+    "tags": [
+      "undo",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h2-070-undo-generic",
+    "start": {
+      "category": "generic",
+      "name": "desk lamp",
+      "color": "#F6D44A",
+      "finish": "glossy",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.4,
+        "height": 0.7
+      }
+    },
+    "before": [
+      "turn it into a sphere"
+    ],
+    "say": "i liked the old shape better, go back",
+    "expect": [
+      {
+        "path": "body.shape",
+        "equals": "cylinder"
+      }
+    ],
+    "tags": [
+      "undo",
+      "generic"
+    ]
+  },
+  {
+    "id": "h2-071-move-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "decals": [
+        {
+          "kind": "shape",
+          "content": "heart",
+          "placement": "front"
+        }
+      ]
+    },
+    "say": "the heart would look better on the back actually",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "heart",
+            "❤",
+            "♥",
+            "💖",
+            "💗",
+            "💕",
+            "💓",
+            "🧡",
+            "💛",
+            "💚",
+            "💙",
+            "💜",
+            "🖤",
+            "🤍"
+          ],
+          "placement": "back"
+        }
+      },
+      {
+        "noDecal": {
+          "content": [
+            "heart",
+            "❤",
+            "♥",
+            "💖",
+            "💗",
+            "💕",
+            "💓",
+            "🧡",
+            "💛",
+            "💚",
+            "💙",
+            "💜",
+            "🖤",
+            "🤍"
+          ],
+          "placement": "front"
+        }
+      }
+    ],
+    "tags": [
+      "move",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-072-move-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ],
+      "decals": [
+        {
+          "kind": "text",
+          "content": "wanderlust",
+          "placement": "back"
+        }
+      ]
+    },
+    "say": "nobody's gonna see the writing against my back, put it on the outside where people can read it",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "wanderlust"
+          ],
+          "placement": "front"
+        }
+      },
+      {
+        "noDecal": {
+          "content": [
+            "wanderlust"
+          ],
+          "placement": "back"
+        }
+      }
+    ],
+    "tags": [
+      "move",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-073-move-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "addons": [
+        {
+          "name": "light",
+          "shape": "capsule",
+          "placement": "front",
+          "glow": true
+        }
+      ]
+    },
+    "say": "the light should be on the back not the front",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "light",
+            "lamp",
+            "led",
+            "lantern",
+            "beacon",
+            "reflector"
+          ],
+          "placement": "back"
+        }
+      },
+      {
+        "noAddon": {
+          "name": [
+            "light",
+            "lamp",
+            "led",
+            "lantern",
+            "beacon",
+            "reflector"
+          ],
+          "placement": "front"
+        }
+      }
+    ],
+    "tags": [
+      "move",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-074-move-generic",
+    "start": {
+      "category": "generic",
+      "name": "travel mug",
+      "color": "#D7263D",
+      "finish": "glossy",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.45,
+        "height": 0.6
+      },
+      "addons": [
+        {
+          "name": "handle",
+          "shape": "torus",
+          "placement": "right"
+        }
+      ]
+    },
+    "say": "swap the handle over to the other side, i'm left handed",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "handle"
+          ],
+          "placement": "left"
+        }
+      },
+      {
+        "noAddon": {
+          "name": [
+            "handle"
+          ],
+          "placement": "right"
+        }
+      }
+    ],
+    "tags": [
+      "move",
+      "generic"
+    ]
+  },
+  {
+    "id": "h2-075-move-skirt",
+    "start": {
+      "category": "skirt",
+      "name": "a-line skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1A1A1D",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ],
+      "decals": [
+        {
+          "kind": "text",
+          "content": "brat",
+          "placement": "bottom"
+        }
+      ]
+    },
+    "say": "bring the writing up to the waistband",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "brat"
+          ],
+          "placement": "waist"
+        }
+      },
+      {
+        "noDecal": {
+          "content": [
+            "brat"
+          ],
+          "placement": "bottom"
+        }
+      }
+    ],
+    "tags": [
+      "move",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h2-076-replace-top",
+    "start": {
+      "category": "top",
+      "name": "everyday top",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "decals": [
+        {
+          "kind": "text",
+          "content": "go bears",
+          "placement": "front"
+        }
+      ]
+    },
+    "say": "actually i'm a ucla kid so it should say go bruins",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "bruins"
+          ]
+        }
+      },
+      {
+        "noDecal": {
+          "content": [
+            "bears"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "replace",
+      "top"
+    ]
+  },
+  {
+    "id": "h2-077-replace-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ],
+      "decals": [
+        {
+          "kind": "emoji",
+          "content": "💀",
+          "placement": "back"
+        }
+      ]
+    },
+    "say": "swap the skull out for a ghost",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "ghost",
+            "👻"
+          ]
+        }
+      },
+      {
+        "noDecal": {
+          "content": [
+            "skull",
+            "💀",
+            "☠"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "replace",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-078-replace-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "decals": [
+        {
+          "kind": "text",
+          "content": "7",
+          "placement": "back"
+        }
+      ]
+    },
+    "say": "it should be 12 not 7, i switched jerseys",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "12"
+          ]
+        }
+      },
+      {
+        "noDecal": {
+          "content": [
+            "7"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "replace",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-079-replace-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte",
+      "decals": [
+        {
+          "kind": "text",
+          "content": "priya",
+          "placement": "back"
+        }
+      ]
+    },
+    "say": "oh my name has an h at the end, it's priyah",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "priyah"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "replace",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-080-replace-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "addons": [
+        {
+          "name": "cat ears",
+          "shape": "cone",
+          "placement": "top",
+          "count": 2
+        }
+      ]
+    },
+    "say": "turn the cat ears into bunny ears",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "bunny",
+            "rabbit"
+          ]
+        }
+      },
+      {
+        "noAddon": {
+          "name": [
+            "cat"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "replace",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-081-replace-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte",
+      "decals": [
+        {
+          "kind": "emoji",
+          "content": "🙂",
+          "placement": "front"
+        }
+      ]
+    },
+    "say": "replace the smiley with a frowny face lol",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "frown",
+            "sad",
+            "☹",
+            "🙁",
+            "😞",
+            "😢",
+            "😟"
+          ]
+        }
+      },
+      {
+        "noDecal": {
+          "content": [
+            "smil",
+            "🙂",
+            "😊",
+            "😀",
+            "😃",
+            "😄",
+            "☺"
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "replace",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-082-style-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "can it be floral, like a flower print",
+    "expect": [
+      {
+        "path": "pattern",
+        "equals": "floral"
+      }
+    ],
+    "tags": [
+      "style",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-083-style-length-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "i want it to go all the way down to the floor",
+    "expect": [
+      {
+        "path": "length",
+        "equals": "maxi"
+      },
+      {
+        "unchanged": [
+          "sleeves"
+        ]
+      }
+    ],
+    "tags": [
+      "style",
+      "length",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-084-style-length-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "shorter please, like above the knee",
+    "expect": [
+      {
+        "path": "length",
+        "equals": "mini"
+      },
+      {
+        "unchanged": [
+          "sleeves"
+        ]
+      }
+    ],
+    "tags": [
+      "style",
+      "length",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-085-style-length-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "knee",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "the hem should land around mid calf",
+    "expect": [
+      {
+        "path": "length",
+        "equals": "midi"
+      }
+    ],
+    "tags": [
+      "style",
+      "length",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-086-style-sleeves-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "the sleeves should go all the way to my wrists",
+    "expect": [
+      {
+        "path": "sleeves",
+        "equals": "long"
+      },
+      {
+        "unchanged": [
+          "length"
+        ]
+      }
+    ],
+    "tags": [
+      "style",
+      "sleeves",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-087-style-sleeves-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "three_quarter",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "the sleeves could be a little longer",
+    "expect": [
+      {
+        "path": "sleeves",
+        "equals": "long"
+      },
+      {
+        "unchanged": [
+          "length"
+        ]
+      }
+    ],
+    "tags": [
+      "style",
+      "sleeves",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-088-style-sleeves-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "mini",
+      "silhouette": "wrap",
+      "sleeves": "long",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "the arms are too long, cut them to like elbow length",
+    "expect": [
+      {
+        "path": "sleeves",
+        "oneOf": [
+          "short",
+          "three_quarter"
+        ]
+      },
+      {
+        "unchanged": [
+          "length"
+        ]
+      }
+    ],
+    "tags": [
+      "style",
+      "sleeves",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-089-style-length-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "knee",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "i'd like the dress itself longer, the sleeves are fine",
+    "expect": [
+      {
+        "path": "length",
+        "oneOf": [
+          "midi",
+          "maxi"
+        ]
+      },
+      {
+        "unchanged": [
+          "sleeves"
+        ]
+      }
+    ],
+    "tags": [
+      "style",
+      "length",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-090-style-sleeves-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "sleeveless would be way better for summer",
+    "expect": [
+      {
+        "path": "sleeves",
+        "equals": "none"
+      }
+    ],
+    "tags": [
+      "style",
+      "sleeves",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-091-style-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "i want it to really hug my body",
+    "expect": [
+      {
+        "path": "silhouette",
+        "equals": "fitted"
+      }
+    ],
+    "tags": [
+      "style",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-092-style-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "little white dots all over it",
+    "expect": [
+      {
+        "path": "pattern",
+        "equals": "polka_dot"
+      }
+    ],
+    "tags": [
+      "style",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-093-style-top",
+    "start": {
+      "category": "top",
+      "name": "everyday top",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "something that covers my whole neck, it's for winter",
+    "expect": [
+      {
+        "path": "neckline",
+        "equals": "turtleneck"
+      }
+    ],
+    "tags": [
+      "style",
+      "top"
+    ]
+  },
+  {
+    "id": "h2-094-style-top",
+    "start": {
+      "category": "top",
+      "name": "everyday top",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "i wanna show off my shoulders with this one",
+    "expect": [
+      {
+        "path": "neckline",
+        "equals": "off_shoulder"
+      }
+    ],
+    "tags": [
+      "style",
+      "top"
+    ]
+  },
+  {
+    "id": "h2-095-style-sleeves-top",
+    "start": {
+      "category": "top",
+      "name": "everyday top",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "big puffy princess sleeves",
+    "expect": [
+      {
+        "path": "sleeves",
+        "equals": "puff"
+      }
+    ],
+    "tags": [
+      "style",
+      "sleeves",
+      "top"
+    ]
+  },
+  {
+    "id": "h2-096-style-skirt",
+    "start": {
+      "category": "skirt",
+      "name": "a-line skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1A1A1D",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "a gingham check like a picnic blanket",
+    "expect": [
+      {
+        "path": "pattern",
+        "oneOf": [
+          "checkered",
+          "plaid"
+        ]
+      }
+    ],
+    "tags": [
+      "style",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h2-097-style-skirt",
+    "start": {
+      "category": "skirt",
+      "name": "a-line skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1A1A1D",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "zigzags all the way around",
+    "expect": [
+      {
+        "path": "pattern",
+        "equals": "chevron"
+      }
+    ],
+    "tags": [
+      "style",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h2-098-style-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "camouflage like army surplus",
+    "expect": [
+      {
+        "path": "pattern",
+        "equals": "camo"
+      }
+    ],
+    "tags": [
+      "style",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-099-style-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "could the bag be made of leather",
+    "expect": [
+      {
+        "path": "fabric",
+        "equals": "leather"
+      }
+    ],
+    "tags": [
+      "style",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-100-style-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte"
+    },
+    "say": "glow in the dark would be amazing for night rides",
+    "expect": [
+      {
+        "path": "finish",
+        "equals": "glow"
+      }
+    ],
+    "tags": [
+      "style",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-101-style-generic",
+    "start": {
+      "category": "generic",
+      "name": "desk lamp",
+      "color": "#F6D44A",
+      "finish": "glossy",
+      "body": {
+        "shape": "cylinder",
+        "width": 0.4,
+        "height": 0.7
+      }
+    },
+    "say": "it's too shiny, can it be more flat looking",
+    "expect": [
+      {
+        "path": "finish",
+        "equals": "matte"
+      }
+    ],
+    "tags": [
+      "style",
+      "generic"
+    ]
+  },
+  {
+    "id": "h2-102-create-dress",
+    "say": "hi um i want like a dress for a wedding, something long and flowy in sage green",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "dress"
+      },
+      {
+        "path": "length",
+        "equals": "maxi"
+      },
+      {
+        "path": "silhouette",
+        "equals": "flowy"
+      },
+      {
+        "path": "color",
+        "family": "green"
+      }
+    ],
+    "tags": [
+      "create",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-103-create-helmet",
+    "say": "i want a bike helmet with speakers built in so i can listen to music",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "helmet"
+      },
+      {
+        "partShown": "headphones"
+      }
+    ],
+    "tags": [
+      "create",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-104-create-top",
+    "say": "just a plain white tee",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "top"
+      },
+      {
+        "path": "color",
+        "family": "white"
+      }
+    ],
+    "tags": [
+      "create",
+      "top"
+    ]
+  },
+  {
+    "id": "h2-105-create-skirt",
+    "say": "a denim mini skirt",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "skirt"
+      },
+      {
+        "path": "fabric",
+        "equals": "denim"
+      },
+      {
+        "path": "length",
+        "equals": "mini"
+      }
+    ],
+    "tags": [
+      "create",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h2-106-create-dress",
+    "say": "a red dress but it has to have pockets",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "dress"
+      },
+      {
+        "path": "color",
+        "family": "red"
+      },
+      {
+        "partShown": "pockets"
+      }
+    ],
+    "tags": [
+      "create",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-107-create-generic",
+    "say": "i want a round speaker, like a ball, in orange",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "path": "body.shape",
+        "equals": "sphere"
+      },
+      {
+        "path": "color",
+        "family": "orange"
+      }
+    ],
+    "tags": [
+      "create",
+      "generic"
+    ]
+  },
+  {
+    "id": "h2-108-create-generic",
+    "say": "how about a lamp shaped like an ice cream cone",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "generic"
+      },
+      {
+        "path": "body.shape",
+        "equals": "cone"
+      }
+    ],
+    "tags": [
+      "create",
+      "generic"
+    ]
+  },
+  {
+    "id": "h2-109-switch-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "actually just the skirt part, forget the top half",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "skirt"
+      }
+    ],
+    "tags": [
+      "switch",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-110-switch-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "hmm can we do this as a top instead of a whole dress",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "top"
+      },
+      {
+        "path": "color",
+        "family": "blue"
+      }
+    ],
+    "tags": [
+      "switch",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-111-switch-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "scrap the backpack, i'd rather have a lunchbox",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "generic"
+      }
+    ],
+    "tags": [
+      "switch",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-112-switch-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte"
+    },
+    "say": "you know what forget the helmet let's do a backpack instead",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "backpack"
+      }
+    ],
+    "tags": [
+      "switch",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-113-switch-skirt",
+    "start": {
+      "category": "skirt",
+      "name": "a-line skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1A1A1D",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "turn it into a full dress but keep it black",
+    "expect": [
+      {
+        "path": "category",
+        "equals": "dress"
+      },
+      {
+        "path": "color",
+        "family": "black"
+      }
+    ],
+    "tags": [
+      "switch",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h2-114-switch-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "could the bottom zip off so it turns into a skirt when i want",
+    "expect": [
+      {
+        "path": "features",
+        "includes": "converts_to_skirt"
+      },
+      {
+        "path": "category",
+        "equals": "dress"
+      }
+    ],
+    "tags": [
+      "switch",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-115-nochange-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "wait how does the pledge thing work",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "sleeves",
+          "neckline",
+          "fabric",
+          "pattern",
+          "finish",
+          "silhouette",
+          "scale",
+          "parts",
+          "decals",
+          "addons",
+          "body",
+          "features"
+        ]
+      }
+    ],
+    "tags": [
+      "nochange",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-116-nochange-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "what's that thing that folds out of the back",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "sleeves",
+          "neckline",
+          "fabric",
+          "pattern",
+          "finish",
+          "silhouette",
+          "scale",
+          "parts",
+          "decals",
+          "addons",
+          "body",
+          "features"
+        ]
+      }
+    ],
+    "tags": [
+      "nochange",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-117-nochange-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte"
+    },
+    "say": "oh my god that's so cool",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "sleeves",
+          "neckline",
+          "fabric",
+          "pattern",
+          "finish",
+          "silhouette",
+          "scale",
+          "parts",
+          "decals",
+          "addons",
+          "body",
+          "features"
+        ]
+      }
+    ],
+    "tags": [
+      "nochange",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-118-nochange-top",
+    "start": {
+      "category": "top",
+      "name": "everyday top",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#7B4FC9",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "i love the color, don't change it",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "sleeves",
+          "neckline",
+          "fabric",
+          "pattern",
+          "finish",
+          "silhouette",
+          "scale",
+          "parts",
+          "decals",
+          "addons",
+          "body",
+          "features"
+        ]
+      }
+    ],
+    "tags": [
+      "nochange",
+      "top"
+    ]
+  },
+  {
+    "id": "h2-119-nochange-skirt",
+    "start": {
+      "category": "skirt",
+      "name": "a-line skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1A1A1D",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "say": "how much do you think something like this would cost",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "sleeves",
+          "neckline",
+          "fabric",
+          "pattern",
+          "finish",
+          "silhouette",
+          "scale",
+          "parts",
+          "decals",
+          "addons",
+          "body",
+          "features"
+        ]
+      }
+    ],
+    "tags": [
+      "nochange",
+      "skirt"
+    ]
+  },
+  {
+    "id": "h2-120-nochange-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "say": "the straps look perfect honestly",
+    "expect": [
+      {
+        "unchanged": [
+          "category",
+          "color",
+          "length",
+          "sleeves",
+          "neckline",
+          "fabric",
+          "pattern",
+          "finish",
+          "silhouette",
+          "scale",
+          "parts",
+          "decals",
+          "addons",
+          "body",
+          "features"
+        ]
+      }
+    ],
+    "tags": [
+      "nochange",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-121-multiturn-decal-top",
+    "start": {
+      "category": "top",
+      "name": "everyday top",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "before": [
+      "i want a dragon on the back"
+    ],
+    "say": "ooh yeah now make that way bigger",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "dragon",
+            "🐉",
+            "🐲"
+          ],
+          "sizeGt": 1
+        }
+      },
+      {
+        "unchanged": [
+          "scale"
+        ]
+      }
+    ],
+    "tags": [
+      "multiturn",
+      "decal",
+      "top"
+    ]
+  },
+  {
+    "id": "h2-122-pronoun-decal-top",
+    "start": {
+      "category": "top",
+      "name": "everyday top",
+      "sleeves": "short",
+      "neckline": "crew",
+      "color": "#F4F4F2",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "put a star on the front and make it blue",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "star",
+            "⭐",
+            "★",
+            "☆",
+            "✨",
+            "🌟",
+            "✩"
+          ],
+          "placement": "front",
+          "family": "blue"
+        }
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "pronoun",
+      "decal",
+      "top"
+    ]
+  },
+  {
+    "id": "h2-123-multiturn-addon-backpack",
+    "start": {
+      "category": "backpack",
+      "name": "commuter backpack",
+      "color": "#3A3D42",
+      "fabric": "cotton",
+      "finish": "matte",
+      "features": [
+        "laptop_stand",
+        "phone_pockets"
+      ]
+    },
+    "before": [
+      "put a light on the front"
+    ],
+    "say": "can it glow red",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "light",
+            "lamp",
+            "led",
+            "lantern",
+            "beacon",
+            "reflector"
+          ],
+          "family": "red",
+          "glow": true
+        }
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "multiturn",
+      "addon",
+      "backpack"
+    ]
+  },
+  {
+    "id": "h2-124-multiturn-addon-helmet",
+    "start": {
+      "category": "helmet",
+      "name": "bike helmet",
+      "color": "#F4F4F2",
+      "finish": "matte"
+    },
+    "before": [
+      "give it cat ears"
+    ],
+    "say": "they should be pink",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "ear"
+          ],
+          "family": "pink"
+        }
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "multiturn",
+      "addon",
+      "helmet"
+    ]
+  },
+  {
+    "id": "h2-125-pronoun-addon-dress",
+    "start": {
+      "category": "dress",
+      "name": "wrap dress",
+      "length": "midi",
+      "silhouette": "wrap",
+      "sleeves": "short",
+      "neckline": "v",
+      "color": "#3A6FD8",
+      "fabric": "cotton",
+      "pattern": "solid",
+      "finish": "matte"
+    },
+    "say": "add a bow at the back and make it black",
+    "expect": [
+      {
+        "addon": {
+          "name": [
+            "bow"
+          ],
+          "placement": "back",
+          "family": "black"
+        }
+      },
+      {
+        "unchanged": [
+          "color"
+        ]
+      }
+    ],
+    "tags": [
+      "pronoun",
+      "addon",
+      "dress"
+    ]
+  },
+  {
+    "id": "h2-126-multiturn-decal-skirt",
+    "start": {
+      "category": "skirt",
+      "name": "a-line skirt",
+      "length": "knee",
+      "silhouette": "a_line",
+      "color": "#1A1A1D",
+      "fabric": "denim",
+      "pattern": "solid",
+      "finish": "matte",
+      "features": [
+        "phone_pockets"
+      ]
+    },
+    "before": [
+      "write brat on the front"
+    ],
+    "say": "actually slide it down to the hem",
+    "expect": [
+      {
+        "decal": {
+          "content": [
+            "brat"
+          ],
+          "placement": "bottom"
+        }
+      }
+    ],
+    "tags": [
+      "multiturn",
+      "decal",
+      "skirt"
+    ]
+  }
+]
