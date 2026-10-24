@@ -22,7 +22,7 @@ export function useUiVariant(): { variant: UiVariant; introKey: number } {
   const [introKey, setIntroKey] = useState(() => (initial() === "2" ? 1 : 0));
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
       const t = e.target;
       if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement || (t instanceof HTMLElement && t.isContentEditable)) return;
       if (e.key !== "1" && e.key !== "2") return;

@@ -749,14 +749,16 @@ p { margin: 0; }
 @keyframes v2ringOut { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.18); opacity: 0; } }
 
 /* Everything but the intro waits until the bubble has formed. */
-.v2 > :not(.orb-slot):not(.glows):not(.v2-intro) { transition: opacity .6s ease; }
-.v2.v2-words > :not(.v2-intro):not(.glows),
-.v2.v2-swipe > :not(.v2-intro):not(.glows),
-.v2.v2-ring > :not(.orb-slot):not(.glows),
-.v2.v2-bubble > :not(.orb-slot):not(.glows) { opacity: 0; pointer-events: none; }
+/* Hidden, not just transparent: out of the tab order and the accessibility tree until it shows. */
+.v2-phase-words > :not(.v2-intro):not(.glows),
+.v2-phase-swipe > :not(.v2-intro):not(.glows),
+.v2-phase-ring > :not(.orb-slot):not(.glows),
+.v2-phase-bubble > :not(.orb-slot):not(.glows) { opacity: 0; visibility: hidden; pointer-events: none; }
+.v2-phase-done > .hdr, .v2-phase-done > .title-xl, .v2-phase-done > .title-product, .v2-phase-done > .speech,
+.v2-phase-done > .v2-captions, .v2-phase-done > .dock, .v2-phase-done > .wavebox { transition: opacity .6s ease, visibility .6s; }
 .v2 .bwrap { transition: opacity .5s ease, transform .9s var(--spring); }
-.v2.v2-words .bwrap, .v2.v2-swipe .bwrap, .v2.v2-ring .bwrap { opacity: 0; transform: scale(.35); }
-.v2.v2-bubble .orb-slot::after {
+.v2-phase-words .bwrap, .v2-phase-swipe .bwrap, .v2-phase-ring .bwrap { opacity: 0; transform: scale(.35); }
+.v2-phase-bubble .orb-slot::after {
   content: ""; position: absolute; inset: 15%; border-radius: 50%; pointer-events: none; z-index: 7;
   background: radial-gradient(closest-side, #fff, rgba(242, 216, 138, .7), transparent); animation: landflash .9s ease-out both;
 }

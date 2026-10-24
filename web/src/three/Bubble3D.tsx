@@ -76,6 +76,7 @@ const pointFrag = /* glsl */ `
     float d = length(gl_PointCoord - 0.5);
     float a = smoothstep(0.5, 0.0, d);
     gl_FragColor = vec4(vColor, a * a * vA);
+    #include <colorspace_fragment>
   }`;
 
 // ---------- Sparkle burst (when the bubble forms) ----------
@@ -107,6 +108,7 @@ const ribbonFrag = /* glsl */ `
     float w = 0.5 + 0.5 * sin(vUv.x * 18.85 - uTime * 2.2 + uPhase);
     float a = pow(w, 4.0) * uGlow;
     gl_FragColor = vec4(mix(uColor, vec3(1.0), w * 0.35), a);
+    #include <colorspace_fragment>
   }`;
 
 function cloudTexture(): THREE.CanvasTexture {
@@ -234,7 +236,7 @@ function Scene({ revealed, burstKey, dim }: { revealed: boolean; burstKey: numbe
     y: (Math.random() * 2 - 1) * 0.35,
     s: 0.45 + Math.random() * 0.35,
     speed: 0.5 + Math.random() * 0.35,
-    mat: new THREE.SpriteMaterial({ map: cloudTex, transparent: true, depthWrite: false, opacity: 0, color: new THREE.Color(["#F2CF72", "#F39CC2", "#9CCAB8"][i % 3]) }),
+    mat: new THREE.SpriteMaterial({ map: cloudTex, transparent: true, depthWrite: false, opacity: 0, toneMapped: false, color: new THREE.Color(["#F2CF72", "#F39CC2", "#9CCAB8"][i % 3]) }),
   })), [cloudTex]);
   const cloudRefs = useRef<(THREE.Sprite | null)[]>([]);
 

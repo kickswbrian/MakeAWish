@@ -738,7 +738,9 @@ export default function Studio() {
   const [burstKey, setBurstKey] = useState(0);
   useEffect(() => {
     if (v2 && phase === "bubble") setBurstKey((k) => k + 1);
-  }, [v2, phase]);
+    // The genie edit card floats outside the app: close it so it doesn't hang over the intro.
+    if (v2 && phase === "words") select(null);
+  }, [v2, phase, select]);
   const lastCaption = voice.captions[voice.captions.length - 1];
   const idle = useIdle(
     `${voice.interim}|${lastCaption?.id ?? ""}|${voice.state}|${voice.active}|${busy}|${typing}|${text}`,
@@ -746,7 +748,7 @@ export default function Studio() {
   );
   // Nothing on screen to type into: start typing anywhere and the box opens with that letter.
   useEffect(() => {
-    if (!v2Landing || phase !== "done" || typing) return;
+    if (!v2Landing || phase !== "done" || typing || voice.mode === "text") return;
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || /[12 ]/.test(e.key)) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
@@ -756,10 +758,10 @@ export default function Studio() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [v2Landing, phase, typing]);
+  }, [v2Landing, phase, typing, voice.mode]);
 
   return (
-    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${stagePending ? "stage-pending" : ""} ${v2 ? `v2 v2-${phase}` : ""} ${v2Landing ? "v2-landing" : ""}`}>
+    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${stagePending ? "stage-pending" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""}`}>
       {v2 && <IntroWords phase={phase} onSkip={skipIntro} />}
       <Glows />
       {showConfetti && <Celebration image={snapshot} line={campaign ? `Funded · ${campaign.captured || campaign.held} of ${campaign.targetBackers}` : undefined} onDone={() => setShowConfetti(false)} />}
@@ -920,7 +922,7 @@ export default function Studio() {
               <Sparkle size={18} color="#182825" /> See matches
             </button>
           )}
-          {(typing || voice.mode === "text") && (
+          {(typing || voice.mode === "text" || (v2Landing && (voice.micStatus === "denied" || voice.micStatus === "failed"))) && (
             <form
               className="typebox"
               onSubmit={(e) => {

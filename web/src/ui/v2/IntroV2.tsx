@@ -38,11 +38,19 @@ export function useIntroPhase(playKey: number, enabled: boolean): [IntroPhase, (
 }
 
 export function IntroWords({ phase, onSkip }: { phase: IntroPhase; onSkip: () => void }) {
+  const playing = phase !== "done";
   useEffect(() => {
-    const k = () => onSkip();
+    if (!playing) return;
+    const k = (e: KeyboardEvent) => {
+      // "1"/"2" switch variants (2 replays the intro); modifiers and form fields aren't a skip.
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || e.key === "1" || e.key === "2") return;
+      const t = e.target;
+      if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement || (t instanceof HTMLElement && t.isContentEditable)) return;
+      onSkip();
+    };
     window.addEventListener("keydown", k);
     return () => window.removeEventListener("keydown", k);
-  }, [onSkip]);
+  }, [onSkip, playing]);
   if (phase !== "words" && phase !== "swipe") return null;
   return (
     <div className={`v2-intro ${phase === "swipe" ? "swipe" : ""}`} onClick={onSkip} aria-label="Want it? Wish it." role="presentation">
