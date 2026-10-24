@@ -217,7 +217,7 @@ export function clampSay(s: string) {
 /** Offline brain: keyword patch + a scripted follow-up. Keeps the demo alive with no LLM. */
 export function ruleBrain(spec: ProductSpec, transcript: TranscriptTurn[], text: string): BrainResult {
   const offered = transcript.some((t) => t.role === "genie" && /make your wish real/i.test(t.text));
-  if ((offered && isAffirmativeLock(text)) || /\b(lock it|make it real)\b/i.test(text) || (/\bwish it\b/i.test(text) && (!isQuestion(text) || /\b(can|could|would|will) you\s+(?:please\s+)?wish it\b/i.test(text)))) {
+  if ((offered && isAffirmativeLock(text)) || /\b(lock it|make it real)\b/i.test(text) || (/\bwish it\b/i.test(text) && (!isQuestion(text) || (!/^\s*(how|why|what)\b/i.test(text) && /\b(can|could|would|will) you\s+(?:please\s+)?wish it(?:\s+(?:now|please|for me))*\s*[?.!]*\s*$/i.test(text))))) {
     return { say: "Your wish is sealed. Let's see if anyone has made it already.", patch: {}, lock: true, brain: "rules" };
   }
   const { patch, did, undo } = interpret(text, spec);
@@ -280,8 +280,10 @@ export function starterTurn(spec: ProductSpec, transcript: TranscriptTurn[], tex
   const own = new Set((s.spec.addons ?? []).map((a) => a.name));
   const addons = edits.addons?.filter((a) => own.has(a.name) || !words.some((w) => a.name.toLowerCase().includes(w) || w.includes(a.name.toLowerCase())));
   // Part colors equal to the product color were the product's ("a red helmet with headphones").
-  const parts = Object.fromEntries(Object.entries(edits.parts ?? {}).filter(([, p]) => !(p?.color && details.color && colorFamily(p.color) === colorFamily(details.color) && !p.scale && !p.hidden)));
-  const features = [...new Set([...(s.spec.features ?? []), ...(edits.features ?? [])])];
+  const oneColor = Object.keys(COLOR_NAMES).filter((n) => new RegExp(`\\b${n}\\b`, "i").test(text)).filter((n, _, all) => !all.some((m) => m !== n && m.includes(n))).length <= 1;
+  const parts = Object.fromEntries(Object.entries(edits.parts ?? {}).filter(([, p]) => !(p?.color && details.color && !p.scale && !p.hidden
+    && (p.color === details.color || (oneColor && colorFamily(p.color) === colorFamily(details.color))))));
+  const features = [...new Set([...(s.spec.features ?? []), ...(edits.features ?? []), ...(guessPatch(text, s.spec).features ?? [])])];
   const patch: SpecPatch = {
     ...s.spec, ...details,
     ...(features.length ? { features } : {}),

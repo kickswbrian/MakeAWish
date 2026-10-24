@@ -32,11 +32,11 @@ const TOPICS: Topic[] = [
     answer: () => "You choose the goal when you launch the campaign, say five backers. When that many holds are in, every hold is captured and it goes to a maker.",
   },
   {
-    re: /\b(charge|charged|charges|pay|paying|payment|payments|credit card|my card|the card|card holds?|holds? on (?:my|the) card|hold works|holds work|what'?s a hold|what is a hold|why (?:use )?(?:a )?holds?|money|refund|refunded|cost me|billed|bill me|stripe|visa)\b/,
+    re: /\b(charge|charged|charges|pay|paying|payment|payments|credit card|my card|the card|card holds?|holds? on (?:my|the) card|hold works|holds work|what'?s a hold|what is a hold|why use (?:a )?(?:card )?holds?|why (?:card )?holds|money|refund|refunded|cost me|billed|bill me|stripe|visa)\b/,
     answer: () => "Backing a wish only places a hold on your card, it isn't a charge. If enough people commit before the deadline every hold is captured; if not, every hold is released and nobody pays.",
   },
   {
-    re: /\b(deadline|how long (?:does|do|will|is|are) (?:the |a |my |this )?(?:campaign|campaigns|it run|it last|it stay open|funding|the wish stay)|how long do (?:i|people|backers) have|how many days (?:do|does|will|is|are) (?:i|we|people|backers|it|the campaign|a campaign)|expire|expires|expiry|time limit|when does it end|what (?:if|happens if) (?:nobody|no one|not enough)|not enough (?:people|backers)|doesn'?t (?:get|reach|hit))\b/,
+    re: /\b(deadline|how long (?:does|do|will|is|are) (?:the |a |my |this )?(?:campaign|campaigns|it run|it last|it stay open|funding|the wish stay)|how long do (?:i|people|backers) have|how many days (?:do|does|will|is|are) (?:i|we|people|backers|the campaign|a campaign|it (?:run|last|stay open))|expire|expires|expiry|time limit|when does it end|what (?:if|happens if) (?:nobody|no one|not enough)|not enough (?:people|backers)|doesn'?t (?:get|reach|hit))\b/,
     answer: () => "Campaigns last at most six days, inside the window a card hold can stay open. If the goal isn't reached by then, every hold is released and nobody is charged.",
   },
   {

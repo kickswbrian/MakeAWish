@@ -25,7 +25,7 @@ export const STARTERS: Starter[] = [
   },
   {
     id: "stand-backpack",
-    match: [["backpack", "bag", "rucksack", "bookbag", "book bag", "knapsack"], ["laptop stand", "laptop-stand", "stand", "kickstand", "desk", "prop up", "props up", "propped up"]],
+    match: [["backpack", "bag", "rucksack", "bookbag", "book bag", "knapsack"], ["laptop stand", "laptop-stand", "stand", "kickstand", "like a desk", "little desk", "into a desk", "laptop desk", "standing desk", "prop up", "props up", "propped up"]],
     not: ["stand up on its own", "stands up on its own", "stand on its own", "stands on its own", "stand upright", "stands upright", "understand", "standard", "outstanding"],
     spec: { category: "backpack", name: "Stand-Up Backpack", color: "#7FB7A4", features: ["laptop_stand", "phone_pockets"] },
     say: "Ooh, a backpack whose front folds out into a laptop stand. What color should it be?",
@@ -33,7 +33,7 @@ export const STARTERS: Starter[] = [
   {
     id: "convertible-dress",
     match: [["dress", "gown", "sundress"], ["skirt", "convert", "converts", "convertible", "turns into", "zip off", "zips off", "detachable", "two in one", "2 in 1"]],
-    not: ["backpack", "bag", "a skirt that turns", "a skirt which turns", "a top that turns", "turns into a dress", "into a dress", "becomes a dress"],
+    not: ["backpack", "bag", "a skirt that turns", "a skirt which turns", "a top that turns", "turns into a dress", "into a dress", "becomes a dress", "with a skirt"],
     spec: {
       category: "dress", name: "Convertible Midi", length: "midi", silhouette: "a_line", sleeves: "cap", neckline: "v",
       color: "#1F8A5B", fabric: "satin", features: ["converts_to_skirt"],
