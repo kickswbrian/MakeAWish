@@ -31,10 +31,10 @@ function Badge({ r }: { r: Row }) {
   return <span className="badge white">Drafting</span>;
 }
 
-function Thumb({ spec, size = 68 }: { spec: WishDTO["spec"]; size?: number }) {
+function Thumb({ thumb, category, color, size = 68 }: { thumb: string | null; category?: string; color?: string; size?: number }) {
   return (
     <div className="mb" style={{ width: size, height: size }}>
-      <CategoryIcon category={spec.category} color={spec.color} size={size * 0.62} />
+      {thumb ? <img src={thumb} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} /> : <CategoryIcon category={category ?? "generic"} color={color} size={size * 0.62} />}
     </div>
   );
 }
@@ -94,12 +94,12 @@ export default function Wishlist() {
           <>
             {rows && rows.length === 0 && <div className="empty-magic">No wishes yet. Every great product started as someone's “I wish…”</div>}
             {rows?.map((r, i) => {
-              const name = r.wish.spec.name ?? r.campaign?.name ?? "Unnamed wish";
+              const name = r.wish.product.title ?? r.campaign?.name ?? "Unnamed wish";
               const to = r.campaign ? `/campaign/${r.campaign.id}` : `/?wish=${r.wish.id}`;
               return (
                 <div key={r.wish.id} className="wcard" style={{ animationDelay: `${0.05 + i * 0.08}s`, background: cardBg(i) }}>
                   <Link to={to} reloadDocument={!r.campaign} className="wcard-link" aria-label={`Open ${name}`} />
-                  <Thumb spec={r.wish.spec} />
+                  <Thumb thumb={r.wish.thumb} category={r.wish.product.category} color={r.wish.product.parts[r.wish.product.rootId]?.material.color} />
                   <div className="winfo">
                     <div className="wtop">
                       <span className="wname">{name}</span>
@@ -124,7 +124,7 @@ export default function Wishlist() {
               <div key={c.id} className="wcard tight" style={{ animationDelay: `${0.05 + i * 0.08}s`, background: cardBg(i) }}>
                 <Link to={`/campaign/${c.id}`} className="wcard-link" aria-label={`Open ${c.name}`} />
                 <span className="rank">{i + 1}{i === 0 && <Sparkle className="spk" color="#E9C46A" />}</span>
-                <Thumb spec={c.spec} size={56} />
+                <Thumb thumb={c.thumb} category={c.product.category} color={c.product.parts[c.product.rootId]?.material.color} size={56} />
                 <div className="winfo" style={{ gap: 8 }}>
                   <span className="wname" style={{ fontSize: 17 }}>{c.name}</span>
                   <div className="track"><div className="fill" style={{ width: `${pct(c)}%` }} /></div>

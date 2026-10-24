@@ -1,13 +1,13 @@
 import {
-  CAMPAIGN_MAX_MS, describeSpec, EVENTS,
-  type Campaign, type CampaignStatus, type Maker, type PledgeStatus, type ProductSpec,
+  CAMPAIGN_MAX_MS, emptyProduct, EVENTS,
+  type Campaign, type CampaignStatus, type Maker, type PledgeStatus, type Product,
 } from "@wishit/shared";
 import { db } from "./db.ts";
 import { emit } from "./bus.ts";
 import { paymentMode } from "./env.ts";
 import { bindPaymentEvents, provider } from "./payments.ts";
 import { maskEmail, newId } from "./util.ts";
-import { getWish, modelUrlFor } from "./wishes.ts";
+import { getWish } from "./wishes.ts";
 
 interface CampaignRow {
   id: string; wish_id: string; price_cents: number; target_backers: number; deadline_at: number;
@@ -29,14 +29,14 @@ export function getCampaign(id: string): Campaign | null {
   const r = getRow(id);
   if (!r) return null;
   const wish = getWish(r.wish_id);
-  const spec: ProductSpec = wish?.spec ?? { category: "generic" };
+  const product: Product = wish?.product ?? emptyProduct();
   const pledges = pledgesOf(id);
   return {
     id: r.id,
     wishId: r.wish_id,
-    name: spec.name ?? describeSpec(spec),
-    spec,
-    modelUrl: wish ? modelUrlFor(wish) : null,
+    name: product.title,
+    product,
+    thumb: wish?.thumb ?? null,
     priceCents: r.price_cents,
     targetBackers: r.target_backers,
     held: pledges.filter((p) => p.status === "held").length,
@@ -176,7 +176,7 @@ function settleCapture(campaignId: string) {
   const c = getRow(campaignId);
   if (!c || c.status !== "capturing") return;
   if (countStatus(campaignId, "held") > 0) return;
-  const maker = pickMaker(getWish(c.wish_id)?.spec);
+  const maker = pickMaker(getWish(c.wish_id)?.product);
   const changed = db.prepare("UPDATE campaigns SET status = 'funded', maker_json = ? WHERE id = ? AND status = 'capturing'").run(JSON.stringify(maker), campaignId).changes;
   if (changed) {
     console.log(`[pay] ${campaignId} funded, PO to ${maker.name}`);
@@ -249,17 +249,16 @@ export function startCampaignTimers() {
 }
 
 /** Simulated maker. The payments are real (test mode); manufacturing is not. */
-function pickMaker(spec?: ProductSpec): Maker {
-  const cat = spec?.category ?? "generic";
-  const makers: Record<string, Omit<Maker, "simulated">> = {
-    dress: { name: "Atelier Verde", location: "Los Angeles, CA", specialty: "Small-batch womenswear, cut-and-sew", url: "https://example.com/atelier-verde" },
-    top: { name: "Atelier Verde", location: "Los Angeles, CA", specialty: "Small-batch womenswear, cut-and-sew", url: "https://example.com/atelier-verde" },
-    skirt: { name: "Atelier Verde", location: "Los Angeles, CA", specialty: "Small-batch womenswear, cut-and-sew", url: "https://example.com/atelier-verde" },
-    backpack: { name: "Mission Pack Works", location: "Oakland, CA", specialty: "Technical bags and soft goods", url: "https://example.com/mission-pack-works" },
-    helmet: { name: "Velo Shell Co.", location: "Portland, OR", specialty: "Certified bike helmets and audio integration", url: "https://example.com/velo-shell" },
-    generic: { name: "Bay Prototype Lab", location: "San Francisco, CA", specialty: "Short-run consumer products", url: "https://example.com/bay-prototype-lab" },
-  };
-  return { ...(makers[cat] ?? makers.generic), simulated: true };
+function pickMaker(product?: Product): Maker {
+  const text = `${product?.category ?? ""} ${product?.title ?? ""}`.toLowerCase();
+  const makers: [RegExp, Omit<Maker, "simulated">][] = [
+    [/dress|skirt|top|shirt|jacket|hoodie|coat|garment|pants|scarf/, { name: "Atelier Verde", location: "Los Angeles, CA", specialty: "Small-batch apparel, cut-and-sew", url: "https://example.com/atelier-verde" }],
+    [/bag|backpack|pack|tote|wallet|pouch|luggage|suitcase/, { name: "Mission Pack Works", location: "Oakland, CA", specialty: "Technical bags and soft goods", url: "https://example.com/mission-pack-works" }],
+    [/helmet|headphone|speaker|audio|earbud/, { name: "Velo Shell Co.", location: "Portland, OR", specialty: "Helmets, shells and audio integration", url: "https://example.com/velo-shell" }],
+    [/lamp|light|planter|mug|cup|bottle|vase|bowl|chair|table|desk|shelf/, { name: "Hearth & Kiln Studio", location: "Berkeley, CA", specialty: "Ceramics, lighting and home goods", url: "https://example.com/hearth-kiln" }],
+  ];
+  const hit = makers.find(([re]) => re.test(text));
+  return { ...(hit?.[1] ?? { name: "Bay Prototype Lab", location: "San Francisco, CA", specialty: "Short-run consumer products", url: "https://example.com/bay-prototype-lab" }), simulated: true };
 }
 
 /** Test helper / demo seeding: drive a pledge to held directly (used with real Stripe server-side confirms too). */

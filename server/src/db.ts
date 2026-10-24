@@ -1,9 +1,9 @@
 import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
-import { DATA_DIR, MODELS_DIR } from "./env.ts";
+import { DATA_DIR } from "./env.ts";
 
-fs.mkdirSync(MODELS_DIR, { recursive: true });
+fs.mkdirSync(DATA_DIR, { recursive: true });
 
 export const db = new Database(path.join(DATA_DIR, "wishit.db"));
 db.pragma("journal_mode = WAL");
@@ -66,10 +66,9 @@ CREATE TABLE IF NOT EXISTS apify_cache (
   total INTEGER NOT NULL,
   fetched_at INTEGER NOT NULL
 );
-CREATE TABLE IF NOT EXISTS meshy_cache (
-  prompt_hash TEXT PRIMARY KEY,
-  prompt TEXT NOT NULL,
-  file TEXT NOT NULL,
-  created_at INTEGER NOT NULL
-);
 `);
+
+// Part-based products replaced the old fixed spec: add the new columns to existing databases.
+const cols = new Set((db.prepare("PRAGMA table_info(wishes)").all() as { name: string }[]).map((c) => c.name));
+if (!cols.has("product_json")) db.exec("ALTER TABLE wishes ADD COLUMN product_json TEXT");
+if (!cols.has("thumb")) db.exec("ALTER TABLE wishes ADD COLUMN thumb TEXT");

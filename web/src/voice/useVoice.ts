@@ -7,11 +7,24 @@ import { CartesiaStt, CartesiaTts } from "./cartesia.ts";
 export type VoiceMode = "cartesia" | "browser" | "text";
 export interface Caption { id: number; who: "you" | "genie"; text: string; at: number }
 export interface VoiceOption { id: string; name: string }
-export interface TurnTiming { endOfSpeech: number; patch?: number; firstAudio?: number }
+export interface TurnTiming {
+  endOfSpeech: number;
+  /** When the eager end-of-turn guess arrived (speculative request start), if any. */
+  eager?: number;
+  sent?: number;
+  firstEvent?: number;
+  firstPatch?: number;
+  lastPatch?: number;
+  firstAudio?: number;
+  fast?: boolean;
+  server?: { firstToken?: number; firstPatch?: number; lastPatch?: number; done?: number; calls?: number; cachedTokens?: number; inputTokens?: number; outputTokens?: number };
+}
 
 interface Opts {
   onTurn: (text: string) => void;
   onInterim?: (text: string) => void;
+  onEager?: (text: string) => void;
+  onResume?: () => void;
 }
 
 type SR = {
@@ -37,7 +50,7 @@ let captionId = 0;
  * The voice loop. Cartesia (Ink 2 STT + Sonic TTS) when the server has a key, the browser's own
  * speech APIs otherwise, and the text box always.
  */
-export function useVoice({ onTurn, onInterim }: Opts) {
+export function useVoice({ onTurn, onInterim, onEager, onResume }: Opts) {
   const [mode, setMode] = useState<VoiceMode>("text");
   const [active, setActive] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -53,8 +66,9 @@ export function useVoice({ onTurn, onInterim }: Opts) {
   const interimRef = useRef("");
   interimRef.current = interim;
 
-  const handlers = useRef({ onTurn, onInterim });
-  handlers.current = { onTurn, onInterim };
+  const handlers = useRef({ onTurn, onInterim, onEager, onResume });
+  handlers.current = { onTurn, onInterim, onEager, onResume };
+  const eagerAt = useRef<number | null>(null);
   const stt = useRef<CartesiaStt | null>(null);
   const tts = useRef<CartesiaTts | null>(null);
   const rec = useRef<SR | null>(null);
@@ -121,7 +135,8 @@ export function useVoice({ onTurn, onInterim }: Opts) {
   const finalTurn = useCallback((text: string) => {
     setInterim("");
     if (!text.trim()) return;
-    timing.current = { endOfSpeech: performance.now() };
+    timing.current = { endOfSpeech: performance.now(), eager: eagerAt.current ?? undefined };
+    eagerAt.current = null;
     addCaption("you", text);
     handlers.current.onTurn(text);
   }, [addCaption]);
@@ -195,6 +210,15 @@ export function useVoice({ onTurn, onInterim }: Opts) {
           onTurnEnd: (text) => {
             if (saying.current && isEcho(text, saying.current)) return;
             finalTurn(text);
+          },
+          onEagerEnd: (text) => {
+            if (!text || (saying.current && isEcho(text, saying.current))) return;
+            eagerAt.current = performance.now();
+            handlers.current.onEager?.(text);
+          },
+          onResume: () => {
+            eagerAt.current = null;
+            handlers.current.onResume?.();
           },
           onStatus: (st) => setMicStatus(st === "closed" ? "off" : st),
         });

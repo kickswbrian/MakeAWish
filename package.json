@@ -12,7 +12,7 @@
     "build": "npm run build -w web",
     "start": "npm start -w server",
     "typecheck": "tsc -p shared && tsc -p server && tsc -p web",
-    "test": "npm test -w shared",
+    "test": "npm test -w shared && npm test -w server",
     "brain:test": "npm run brain:test -w server",
     "demo:reset": "npm run demo:reset -w server --"
   },

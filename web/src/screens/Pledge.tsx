@@ -159,7 +159,7 @@ export default function Pledge() {
         <Bubble>
           {showStage && (
             <Suspense fallback={null}>
-              <Stage spec={c.spec} heroUrl={c.modelUrl} framing="bubble" transparent orb={false} pedestal={c.spec.category !== "generic" || !!c.modelUrl} celebrateKey={celebrateKey} />
+              <Stage product={c.product} framing="bubble" transparent interactive={false} effects={false} celebrateKey={celebrateKey} />
             </Suspense>
           )}
         </Bubble>

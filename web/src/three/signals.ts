@@ -36,3 +36,16 @@ export const fx: FxApi = {
   assemble: (...a) => impl?.assemble(...a),
   inward: (...a) => impl?.inward(...a),
 };
+
+/**
+ * Screen position (CSS px, relative to the canvas) of the selected part's tap point, written every
+ * frame by the canvas so the genie bubble can follow the part without React re-renders.
+ */
+export const anchorSignal = { x: 0, y: 0, visible: false, width: 0, height: 0 };
+
+/** Camera/display commands from the fast path ("show me the back"). Bump `version` to trigger. */
+export const viewSignal: { version: number; command: import("@wishit/shared").ViewCommand | null } = { version: 0, command: null };
+export function sendView(command: import("@wishit/shared").ViewCommand) {
+  viewSignal.command = command;
+  viewSignal.version++;
+}

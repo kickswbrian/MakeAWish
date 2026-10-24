@@ -18,24 +18,34 @@ Each key you leave empty falls back, so the full flow runs offline:
 
 | Piece | With keys | Without |
 | --- | --- | --- |
-| Genie (design brain) | Claude, one `update_spec` tool call per turn | Rule-based keyword genie |
+| Genie (design brain) | Claude Opus 5.5 fast mode (new designs) + Sonnet 5 (edits), streamed patch tool calls | Templates + the instant fast path |
 | Voice | Cartesia Ink 2 STT (turn detection) and Sonic TTS | Browser speech APIs, plus the text box |
 | Does it exist? | `wish-matcher` Apify Actor, cached 24 h | Clearly labelled sample listings |
-| Hero 3D model | Meshy text-to-3D, swapped in when ready | The parametric model stays |
 | Payments | Stripe **test mode** manual-capture holds | Simulated provider with the same test cards |
 
 Other commands:
 
 ```bash
-npm test                 # shared spec tests
+npm test                 # shared product/patch/fast-path tests
 npm run typecheck        # shared + server + web
-npm run brain:test       # 5 scripted genie turns (step B2's check)
+npm run brain:test       # genie latency bench: new designs + edits, writes web/public/bench/*.json
 npm run demo:reset -- --planter-deadline=120   # demo starting state (needs the server running)
 npm run demo:reset -- --remote=https://your.deploy --planter-deadline=180
 npm run build && npm start   # production: one process serves API + web
 ```
 
 Stripe webhooks locally: `stripe listen --forward-to localhost:3000/api/stripe/webhook`, then put the printed `whsec_...` in `STRIPE_WEBHOOK_SECRET`. Without a webhook secret, the pledge page polls Stripe every 3 s, so holds still register.
+
+## Demo script (about 90 seconds)
+
+1. **Wish** (tap Talk): "A midi dress that turns into a skirt, with pockets that actually fit my phone." The template appears the instant you stop talking; the genie customizes it and asks a follow-up.
+2. **Instant edits** (no LLM, under a frame): "Make it navy." "A bit longer." "Make the pockets gold." "Undo."
+3. **Tap to edit**: tap the waist zipper. The camera flies to it, a gold outline pulses, and the genie card shows its real size. Tap a swatch, then ask the card: "add a little bow here". It lands exactly where you tapped.
+4. **Show off**: "Take it apart" (exploded view), "show me the back", "put it back together". Press `G` for the gizmo and drag a part.
+5. **Something new**: "A robot vacuum that looks like a turtle". With no template it builds from scratch: first parts in ~1.5 s, finished in ~6 s, parts popping in with sparkles.
+6. **See matches**, then **Wish it into existence**: launch the campaign, scan the QR code with a phone and place a card hold.
+
+Add `?debug` to the studio URL to show per-turn latency (speech end → request → first patch → last patch → first audio).
 
 ## Screens
 
@@ -45,7 +55,8 @@ Stripe webhooks locally: `stripe listen --forward-to localhost:3000/api/stripe/w
 | `/c/:id` | Mobile pledge page: email, card, hold. Shows released or captured afterwards, plus the purchase order. |
 | `/campaign/:id` | Laptop campaign view (QR, live demand bar). `?admin` adds a "Force deadline" button. |
 | `/wishlist` | My wishes and the live "Most wished" leaderboard. |
-| `/debug` | 3D test bench: edit the spec JSON and watch the model morph. |
+| `/debug` | 3D bench: templates (`?t=backpack`), bench results (`?src=/bench/lamp.json`), live product JSON; `&bare` for full screen. |
+| `/lab/materials`, `/lab/kit` | Material presets and the 31 kit parts under studio light. |
 
 ## Architecture
 
@@ -53,18 +64,30 @@ Stripe webhooks locally: `stripe listen --forward-to localhost:3000/api/stripe/w
 browser (studio, laptop) ──audio──> Cartesia (Ink 2 STT / Sonic TTS, short-lived token)
         │  REST + Socket.IO
         ▼
-Node server (Express + Socket.IO + SQLite) ──> Claude (update_spec tool)
+Node server (Express + Socket.IO + SQLite) ──> Claude (streamed plan_design / add_parts / apply_patches)
         │                                  ──> Apify wish-matcher Actor ──> Amazon / Etsy / Google Shopping actors
-        │                                  ──> Meshy text-to-3D (GLB served from /models)
         │                                  <─> Stripe test mode (manual capture, webhooks)
         ▼
 browser (pledge page, phone) ──card──> Stripe Payment Element
 ```
 
-- `shared/`: the contract. A `ProductSpec` zod schema, `applyPatch` (drops invalid fields, never throws), socket event names and API types. Also the keyword "instant guess" that starts forming the product from live captions before the server answers.
-- `server/`: turn handling (patch applied and `spec:updated` emitted **before** the reply is spoken), campaign state machine, Apify and Meshy jobs, Stripe and simulated payments, and deadline timers that are rebuilt on boot.
-- `web/`: React + react-three-fiber. Parametric garments on a dress form (lathe-style skirt whose shape comes from length and silhouette, bodice with blended necklines, sleeves, pockets, a glowing convertible seam), a backpack with a fold-out laptop stand, and a helmet with headphone cups. Every spec change morphs over about 400 ms with a particle shimmer. Also the sparkle orb, bloom, and the Meshy GLB dissolve-swap.
-- `actor/`: the `wish-matcher` Apify Actor. It calls three Store actors in parallel with per-store timeouts, normalizes listings, scores them all in one Claude call, and returns the top matches plus a `_meta` row. See [actor/README.md](actor/README.md).
+- `shared/`: the contract. A product is a flat map of `Part`s with parent links (`product.ts`: zod schemas, `applyPatches` that validates and never throws); every edit is a `Patch` (`add` / `update` / `remove`). Also the kit catalog (`kit.ts`, 31 parts with attachment points), 20 hand-built templates (`templates/`: bags, shoes, a dress, helmet, headphones, speaker, suitcase, lamp, bottle, mug, planter, watch, sunglasses, kettle, umbrella, office chair, skateboard, teddy bear, phone), and the instant fast path (`intent.ts`: "make it red", "bigger", "leather", "remove this", "make the straps black", "undo", plus camera commands like "show me the back", "zoom in", "take it apart").
+- `server/`: the streaming brain (`brain.ts`). New designs: a planner call writes the root body and 5-8 part groups; each group starts its own builder call the moment it is written, so groups build in parallel. Edits: one call with the tapped part, its neighbors, the tap point, normal and mount rotation; a new part whose position was written in product space instead of its parent's frame is moved back onto its parent (`shared/frames.ts`). Template wishes: the client shows the template instantly and the planner customizes it from a per-part outline. Tool input is streamed (`eager_input_streaming`) and scanned incrementally (`jsonstream.ts`), each patch validated and forwarded as NDJSON the moment it closes. The static system prompt (rules, schema, kit catalog, templates, worked examples) is prompt-cached and pre-warmed at boot. Also the campaign state machine, Apify, Stripe and simulated payments.
+- `web/`: React + react-three-fiber. `three/parts/` renders products: procedural geometry (rounded boxes, smoothed lathes, swept straps, beveled extrusions, CSG cutouts via three-bvh-csg), 31 procedural kit parts, textured `MeshPhysicalMaterial` presets (CC0 Poly Haven / ambientCG, see `web/public/textures/CREDITS.md`), spring pop-in per part with sparkle bursts, and a selection outline. `state/store.ts` holds the product with zundo undo/redo (one step per edit or per genie turn). The studio adds tap-to-select (gold outline, camera zoom to the part), the anchored genie card (colors, materials, size, move, remove, ask), a parts tree, an exploded view, real-world dimensions, `.glb` export for makers, the move/rotate/scale gizmo (`G`), keyboard undo/redo, a speculative turn on Cartesia's early end-of-turn, and `?debug` latency timings.
+
+### Latency (measured, `npm run brain:test` and `?debug`)
+
+| Path | Time |
+| --- | --- |
+| Fast-path edit ("make it red", chips, gizmo, undo, "show me the back") | instant, no network |
+| Compound request ("make it red and add wheels") | the instant half lands immediately; the genie streams the rest |
+| Wish that matches a template | template on screen immediately; Claude (Opus planner, given the template's part outline) streams its customizations from ~1 s, done ~1.5-7 s |
+| Asking again while the genie works | instant edits apply at once; anything else is queued and runs right after |
+| Edit through the genie | first patch ~1-2 s, done ~2.5-3.5 s |
+| Brand-new design | first part ~1.1-1.7 s, complete ~5-6 s (planner + parallel builders) |
+
+New designs use Opus 5.5 in fast mode: it streams ~290 tokens/s vs ~140 for Haiku 4.5 and ~120 for Sonnet 5 (measured), so it is both faster and better for long outputs. Edits use Sonnet 5 with thinking off: edit outputs are short, so its fast first token wins (first patch ~1.9 s vs ~2.4-3.9 s on Opus, whose thinking can't be disabled). Haiku 4.5 is the automatic fallback if a call fails before streaming. Models are set with `DESIGN_MODEL`, `EDIT_MODEL`, `FAST_MODE`, `FALLBACK_MODEL`.
+- `actor/`: the `wish-matcher` Apify Actor. It calls three Store actors in parallel with per-store timeouts, normalizes listings, scores them all in one Claude call, and returns the top matches plus a `_meta` row. The server searches with the genie's short `searchQuery` ("electric kettle tea infuser"), not the product's invented name. After changing `actor/src`, redeploy it (`cd actor && apify push`): the server only sends inputs. See [actor/README.md](actor/README.md).
 
 ### Payments: card holds as a commitment primitive
 

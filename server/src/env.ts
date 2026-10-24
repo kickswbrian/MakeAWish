@@ -4,7 +4,6 @@ import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(here, "../..");
 export const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(ROOT, "data");
-export const MODELS_DIR = path.join(DATA_DIR, "models");
 export const WEB_DIST = path.join(ROOT, "web", "dist");
 
 const s = (k: string) => (process.env[k] && process.env[k]!.trim()) || undefined;
@@ -22,12 +21,21 @@ export const env = {
   demoMode: s("DEMO_MODE") === "1" || s("DEMO_MODE") === "true",
   adminToken: s("ADMIN_TOKEN"),
   anthropicKey: s("ANTHROPIC_API_KEY") ?? s("ANTHROPIC_AUTH_TOKEN"),
-  brainModel: s("BRAIN_MODEL") ?? "claude-opus-5-5",
+  /**
+   * Edits: small scoped patches, latency first. Sonnet 5 with thinking off measured first patch
+   * ~1.9 s vs ~2.4-3.9 s for Opus 5.5 fast (whose thinking can't be disabled) on the same edits.
+   */
+  editModel: s("EDIT_MODEL") ?? "claude-sonnet-5",
+  /** New designs: planner + parallel part builders. */
+  designModel: s("DESIGN_MODEL") ?? "claude-opus-5-5",
+  /** Fast mode (Opus only): ~2x output speed. Measured ~290 tok/s vs ~140 for Haiku 4.5. */
+  fastMode: (s("FAST_MODE") ?? "1") !== "0",
+  /** Used when the main model is rate-limited or fails before streaming. */
+  fallbackModel: s("FALLBACK_MODEL") ?? "claude-haiku-4-5",
   cartesiaKey: s("CARTESIA_API_KEY"),
   cartesiaVersion: s("CARTESIA_VERSION") ?? "2026-08-14",
   apifyToken: s("APIFY_TOKEN"),
   apifyActor: s("APIFY_ACTOR"), // e.g. "yourname~wish-matcher"
-  meshyKey: s("MESHY_API_KEY"),
   stripeSecret: s("STRIPE_SECRET_KEY"),
   stripePublishable: s("STRIPE_PUBLISHABLE_KEY"),
   stripeWebhookSecret: s("STRIPE_WEBHOOK_SECRET"),
@@ -35,12 +43,11 @@ export const env = {
   allowedOrigins: (s("ALLOWED_ORIGINS") ?? "").split(",").map((o) => o.trim()).filter(Boolean),
   /**
    * Daily caps on paid calls, across all users. Past a cap the app degrades to its free fallback
-   * (rule-based genie, sample matches, parametric 3D, browser speech) instead of erroring. 0 = off.
+   * (rule-based genie, sample matches, browser speech) instead of erroring. 0 = off.
    */
   budget: {
     llmTurns: n("DAILY_LLM_TURNS", 1500),
     apifySearches: n("DAILY_APIFY_SEARCHES", 60),
-    meshyModels: n("DAILY_MESHY_MODELS", 30),
     cartesiaTokens: n("DAILY_CARTESIA_TOKENS", 600),
   },
 };
@@ -66,10 +73,9 @@ export function logConfig() {
   console.log(
     [
       `[wish-it] ${env.publicUrl}  demoMode=${env.demoMode}  ${isProd ? "PRODUCTION" : "development"}`,
-      `  brain    ${on(env.anthropicKey)} ${env.anthropicKey ? env.brainModel : "(rule-based fallback)"}`,
+      `  brain    ${on(env.anthropicKey)} ${env.anthropicKey ? `design=${env.designModel} edit=${env.editModel}` : "(rule-based fallback)"}`,
       `  cartesia ${on(env.cartesiaKey)} ${env.cartesiaKey ? "" : "(browser speech fallback)"}`,
       `  apify    ${on(env.apifyToken && env.apifyActor)} ${env.apifyToken && env.apifyActor ? env.apifyActor : "(sample matches)"}`,
-      `  meshy    ${on(env.meshyKey)} ${env.meshyKey ? "" : "(parametric only)"}`,
       `  stripe   ${paymentMode === "stripe" ? "on  test mode" : "off (simulated payments)"}${paymentMode === "stripe" && !env.stripeWebhookSecret ? "  WARNING: no STRIPE_WEBHOOK_SECRET, relying on polling" : ""}`,
     ].join("\n"),
   );

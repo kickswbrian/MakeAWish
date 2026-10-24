@@ -1,31 +1,30 @@
-import { applyPatch, defaultSpec, ProductSpec, type SpecField, type WishDTO, type WishStatus } from "@wishit/shared";
+import { emptyProduct, parseProduct, type Product, type WishDTO, type WishStatus } from "@wishit/shared";
 import { db } from "./db.ts";
 import { newId } from "./util.ts";
 
 export interface TranscriptTurn { role: "user" | "genie"; text: string; at: number }
 interface WishRow {
-  id: string; spec_json: string; transcript_json: string; meshy_task_id: string | null;
-  model_path: string | null; status: WishStatus; created_at: number;
+  id: string; product_json: string | null; transcript_json: string; thumb: string | null;
+  status: WishStatus; created_at: number;
 }
 
 export interface Wish {
-  id: string; spec: ProductSpec; transcript: TranscriptTurn[]; meshyTaskId: string | null;
-  modelPath: string | null; status: WishStatus; createdAt: number;
+  id: string; product: Product; transcript: TranscriptTurn[]; thumb: string | null; status: WishStatus; createdAt: number;
 }
 
 const toWish = (r: WishRow): Wish => ({
   id: r.id,
-  spec: ProductSpec.safeParse(JSON.parse(r.spec_json)).data ?? defaultSpec,
+  product: (r.product_json && parseProduct(JSON.parse(r.product_json))) || emptyProduct(r.id),
   transcript: JSON.parse(r.transcript_json),
-  meshyTaskId: r.meshy_task_id,
-  modelPath: r.model_path,
+  thumb: r.thumb,
   status: r.status,
   createdAt: r.created_at,
 });
 
-export function createWish(spec: ProductSpec = defaultSpec): Wish {
+export function createWish(product?: Product): Wish {
   const id = newId();
-  db.prepare("INSERT INTO wishes (id, spec_json, created_at) VALUES (?, ?, ?)").run(id, JSON.stringify(spec), Date.now());
+  const p = product ? { ...product, id } : emptyProduct(id);
+  db.prepare("INSERT INTO wishes (id, spec_json, product_json, created_at) VALUES (?, '{}', ?, ?)").run(id, JSON.stringify(p), Date.now());
   return getWish(id)!;
 }
 
@@ -34,12 +33,13 @@ export function getWish(id: string): Wish | null {
   return r ? toWish(r) : null;
 }
 
-export function patchWish(id: string, patch: unknown): { spec: ProductSpec; changed: SpecField[]; dropped: string[] } {
-  const w = getWish(id);
-  if (!w) throw new Error("wish not found");
-  const res = applyPatch(w.spec, patch);
-  if (res.changed.length) db.prepare("UPDATE wishes SET spec_json = ? WHERE id = ?").run(JSON.stringify(res.spec), id);
-  return res;
+export function saveProduct(id: string, product: Product) {
+  db.prepare("UPDATE wishes SET product_json = ? WHERE id = ?").run(JSON.stringify({ ...product, id }), id);
+}
+
+/** Small data-URL snapshot for lists and campaign pages. */
+export function saveThumb(id: string, thumb: string) {
+  db.prepare("UPDATE wishes SET thumb = ? WHERE id = ?").run(thumb, id);
 }
 
 export function appendTranscript(id: string, turns: TranscriptTurn[]) {
@@ -53,13 +53,7 @@ export function setWishStatus(id: string, status: WishStatus) {
   db.prepare("UPDATE wishes SET status = ? WHERE id = ?").run(status, id);
 }
 
-export function setWishModel(id: string, modelPath: string | null, taskId?: string | null) {
-  db.prepare("UPDATE wishes SET model_path = COALESCE(?, model_path), meshy_task_id = COALESCE(?, meshy_task_id) WHERE id = ?").run(modelPath, taskId ?? null, id);
-}
-
-export const modelUrlFor = (w: Wish) => (w.modelPath ? `/models/${w.modelPath}` : null);
-
 export function toWishDTO(w: Wish): WishDTO {
   const c = db.prepare("SELECT id FROM campaigns WHERE wish_id = ? ORDER BY created_at DESC LIMIT 1").get(w.id) as { id: string } | undefined;
-  return { id: w.id, spec: w.spec, status: w.status, modelUrl: modelUrlFor(w), campaignId: c?.id ?? null };
+  return { id: w.id, product: w.product, status: w.status, thumb: w.thumb, campaignId: c?.id ?? null };
 }
