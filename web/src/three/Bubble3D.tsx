@@ -106,7 +106,7 @@ export default function Bubble3D({ revealed, paused = false }: Bubble3DProps) {
   const fov = (2 * Math.atan(BUBBLE3D_OVERSCAN / 9) * 180) / Math.PI;
   return (
     <div className="bubble3d" aria-hidden="true">
-      <Canvas frameloop={paused ? "never" : "always"} dpr={[1, 1.5]} gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }} camera={{ fov, position: [0, 0, 9], near: 0.1, far: 50 }} style={{ pointerEvents: "none" }}>
+      <Canvas frameloop={paused ? "never" : "always"} resize={{ offsetSize: true }} dpr={[1, 1.5]} gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }} camera={{ fov, position: [0, 0, 9], near: 0.1, far: 50 }} style={{ pointerEvents: "none" }}>
         <Scene revealed={revealed} />
       </Canvas>
     </div>
