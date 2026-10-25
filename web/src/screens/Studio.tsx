@@ -26,6 +26,7 @@ import { BackIcon, CategoryIcon, ChevronDown, HeartIcon, KeyboardIcon, MicIcon, 
 import { LaunchSheet, MatchGrid, rankMatches, SortSelect, summarize, type SortKey } from "../ui/Results.tsx";
 import { CampaignPanel, Celebration } from "../ui/Campaign.tsx";
 import { WishWorld } from "../ui/WishWorld.tsx";
+import { Purchases } from "../ui/Purchases.tsx";
 import { remixWish } from "../lib/remix.ts";
 import Bubble3D from "../three/Bubble3D.tsx";
 import { IntroRing, IntroWords, useFramesSettled, useIntroPhase } from "../ui/v2/IntroV2.tsx";
@@ -901,6 +902,8 @@ export default function Studio() {
   }, [v2, voice.active, voice.muted, typing]);
   // The globe in the corner of the wish screen: the bubble swells and fades, then the Wish World.
   const [toWorld, setToWorld] = useState(false);
+  const [showOrders, setShowOrders] = useState(false);
+  const closeOrders = useCallback(() => setShowOrders(false), []);
   const openWorld = () => {
     if (toWorld) return;
     setToWorld(true);
@@ -998,6 +1001,7 @@ export default function Studio() {
   return (
     <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${mode === "voice" && typeboxOpen && !v2 ? "typing" : ""} ${stagePending ? "stage-pending" : ""} ${leaving ? "leaving" : ""} ${entering ? "entering" : ""} ${mode === "world" && worldLanded && !launchOpen ? "world-landed" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""} ${toWorld ? "to-world" : ""} ${v2 && mode === "voice" && hasProduct ? "v2-product" : ""}`}>
       {v2 && <IntroWords phase={phase} onSkip={skipIntro} />}
+      {showOrders && <Purchases onClose={closeOrders} />}
       <Glows />
       {showConfetti && <Celebration image={snapshot} line={campaign ? `Funded · ${campaign.captured || campaign.held} of ${campaign.targetBackers}` : undefined} onDone={() => setShowConfetti(false)} />}
       {debug && perf && <div className="perf">{perf}</div>}
@@ -1176,6 +1180,15 @@ export default function Studio() {
               </div>
             )}
           </div>
+          {v2Landing && phase === "done" && (
+            <button className="v2-world-link v2-orders-link" onClick={() => setShowOrders(true)} aria-label="Your purchases" title="Your purchases">
+              <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M8 11.5h16l-1.4 14.2a1.6 1.6 0 0 1-1.6 1.4H11a1.6 1.6 0 0 1-1.6-1.4z" />
+                <path d="M12 14v-3.5a4 4 0 0 1 8 0V14" />
+                <path className="wl-twinkle" d="M25.5 3.5c.3 1.8.8 2.3 2.6 2.6-1.8.3-2.3.8-2.6 2.6-.3-1.8-.8-2.3-2.6-2.6 1.8-.3 2.3-.8 2.6-2.6z" fill="currentColor" stroke="none" />
+              </svg>
+            </button>
+          )}
           {v2Landing && phase === "done" && (
             <button className="v2-world-link" onClick={openWorld} aria-label="Open the Wish World" title="Wish World">
               {/* A little ringed world with a twinkle: thin lines, faint until hovered. */}

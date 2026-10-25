@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import type { TapCheck } from "@wishit/shared";
+import type { OrderDTO, TapCheck } from "@wishit/shared";
 import { db } from "./db.ts";
 import { env } from "./env.ts";
 import { agentKey, signObject, signRequest, verifyContainer, verifyRequest } from "./tap.ts";
@@ -39,21 +39,26 @@ db.exec(`CREATE TABLE IF NOT EXISTS agent_orders (
   created_at INTEGER NOT NULL
 )`);
 
+// Who bought it (the browser's anonymous id, as for votes) and the listing photo, for "your purchases".
+const orderCols = (db.prepare("PRAGMA table_info(agent_orders)").all() as { name: string }[]).map((c) => c.name);
+if (!orderCols.includes("buyer")) db.exec("ALTER TABLE agent_orders ADD COLUMN buyer TEXT");
+if (!orderCols.includes("image")) db.exec("ALTER TABLE agent_orders ADD COLUMN image TEXT");
+
 export const ORDER_PATH = "/api/agent/orders";
 const SELF = () => `127.0.0.1:${env.port}`;
 const MANDATE_MS = 10 * 60_000;
 
-interface Listing { title: string; url: string; source: string; price: number | null }
+interface Listing { title: string; url: string; source: string; price: number | null; image: string | null }
 interface MandateRow { id: string; wish_id: string; url: string; max_cents: number; expires_at: number; status: string }
 export interface OrderResult { status: number; body: { ok: boolean; checks: TapCheck[]; outcome: string; orderId?: string; amountCents?: number } }
 
 /** One of this wish's search results, by its link. */
 function listing(wishId: string, url: string): Listing | null {
-  return (db.prepare("SELECT title, url, source, price FROM matches WHERE wish_id = ? AND url = ?").get(wishId, url) as Listing | undefined) ?? null;
+  return (db.prepare("SELECT title, url, source, price, image FROM matches WHERE wish_id = ? AND url = ?").get(wishId, url) as Listing | undefined) ?? null;
 }
 
 /** The genie buys this listing for the shopper (they just confirmed it at its price). */
-export async function agentBuy(wishId: string, url: string): Promise<OrderResult> {
+export async function agentBuy(wishId: string, url: string, buyer: string | null): Promise<OrderResult> {
   const l = listing(wishId, url);
   if (!l) return { status: 404, body: { ok: false, checks: [], outcome: "That listing isn't in this wish's matches" } };
   if (l.price == null || l.price <= 0) return { status: 400, body: { ok: false, checks: [], outcome: "This listing has no price to pay" } };
@@ -63,7 +68,7 @@ export async function agentBuy(wishId: string, url: string): Promise<OrderResult
     .run(mandate.id, wishId, url, amountCents, mandate.expires_at, Date.now());
   const nonce = crypto.randomBytes(32).toString("base64");
   const container = signObject({ nonce, kid: agentKey.kid, alg: "Ed25519", mandateId: mandate.id, wishId, url, amountCents });
-  const body = JSON.stringify({ wishId, url, amountCents, agenticPaymentContainer: container });
+  const body = JSON.stringify({ wishId, url, amountCents, buyer, agenticPaymentContainer: container });
   const { headers } = signRequest(SELF(), ORDER_PATH, body, "agent-payer-auth", { nonce });
   const res = await fetch(`http://${SELF()}${ORDER_PATH}`, { method: "POST", headers: { "content-type": "application/json", [INTERNAL_HEADER]: INTERNAL_SECRET, ...headers }, body });
   return { status: res.status, body: (await res.json()) as OrderResult["body"] };
@@ -76,7 +81,7 @@ export function handleAgentOrder(req: { host: string; path: string; headers: Rec
   const checks = [...tap.checks];
   if (!tap.ok) return fail(checks, checks[checks.length - 1]?.detail ?? "Not a verified agent");
 
-  let body: { wishId?: string; url?: string; amountCents?: number; agenticPaymentContainer?: Record<string, unknown> };
+  let body: { wishId?: string; url?: string; amountCents?: number; buyer?: string | null; agenticPaymentContainer?: Record<string, unknown> };
   try {
     body = JSON.parse(req.rawBody.toString("utf8"));
   } catch {
@@ -104,9 +109,38 @@ export function handleAgentOrder(req: { host: string; path: string; headers: Rec
 
   db.prepare("UPDATE order_mandates SET status = 'used' WHERE id = ?").run(m!.id);
   const orderId = newId();
-  db.prepare("INSERT INTO agent_orders (id, wish_id, url, title, source, amount_cents, keyid, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-    .run(orderId, m!.wish_id, m!.url, l!.title, l!.source, amount, tap.keyid!, Date.now());
+  const buyer = typeof body.buyer === "string" && /^[A-Za-z0-9-]{8,64}$/.test(body.buyer) ? body.buyer : null;
+  db.prepare("INSERT INTO agent_orders (id, wish_id, url, title, source, amount_cents, keyid, created_at, buyer, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    .run(orderId, m!.wish_id, m!.url, l!.title, l!.source, amount, tap.keyid!, Date.now(), buyer, l!.image);
   checks.push({ name: "Order placed", ok: true, detail: `Test order ${orderId.toUpperCase()} for $${(amount / 100).toFixed(2)} (no real store checkout or charge)` });
   console.log(`[tap] order ${orderId} ACCEPTED: ${l!.title} $${(amount / 100).toFixed(2)}`);
   return { status: 200, body: { ok: true, checks, outcome: "Bought by your genie", orderId, amountCents: amount } };
+}
+
+// ---------- Your purchases ----------
+
+/**
+ * Tracking for a test order is simulated (no store shipped anything): it moves through the stages on a
+ * short demo clock, so a purchase made at the start of a demo shows progress by the end.
+ */
+const STAGE_MS = [0, 2 * 60_000, 6 * 60_000, 12 * 60_000];
+const CARRIERS = ["Wish Express", "Genie Post", "Lamp Logistics"];
+
+export function listOrders(buyer: string): OrderDTO[] {
+  const rows = db.prepare("SELECT * FROM agent_orders WHERE buyer = ? ORDER BY created_at DESC LIMIT 50").all(buyer) as {
+    id: string; wish_id: string; url: string; title: string; source: string; image: string | null; amount_cents: number; created_at: number;
+  }[];
+  const now = Date.now();
+  return rows.map((r) => {
+    const stageAt = STAGE_MS.map((ms) => r.created_at + ms) as OrderDTO["stageAt"];
+    const stage = stageAt.filter((t) => t <= now).length - 1;
+    const n = parseInt(r.id.replace(/[^0-9]/g, "").slice(0, 9) || "7", 10);
+    return {
+      id: r.id, wishId: r.wish_id, title: r.title, url: r.url, source: r.source, image: r.image, amountCents: r.amount_cents, createdAt: r.created_at,
+      carrier: CARRIERS[n % CARRIERS.length],
+      trackingNumber: `WI${r.id.toUpperCase()}${String(n % 1000).padStart(3, "0")}`,
+      stage: Math.max(0, Math.min(3, stage)) as OrderDTO["stage"],
+      stageAt,
+    };
+  });
 }

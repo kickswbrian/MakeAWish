@@ -21,7 +21,7 @@ import { listWorld, voteWish } from "./world.ts";
 import { seedWorldIfEmpty } from "./worldSeed.ts";
 import { handleStripeEvent, mockConfirm, stripe } from "./payments.ts";
 import { agentAttack, agentPledge, handleAgentPledge, type Attack } from "./agent.ts";
-import { agentBuy, handleAgentOrder, ORDER_PATH } from "./orders.ts";
+import { agentBuy, handleAgentOrder, listOrders, ORDER_PATH } from "./orders.ts";
 import { lookupKey } from "./tap.ts";
 import { isInternal } from "./internal.ts";
 import { appendTranscript, createWish, getWish, saveProduct, saveThumb, setWishStatus, toWishDTO } from "./wishes.ts";
@@ -291,11 +291,18 @@ app.post("/api/campaigns/:id/agent-pledge", limits.agentPledge, wrap(async (req,
   res.status(r.status).json(r.body);
 }));
 
+/** This browser's agent purchases (by its anonymous id), with simulated tracking. */
+app.get("/api/orders", limits.read, (req, res) => {
+  const buyer = typeof req.query.buyer === "string" && /^[A-Za-z0-9-]{8,64}$/.test(req.query.buyer) ? req.query.buyer : null;
+  res.json(buyer ? listOrders(buyer) : []);
+});
+
 /** "Purchase" on a match card: the genie buys that listing for the shopper (a test-mode order). */
 app.post("/api/wish/:id/agent-buy", limits.agentBuy, wrap(async (req, res) => {
   const url = String(req.body?.url ?? "");
   if (!/^https?:\/\//.test(url) || url.length > 2000) throw badRequest("Which listing?");
-  const r = await agentBuy(req.params.id, url);
+  const buyer = typeof req.body?.buyer === "string" && /^[A-Za-z0-9-]{8,64}$/.test(req.body.buyer) ? req.body.buyer : null;
+  const r = await agentBuy(req.params.id, url, buyer);
   res.status(r.status).json(r.body);
 }));
 
