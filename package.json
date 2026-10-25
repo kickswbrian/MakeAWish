@@ -8,7 +8,7 @@
     "web"
   ],
   "scripts": {
-    "dev": "concurrently -k -n server,web -c magenta,cyan \"npm run dev -w server\" \"npm run dev -w web\"",
+    "dev": "concurrently -k -n server,web -c magenta,cyan \"cd server && tsx watch --env-file-if-exists=../.env src/index.ts\" \"cd web && vite\"",
     "build": "npm run build -w web",
     "start": "npm start -w server",
     "typecheck": "tsc -p shared && tsc -p server && tsc -p web",
