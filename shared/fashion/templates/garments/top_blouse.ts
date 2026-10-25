@@ -51,7 +51,7 @@ export const topBlouse = meshTemplate({
   name: "Satin turtleneck blouse",
   category: "blouse",
   kind: "top",
-  keywords: ["blouse", "satin blouse", "button up", "button down", "dress shirt", "turtleneck blouse", "balloon sleeve top", "lace up back top"],
+  keywords: ["blouse", "satin blouse", "button up", "button down", "dress shirt", "turtleneck blouse", "balloon sleeve top", "lace up back top", "puff sleeve top", "cute top", "pretty top", "sweet top", "girly top", "shirt", "outfit"],
   description: "Fitted satin blouse with a turtleneck, full balloon sleeves gathered into buttoned cuffs, and a lace-up back opening",
   targetPriceUsd: 65,
   controls: {
