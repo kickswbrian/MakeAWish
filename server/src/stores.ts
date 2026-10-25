@@ -264,7 +264,9 @@ async function makePlan(w: Wanted): Promise<SearchPlan> {
     );
     const out = response.parsed_output;
     if (!out) throw new Error(response.stop_reason === "refusal" ? "refusal" : "no parsed output");
-    const queries = [...new Set([...out.queries.map(clean), ...fallback.queries].filter((q) => q.length > 2))].slice(0, 3);
+    // The shopper's own words first ("double decker couch" is a real product people sell under that name),
+    // then the planner's: invented ideas often exist under exactly the name the shopper used.
+    const queries = [...new Set([...fallback.queries, ...out.queries.map(clean)].filter((q) => q.length > 2))].slice(0, 3);
     const plan: SearchPlan = {
       exists: out.exists,
       soldAs: out.sold_as.trim() || null,
@@ -481,6 +483,8 @@ export async function searchStores(
   const seen: Listing[] = [];
   const scored: Scored[] = [];
   const answered = new Set<string>();
+  // The first query is the shopper's own words: don't stop waiting before it has been heard from.
+  let firstIn = false;
   let apify = 0, claude = 0;
   const score = async (source: string, found: Listing[]) => {
     const fresh = pickListings([...new Set(found.map((l) => l.query ?? ""))], found, seen);
@@ -490,6 +494,7 @@ export async function searchStores(
     claude += done.reduce((t, d) => t + d.usd, 0);
     scored.push(...done.flatMap((d) => d.scored));
     answered.add(source);
+    if (found.some((l) => l.query === plan.queries[0])) firstIn = true;
     if (scored.length && !finished) opts.onPartial?.(rank([...scored]), answered.size);
   };
   let finished = false;
@@ -518,7 +523,7 @@ export async function searchStores(
   await new Promise<void>((resolve) => {
     const tick = setInterval(() => {
       const t = Date.now() - started;
-      if ((answered.size === STORE_NAMES.length && t > ENOUGH_MS) || (scored.length && t > CUTOFF_MS)) {
+      if ((answered.size === STORE_NAMES.length && firstIn && t > ENOUGH_MS) || (scored.length && t > CUTOFF_MS)) {
         clearInterval(tick);
         console.log(`[apify] not waiting for slower runs after ${t}ms (${answered.size}/${STORE_NAMES.length} stores in)`);
         resolve();
