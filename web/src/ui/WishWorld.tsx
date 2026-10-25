@@ -113,6 +113,8 @@ export function WishWorld({ wishId, yourTitle, yourThumb, landed, onLaunch, onRe
   // The open card's real model (the thumbnail stands in until it arrives).
   const [model, setModel] = useState<Product | null>(null);
   const [modelShown, setModelShown] = useState(false);
+  const selRef = useRef(sel);
+  selRef.current = sel;
   useEffect(() => {
     setModel(null);
     setModelShown(false);
@@ -285,7 +287,11 @@ export function WishWorld({ wishId, yourTitle, yourThumb, landed, onLaunch, onRe
                     preload={false}
                     // Full size from the first frame (no pop-in springs); hand over once textures have had a beat.
                     animate={false}
-                    onShown={() => window.setTimeout(() => setModelShown(true), 450)}
+                    onShown={() => {
+                      // Only for the card still open (a quick switch must not reveal the next card early).
+                      const id = model.id;
+                      window.setTimeout(() => selRef.current === id && setModelShown(true), 450);
+                    }}
                   />
                 </div>
               )}
