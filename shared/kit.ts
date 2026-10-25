@@ -1,3 +1,12 @@
+import { CLOSURES } from "./modules/closures.ts";
+import { CONSTRUCTION } from "./modules/construction.ts";
+import { TRIMS } from "./modules/trims.ts";
+import { POCKETS } from "./modules/pockets.ts";
+import { LABELS } from "./modules/labels.ts";
+import { JEWELRY } from "./modules/jewelry.ts";
+import { BAG_HARDWARE } from "./modules/bag.ts";
+import { DISPLAY } from "./modules/display.ts";
+
 /**
  * The parts kit: ready-made hardware the genie places by id (kind "kit", kitAsset = id).
  * Every kit part is procedural (no downloads), built at real-world size in meters.
@@ -12,12 +21,24 @@
  * The part's material colors the main body; hardware details (teeth, rivets) keep their own finish.
  */
 
-export interface KitParamSpec {
+export interface KitNumberParam {
   default: number;
   min: number;
   max: number;
   description: string;
 }
+/** A named style choice ("style": "pearl" | "horn" ...). The builder receives the option's index. */
+export interface KitEnumParam {
+  options: string[];
+  default: string;
+  description: string;
+}
+export type KitParamSpec = KitNumberParam | KitEnumParam;
+export const isEnumParam = (s: KitParamSpec): s is KitEnumParam => "options" in s;
+
+/** Garment / accessory categories a detail module suits (used by the catalog and the style compiler). */
+export const MODULE_CATEGORIES = ["top", "outerwear", "bottom", "skirt", "dress", "bag", "jewelry", "accessory", "any"] as const;
+export type ModuleCategory = (typeof MODULE_CATEGORIES)[number];
 
 export interface KitEntry {
   id: string;
@@ -28,6 +49,21 @@ export interface KitEntry {
   params?: Record<string, KitParamSpec>;
   /** Suggested material preset for the main body. */
   material: string;
+  /**
+   * Path kits follow the part's kitPath (a seam, hem, strap or necklace line) instead of sitting at
+   * one point: the part's position is usually [0,0,0] and the path is in the parent's frame.
+   */
+  path?: boolean;
+  /** Detail-module metadata: which products it suits and the template zones it usually goes on. */
+  categories?: ModuleCategory[];
+  zones?: string[];
+  /** Grouping for the catalog: closure, construction, trim, pocket, label, jewelry, bag_hardware, hardware. */
+  family?: string;
+  /**
+   * The template material slot this module takes by default when placed on a zone (overrides the
+   * family default): e.g. "shell" for a dart or welt seam made of the garment's own fabric.
+   */
+  slot?: string;
 }
 
 export const KIT: KitEntry[] = [
@@ -318,6 +354,14 @@ export const KIT: KitEntry[] = [
     material: "glass",
   },
 ];
+
+for (const list of [CLOSURES, CONSTRUCTION, TRIMS, POCKETS, LABELS, JEWELRY, BAG_HARDWARE, DISPLAY]) {
+  for (const k of list) {
+    const i = KIT.findIndex((x) => x.id === k.id);
+    if (i >= 0) KIT[i] = k; // a family file may upgrade a core entry (e.g. zipper gains a path)
+    else KIT.push(k);
+  }
+}
 
 export const KIT_IDS = new Set(KIT.map((k) => k.id));
 export const kitById = (id: string) => KIT.find((k) => k.id === id);

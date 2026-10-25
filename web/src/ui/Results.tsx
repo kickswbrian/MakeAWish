@@ -7,16 +7,12 @@ const STORE_SHORT: Record<string, string> = { amazon: "Amazon", etsy: "Etsy", go
 const STORE_DOT: Record<string, string> = { amazon: "#F2A541", etsy: "#E86A33", google_shopping: "#5B8DEF", sample: "#9AA8A3" };
 
 const money = (p: number | null) => (p == null ? null : `$${p % 1 ? p.toFixed(2) : p.toLocaleString("en-US")}`);
-/**
- * How well a listing matches: the description score, blended with how much its photo looks like the
- * render once Claude has compared them (visual match, server/src/visual.ts).
- */
-export const matchOf = (m: Match) => (m.visual != null ? Math.round(m.visual * 0.6 + m.score * 0.4) : m.score);
+/** How well a listing matches (the store search scores each listing against the design render and its photo). */
+export const matchOf = (m: Match) => m.score;
 
-export type SortKey = "best" | "look" | "price";
+export type SortKey = "best" | "price";
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "best", label: "Best match + price" },
-  { key: "look", label: "Closest look" },
   { key: "price", label: "Lowest price" },
 ];
 
@@ -35,13 +31,24 @@ export function rankMatches(res: MatchesResponse | null, sort: SortKey = "best")
   const value: Record<SortKey, (m: Match) => number> = {
     // A listing that IS the product leads (the headline says "It already exists!" about it).
     best: (m) => (m.score >= EXISTS_SCORE ? 1000 : 0) + matchOf(m) * 0.7 + cheap(m) * 30,
-    look: (m) => (m.visual ?? -1) * 1000 + matchOf(m),
     price: (m) => (m.price == null ? -1e9 : -m.price),
   };
   return [...pool].sort((a, b) => value[sort](b) - value[sort](a) || matchOf(b) - matchOf(a));
 }
 
 const tier = (score: number) => (score >= EXISTS_SCORE ? "hi" : score >= CLOSE_SCORE ? "mid" : "lo");
+
+/** "★ 4.6 · 2.3k": only for listings with a real track record. */
+function Stars({ m }: { m: Match }) {
+  if (!m.rating) return null;
+  const n = m.reviews ?? 0;
+  const count = n >= 1000 ? `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1).replace(/\.0$/, "")}k` : n ? String(n) : "";
+  return (
+    <span className="mstars" aria-label={`Rated ${m.rating} out of 5${n ? ` from ${n.toLocaleString("en-US")} reviews` : ""}`}>
+      <b aria-hidden="true">★</b>{m.rating.toFixed(1)}{count && <small> · {count}</small>}
+    </span>
+  );
+}
 
 /** "No cedar wood" reads better than a bare noun phrase. */
 const lacks = (m: string) => (/^(no|not|doesn|lacks|missing)\b/i.test(m) ? m : `No ${m}`);
@@ -65,14 +72,15 @@ export function MatchCard({ m, category, color, i, shared }: { m: Match; categor
   return (
     <a className="mcard" href={m.url} target="_blank" rel="noreferrer" style={{ animationDelay: `${0.06 + i * 0.07}s` }} aria-label={`${m.title} on ${store}${price ? `, ${price}` : ""}, ${pct}% match`}>
       <Photo m={m} category={category} color={color} size={72} />
-      <span className={`mscore ${tier(pct)}`} title={m.visual != null ? `Looks ${m.visual}% alike · description ${m.score}%` : undefined}>{pct}%<small> match</small></span>
+      <span className={`mscore ${tier(pct)}`}>{pct}%<small> match</small></span>
       <div className="minfo">
         <div className="mrow">
           <span className="mstore"><i style={{ background: STORE_DOT[m.source] ?? "#9AA8A3" }} />{STORE_SHORT[m.source] ?? m.source}</span>
           {price && <span className="mprice">{price}</span>}
         </div>
         <span className="mtitle" title={m.title}>{m.title}</span>
-        {gap && <span className="mlack" title={m.missing.map(lacks).join(", ")}>{lacks(gap)}</span>}
+        <Stars m={m} />
+        {m.why ? <span className="mwhy">{m.why}</span> : gap && <span className="mlack" title={m.missing.map(lacks).join(", ")}>{lacks(gap)}</span>}
       </div>
     </a>
   );
@@ -84,17 +92,18 @@ function TopMatch({ m, category, color, sort }: { m: Match; category: string; co
   const exists = m.score >= EXISTS_SCORE;
   const price = money(m.price);
   const pct = matchOf(m);
-  const kicker = exists ? <><Sparkle size={13} color="#8A6A12" /> It exists</> : sort === "price" ? "Lowest price" : sort === "look" ? "Closest look" : "Best pick";
+  const kicker = exists ? <><Sparkle size={13} color="#8A6A12" /> It exists</> : sort === "price" ? "Lowest price" : "Best pick";
   return (
     <a className={`mtop ${exists ? "exists" : ""}`} href={m.url} target="_blank" rel="noreferrer" aria-label={`Top pick: ${m.title} on ${store}${price ? `, ${price}` : ""}, ${pct}% match`}>
       <Photo m={m} category={category} color={color} size={96} />
       <div className="minfo">
-        <span className="mkicker">{kicker}<span className={`mscore inline ${tier(pct)}`}>{pct}%</span>{m.visual != null && <span className="mlook">looks {m.visual}% alike</span>}</span>
+        <span className="mkicker">{kicker}<span className={`mscore inline ${tier(pct)}`}>{pct}%</span></span>
         <span className="mtitle big" title={m.title}>{m.title}</span>
         <div className="mrow">
-          <span className="mstore"><i style={{ background: STORE_DOT[m.source] ?? "#9AA8A3" }} />{STORE_SHORT[m.source] ?? store}</span>
+          <span className="mstore"><i style={{ background: STORE_DOT[m.source] ?? "#9AA8A3" }} />{STORE_SHORT[m.source] ?? store}<Stars m={m} /></span>
           {price && <span className="mprice big">{price}</span>}
         </div>
+        {m.why && <span className="mwhy big">{m.why}</span>}
         {m.missing.length > 0 && (
           <div className="mlacks">{m.missing.slice(0, 3).map((x) => <span key={x} className="mlack">{lacks(x)}</span>)}</div>
         )}
@@ -121,7 +130,6 @@ export function MatchGrid({ res, category, color }: { res: MatchesResponse | nul
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState<SortKey>("best");
   const list = useMemo(() => rankMatches(res, sort), [res, sort]);
-  const hasLook = list.some((m) => m.visual != null);
   const stores = useMemo(() => [...new Set(list.map((m) => m.source))], [list]);
   const shown = filter === "all" ? list : list.filter((m) => m.source === filter);
 
@@ -148,7 +156,7 @@ export function MatchGrid({ res, category, color }: { res: MatchesResponse | nul
     <>
       <div className="chips">
         <div className="chip-group" role="radiogroup" aria-label="Sort matches">
-          {SORTS.filter((s) => s.key !== "look" || hasLook).map((s) => (
+          {SORTS.map((s) => (
             <button key={s.key} className="chip" role="radio" aria-checked={sort === s.key} onClick={() => setSort(s.key)}>
               {s.label}
             </button>

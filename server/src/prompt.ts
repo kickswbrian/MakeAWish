@@ -1,4 +1,5 @@
-import { GEOMETRY_TYPES, KIT, MATERIAL_PRESETS, TEMPLATES, templateById, type Part } from "@wishit/shared";
+import { GEOMETRY_TYPES, KIT, MATERIAL_PRESETS, TEMPLATES, isEnumParam, templateById, type Part } from "@wishit/shared";
+import { fashionCatalog, styleBlock } from "./outfit.ts";
 
 /**
  * The genie's static system prompt. It never changes between requests (so it is prompt-cached):
@@ -6,12 +7,19 @@ import { GEOMETRY_TYPES, KIT, MATERIAL_PRESETS, TEMPLATES, templateById, type Pa
  * and two worked examples. Everything per-request goes in the user message.
  */
 
-const kitLines = () =>
-  KIT.map((k) => {
-    const params = k.params ? ` params{${Object.entries(k.params).map(([n, p]) => `${n}:${p.default} (${p.min}-${p.max})`).join(", ")}}` : "";
-    const attach = Object.keys(k.attach).length ? ` attach{${Object.entries(k.attach).map(([n, v]) => `${n}:[${v.join(",")}]`).join(" ")}}` : "";
-    return `- ${k.id}: ${k.description} size[${k.size.join(",")}]${attach}${params} (default material ${k.material})`;
-  }).join("\n");
+const kitLine = (k: (typeof KIT)[number]) => {
+  const params = k.params ? ` params{${Object.entries(k.params).map(([n, p]) => (isEnumParam(p) ? `${n}:${p.options.join("|")} (default ${p.default})` : `${n}:${p.default} (${p.min}-${p.max})`)).join(", ")}}` : "";
+  const attach = Object.keys(k.attach).length ? ` attach{${Object.entries(k.attach).map(([n, v]) => `${n}:[${v.join(",")}]`).join(" ")}}` : "";
+  const where = k.family ? ` [${k.path ? "path; " : ""}${(k.categories ?? []).join("/")}${k.zones?.length ? `; zones ${k.zones.join(",")}` : ""}${k.slot ? `; slot ${k.slot}` : ""}]` : "";
+  return `- ${k.id}: ${k.description} size[${k.size.map((v) => +v.toFixed(4)).join(",")}]${attach}${params}${where} (default material ${k.material})`;
+};
+const kitLines = () => KIT.filter((k) => !k.family).map(kitLine).join("\n");
+/** Fashion detail modules, grouped by family. */
+const moduleLines = () => {
+  const fam = new Map<string, string[]>();
+  for (const k of KIT) if (k.family) fam.set(k.family, [...(fam.get(k.family) ?? []), kitLine(k)]);
+  return [...fam].map(([f, lines]) => `## ${f}\n${lines.join("\n")}`).join("\n");
+};
 
 const templateLines = () =>
   TEMPLATES.length
@@ -83,6 +91,25 @@ ${kitLines()}
 
 # Templates (hand-built starting designs)
 ${templateLines()}
+
+# Fashion (clothing, bags, jewelry)
+Fashion products are built from fashion templates: a detailed base (garment pieces, bag body, earring frames) with CONTROLS (length, fit, leg shape...), MATERIAL SLOTS (shell, lining, trim, hardware, thread, metal, stone...) and named ZONES (chest_left, placket, hem, cuff_left, waistband, earlobe_left...) where DETAIL MODULES (the fashion kit below) attach. You never place fashion details by coordinates: you name a module and a zone, and it lands on the surface, follows the garment when it is re-cut, and is a separate tappable part.
+- New fashion wish: the template is already on screen in a first local styling. Call style_outfit: controls (only changes), materials per slot (only changes), remove (ids of details that don't fit the look), modules [{module, zone, params?, material?, name?}], meta, say.
+- Translate style words into concrete choices using the style dictionary below: fabrics (presets), palette (hex), silhouette (controls), signature details (modules), hardware finish. "Cozy officewear" = the first style leads, the second adds what doesn't conflict.
+- Aim for 8-15 details on hero products (jacket, jeans, tote, earrings): construction (topstitch, rivets, bar tacks), closures (zipper_path, buttons), trims (rib_band, ruffle, lace_trim, piping), pockets, labels, hardware. Pick what a real product in that style would have; avoid what the style avoids.
+- Zone syntax: "chest_left"; "placket@0.3" (a point 30% along a path zone); "chest_left~0.01,-0.02" (shifted 1 cm right, 2 cm down); "pocket_*" (both sides). Point modules on a path zone take params.count to spread copies (buttons down a placket: {"module":"button","zone":"placket","params":{"count":5,"style":"jeans_tack"}}). Path modules (marked path) follow the whole zone (topstitch along hem, rib_band on cuff_left).
+- Module material: a slot name ("hardware", "thread", "accent") or an explicit {preset,color}; by default modules take their slot (hardware for closures and bag hardware, thread for stitching, metal for jewelry).
+- display_form / display_stand (and earring stands) are the shop display, not the product: never remove or restyle them unless the shopper asks about the mannequin/stand (then use the "display" slot).
+- Edits on fashion products: apply_patches also takes controls, materials, remove and modules ("make it cropped" = controls {"length":"cropped"}; "gold hardware" = materials {"hardware":{"preset":"metal_polished","color":"#E3BA5F"}}; "add a bow here" on a tapped detail or panel = modules on the nearest zone, or a kit part at the tap point; "make the buttons pearl" = patches updating those button parts' material to preset pearl). Ordinary patches still work on every part.
+
+## Fashion templates
+${fashionCatalog()}
+
+## Fashion detail modules (kitAsset ids; also usable as plain kit parts)
+${moduleLines()}
+
+## Style dictionary
+${styleBlock()}
 
 # Design quality bar
 - A full new product has 14-40 parts: a main body, then secondary volumes (pockets, lids, bases, handles), then trims/edges/seams (stitching kit along panel edges, piping tubes, bumpers), then hardware (zippers, buckles, screws, rivets, feet, ports, LEDs) and a brand_patch or label where a real product would have one.

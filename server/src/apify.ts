@@ -5,13 +5,15 @@ import { env } from "./env.ts";
 import { hash, withTimeout } from "./util.ts";
 import { getWish } from "./wishes.ts";
 import { spend } from "./security.ts";
-import { searchStores, STORE_NAMES } from "./stores.ts";
-import { scoreVisual } from "./visual.ts";
+import { planSearch, searchAhead, searchedAhead, searchStores, STORE_NAMES, type Wanted } from "./stores.ts";
 
 const CACHE_MS = 24 * 3600_000;
 // Etsy's scraper (Playwright) can't finish inside a per-store timeout, so it's left out.
 export const SOURCES = STORE_NAMES;
+/** Listings per query per store (each store runs up to 3 queries in one scraper run). */
 const MAX_PER_SOURCE = 5;
+/** Matches kept for the results grid. */
+const KEEP = 8;
 /** Per-store run limit inside the Actor. Google Shopping takes ~30 s; the Actor default (25 s) cut it off every time. */
 const STORE_TIMEOUT_SECS = 40;
 /**
@@ -56,7 +58,8 @@ const STOP = new Set(["the", "and", "built", "little", "tiny", "small", "big", "
 const keyFor = (product: Product) => {
   const root = product.parts[product.rootId];
   const parts = childrenOf(product, product.rootId).map((c) => c.name.toLowerCase()).sort();
-  return hash(JSON.stringify({ q: matchQuery(product), parts, color: root ? colorName(root.material.color) : null }));
+  // v2: planned queries + photo scoring; older cached results are re-searched.
+  return hash(JSON.stringify({ v: 2, q: matchQuery(product), parts, color: root ? colorName(root.material.color) : null }));
 };
 
 /** The structured summary the matcher Actor scores listings against. */
@@ -65,12 +68,41 @@ function actorSpec(product: Product) {
   return { name: product.title, category: product.category ?? "generic", features: [], target_price_usd: product.targetPriceUsd, notes: product.description };
 }
 
+/** What the direct search plans and scores against. */
+function wanted(product: Product): Wanted {
+  return { name: product.title, category: product.category, description: product.description, query: matchQuery(product), target_price_usd: product.targetPriceUsd };
+}
+
+const aheadTimers = new Map<string, NodeJS.Timeout>();
+/** Wait this long after a design settles before searching ahead (a quick follow-up edit replaces it). */
+const AHEAD_DELAY_MS = 800;
+
+/**
+ * A design just finished: plan its store search now (one small Claude call, cached), then, once
+ * the design has settled, run the whole search ahead so "See matches" shows results instantly.
+ * Keyed by what the product is, so color and size tweaks reuse the same search. Skips untitled
+ * drafts. SEARCH_AHEAD=0 only plans ahead (searches start on See matches).
+ */
+export function prepareMatches(product: Product, thumb?: string | null): void {
+  if (!product.description || !env.apifyToken || env.demoMode || readCache(product)) return;
+  const w = wanted(product);
+  void planSearch(w);
+  if (process.env.SEARCH_AHEAD === "0" || searchedAhead(w)) return;
+  clearTimeout(aheadTimers.get(product.id));
+  aheadTimers.set(product.id, setTimeout(() => {
+    aheadTimers.delete(product.id);
+    if (searchedAhead(w) || !spend("apifySearches")) return;
+    console.log(`[apify] searching ahead for "${product.title}"`);
+    searchAhead(w, thumb ?? getWish(product.id)?.thumb);
+  }, AHEAD_DELAY_MS));
+}
+
 export function getMatches(wishId: string): MatchesResponse {
   const run = db.prepare("SELECT * FROM match_runs WHERE wish_id = ?").get(wishId) as
     | { searched: number; total: number; pending: number; sample: number } | undefined;
   const rows = db.prepare("SELECT * FROM matches WHERE wish_id = ? ORDER BY score DESC").all(wishId) as any[];
   return {
-    matches: rows.map((r) => ({ source: r.source, title: r.title, url: r.url, price: r.price, image: r.image, score: r.score, visual: r.visual ?? null, missing: JSON.parse(r.missing_json) })),
+    matches: rows.map((r) => ({ source: r.source, title: r.title, url: r.url, price: r.price, image: r.image, score: r.score, missing: JSON.parse(r.missing_json), ...(r.extra_json ? JSON.parse(r.extra_json) : {}) })),
     searched: run?.searched ?? 0,
     total: run?.total ?? SOURCES.length,
     pending: run ? !!run.pending : false,
@@ -78,12 +110,15 @@ export function getMatches(wishId: string): MatchesResponse {
   };
 }
 
-function save(wishId: string, matches: Match[], searched: number, total: number, sample: boolean) {
+function save(wishId: string, matches: Match[], searched: number, total: number, sample: boolean, pending = false) {
   db.transaction(() => {
     db.prepare("DELETE FROM matches WHERE wish_id = ?").run(wishId);
-    const ins = db.prepare("INSERT INTO matches (wish_id, source, title, url, price, image, score, missing_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    for (const m of matches) ins.run(wishId, m.source, m.title, m.url, m.price, m.image, Math.round(m.score), JSON.stringify(m.missing ?? []));
-    db.prepare("INSERT OR REPLACE INTO match_runs (wish_id, searched, total, pending, sample) VALUES (?, ?, ?, 0, ?)").run(wishId, searched, total, sample ? 1 : 0);
+    const ins = db.prepare("INSERT INTO matches (wish_id, source, title, url, price, image, score, missing_json, extra_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    for (const m of matches) {
+      const extra = { rating: m.rating ?? null, reviews: m.reviews ?? null, why: m.why };
+      ins.run(wishId, m.source, m.title, m.url, m.price, m.image, Math.round(m.score), JSON.stringify(m.missing ?? []), JSON.stringify(extra));
+    }
+    db.prepare("INSERT OR REPLACE INTO match_runs (wish_id, searched, total, pending, sample) VALUES (?, ?, ?, ?, ?)").run(wishId, searched, total, pending ? 1 : 0, sample ? 1 : 0);
   })();
   emit(`wish:${wishId}`, EVENTS.matchesReady, { wishId, ...getMatches(wishId) });
 }
@@ -111,9 +146,7 @@ export async function findMatches(wishId: string): Promise<void> {
   if (inflight.has(flight)) return;
   inflight.add(flight);
   try {
-    await search(wishId, spec);
-    // Then the photos: ranks re-settle by look once Claude has compared them with the render.
-    await scoreVisual(wishId, getWish(wishId)?.thumb ?? null);
+    await search(wishId, spec, wish.thumb);
   } finally {
     inflight.delete(flight);
   }
@@ -123,7 +156,7 @@ const inflight = new Set<string>();
 /** Set when the deployed Actor proves outdated (it searched but kept no listings). */
 let actorStale = false;
 
-async function search(wishId: string, spec: Product) {
+async function search(wishId: string, spec: Product, thumb: string | null) {
   db.prepare("INSERT OR REPLACE INTO match_runs (wish_id, searched, total, pending, sample) VALUES (?, 0, ?, 1, 0)").run(wishId, SOURCES.length);
   db.prepare("DELETE FROM matches WHERE wish_id = ?").run(wishId);
 
@@ -132,20 +165,32 @@ async function search(wishId: string, spec: Product) {
     console.log(`[apify] cache hit "${matchQuery(spec)}"`);
     return save(wishId, cached.matches, cached.searched, cached.total, false);
   }
-  if (!env.apifyToken || env.demoMode || !spend("apifySearches")) {
+  // A search done ahead was already counted against the daily cap.
+  if (!env.apifyToken || env.demoMode || !(searchedAhead(wanted(spec)) || spend("apifySearches"))) {
     console.log(`[apify] ${env.demoMode ? "DEMO_MODE cache miss" : env.apifyToken ? "daily search cap reached" : "no APIFY_TOKEN"}, serving sample matches`);
     return save(wishId, sampleMatches(spec), SOURCES.length, SOURCES.length, true);
   }
 
   const started = Date.now();
   const query = matchQuery(spec);
-  console.log(`[apify] searching ${SOURCES.join(" + ")} for "${query}" ${env.apifyActor ? `via ${env.apifyActor}` : "directly"}`);
+  console.log(`[apify] searching ${SOURCES.join(" + ")} for "${query}" ${env.apifyActor && env.matchViaActor ? `via ${env.apifyActor}` : "directly"}`);
   // No deployed Actor (or an outdated one): the server calls the store scrapers itself (same scrapers, one hop less).
   const direct = async () => {
     try {
-      const r = await searchStores(query, actorSpec(spec), MAX_PER_SOURCE, STORE_TIMEOUT_SECS + 20);
-      const matches = r.matches.sort((a, b) => b.score - a.score).slice(0, 6);
-      console.log(`[apify] ${matches.length} matches in ${Date.now() - started}ms, searched ${r.searched}/${r.total}`);
+      const partial = (m: Match[], searched: number) => save(wishId, m.slice(0, KEEP), searched, SOURCES.length, false, true);
+      // Searched ahead while they were designing: show what's in now and follow the rest.
+      const pre = searchedAhead(wanted(spec));
+      if (pre) {
+        console.log(`[apify] using the search done ahead (${Math.round((Date.now() - pre.at) / 1000)}s old${pre.latest ? `, ${pre.latest.matches.length} matches in` : ", still running"})`);
+        if (pre.latest) partial(pre.latest.matches, pre.latest.searched);
+        pre.listeners.add(partial);
+      }
+      // Otherwise matches stream into the grid as each scraper run is scored (pending until all are in).
+      const r = pre
+        ? await pre.done.finally(() => pre.listeners.delete(partial))
+        : await searchStores(wanted(spec), { max: MAX_PER_SOURCE, timeoutSecs: STORE_TIMEOUT_SECS, thumb, onPartial: partial });
+      const matches = r.matches.slice(0, KEEP);
+      console.log(`[apify] ${matches.length} matches in ${Date.now() - started}ms, searched ${r.searched}/${r.total}, top ${matches.slice(0, 3).map((m) => m.score).join("/") || "-"}, cost ~$${(r.usd.apify + r.usd.claude).toFixed(3)} (apify $${r.usd.apify.toFixed(3)}, claude $${r.usd.claude.toFixed(3)})`);
       if (matches.length) writeCache(spec, matches, r.searched, r.total);
       // Every store came back empty: clearly-labelled samples rather than an empty grid.
       return matches.length ? save(wishId, matches, r.searched, r.total, false) : save(wishId, sampleMatches(spec), 0, r.total, true);
@@ -154,7 +199,7 @@ async function search(wishId: string, spec: Product) {
       return save(wishId, sampleMatches(spec), 0, SOURCES.length, true);
     }
   };
-  if (!env.apifyActor || actorStale) return direct();
+  if (!env.apifyActor || !env.matchViaActor || actorStale) return direct();
   try {
     // The Actor runs the stores in parallel, each up to STORE_TIMEOUT_SECS, then scores: give it room.
     const url = `https://api.apify.com/v2/acts/${encodeURIComponent(env.apifyActor)}/run-sync-get-dataset-items?timeout=${STORE_TIMEOUT_SECS + 45}`;
@@ -175,7 +220,7 @@ async function search(wishId: string, spec: Product) {
       .filter((i) => i && !i._meta && i.title && i.url)
       .map((i) => ({ source: String(i.source ?? "web"), title: String(i.title), url: String(i.url), price: i.price == null ? null : Number(i.price), image: i.image ?? null, score: Number(i.score ?? 0), missing: Array.isArray(i.missing) ? i.missing.map(String) : [] }))
       .sort((a, b) => b.score - a.score)
-      .slice(0, 6);
+      .slice(0, KEEP);
     if (!matches.length && meta?._meta?.searched > 0 && !meta._meta.listings) {
       // An outdated Actor build runs the stores but drops every listing: skip it until a restart.
       console.warn(`[apify] ${env.apifyActor} returned no listings (outdated build? \`apify push\` from actor/), searching the stores directly`);
