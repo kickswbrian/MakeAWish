@@ -254,8 +254,12 @@ function text(p: GeometryOf<"text">["params"]) {
     font = new FontLoader().parse(FONTS[p.font] as never);
     fonts.set(p.font, font);
   }
+  // Letters the font lacks: an accent falls back to its bare letter (e for é), others (hearts, emoji)
+  // are left out rather than drawn as "?".
+  const glyphs = (font.data as unknown as { glyphs: Record<string, unknown> }).glyphs;
+  const words = [...p.text].map((ch) => (ch === "\n" || glyphs[ch] ? ch : [...ch.normalize("NFD")].find((c) => glyphs[c]) ?? "")).join("").replace(/ {2,}/g, " ").trim() || "?";
   // `size` is the capital height; these fonts' capitals are about 0.72 of the em.
-  const shapes = font.generateShapes(p.text, p.size / 0.72);
+  const shapes = font.generateShapes(words, p.size / 0.72);
   const bevel = Math.min(p.bevel ?? p.depth * 0.15, p.depth / 2 - 1e-5, p.size * 0.04);
   let geo: THREE.BufferGeometry = new THREE.ExtrudeGeometry(shapes, {
     depth: Math.max(1e-5, p.depth - bevel * 2),
