@@ -145,8 +145,15 @@ app.post("/api/wish/:id/turn", ...limits.turn, wrap(async (req, res) => {
   res.on("close", () => {
     if (!res.writableFinished) abort.abort();
   });
+  let meta = { title: product.title, category: product.category, description: product.description, searchQuery: product.searchQuery, targetPriceUsd: product.targetPriceUsd };
   const send = (ev: TurnEvent) => {
     if (!res.writableEnded) res.write(JSON.stringify(ev) + "\n");
+    // The genie names and describes a new design in its first second or two, long before the 3D is
+    // built: start the store search from that, so matches are ready by the time the shopper looks.
+    if (ev.t === "meta" && !speculative) {
+      meta = { ...meta, ...ev.meta };
+      prepareMatches({ ...product, ...meta, id });
+    }
   };
 
   const started = Date.now();

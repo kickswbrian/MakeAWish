@@ -5,7 +5,7 @@ import { env } from "./env.ts";
 import { hash, withTimeout } from "./util.ts";
 import { getWish } from "./wishes.ts";
 import { spend } from "./security.ts";
-import { planSearch, searchStores, STORE_NAMES, type Wanted } from "./stores.ts";
+import { planSearch, searchAhead, searchedAhead, searchStores, STORE_NAMES, type Wanted } from "./stores.ts";
 
 const CACHE_MS = 24 * 3600_000;
 // Etsy's scraper (Playwright) can't finish inside a per-store timeout, so it's left out.
@@ -73,13 +73,28 @@ function wanted(product: Product): Wanted {
   return { name: product.title, category: product.category, description: product.description, query: matchQuery(product), target_price_usd: product.targetPriceUsd };
 }
 
+const aheadTimers = new Map<string, NodeJS.Timeout>();
+/** Wait this long after a design settles before searching ahead (a quick follow-up edit replaces it). */
+const AHEAD_DELAY_MS = 800;
+
 /**
- * A design just finished: plan its store search now (one small Claude call, cached), so "See
- * matches" starts searching the stores right away. Skips empty and untitled drafts.
+ * A design just finished: plan its store search now (one small Claude call, cached), then, once
+ * the design has settled, run the whole search ahead so "See matches" shows results instantly.
+ * Keyed by what the product is, so color and size tweaks reuse the same search. Skips untitled
+ * drafts. SEARCH_AHEAD=0 only plans ahead (searches start on See matches).
  */
-export function prepareMatches(product: Product): void {
+export function prepareMatches(product: Product, thumb?: string | null): void {
   if (!product.description || !env.apifyToken || env.demoMode || readCache(product)) return;
-  void planSearch(wanted(product));
+  const w = wanted(product);
+  void planSearch(w);
+  if (process.env.SEARCH_AHEAD === "0" || searchedAhead(w)) return;
+  clearTimeout(aheadTimers.get(product.id));
+  aheadTimers.set(product.id, setTimeout(() => {
+    aheadTimers.delete(product.id);
+    if (searchedAhead(w) || !spend("apifySearches")) return;
+    console.log(`[apify] searching ahead for "${product.title}"`);
+    searchAhead(w, thumb ?? getWish(product.id)?.thumb);
+  }, AHEAD_DELAY_MS));
 }
 
 export function getMatches(wishId: string): MatchesResponse {
@@ -150,7 +165,8 @@ async function search(wishId: string, spec: Product, thumb: string | null) {
     console.log(`[apify] cache hit "${matchQuery(spec)}"`);
     return save(wishId, cached.matches, cached.searched, cached.total, false);
   }
-  if (!env.apifyToken || env.demoMode || !spend("apifySearches")) {
+  // A search done ahead was already counted against the daily cap.
+  if (!env.apifyToken || env.demoMode || !(searchedAhead(wanted(spec)) || spend("apifySearches"))) {
     console.log(`[apify] ${env.demoMode ? "DEMO_MODE cache miss" : env.apifyToken ? "daily search cap reached" : "no APIFY_TOKEN"}, serving sample matches`);
     return save(wishId, sampleMatches(spec), SOURCES.length, SOURCES.length, true);
   }
@@ -161,11 +177,18 @@ async function search(wishId: string, spec: Product, thumb: string | null) {
   // No deployed Actor (or an outdated one): the server calls the store scrapers itself (same scrapers, one hop less).
   const direct = async () => {
     try {
-      // Matches stream into the grid as each scraper run is scored (still pending until all are in).
-      const r = await searchStores(wanted(spec), {
-        max: MAX_PER_SOURCE, timeoutSecs: STORE_TIMEOUT_SECS, thumb,
-        onPartial: (m, searched) => save(wishId, m.slice(0, KEEP), searched, SOURCES.length, false, true),
-      });
+      const partial = (m: Match[], searched: number) => save(wishId, m.slice(0, KEEP), searched, SOURCES.length, false, true);
+      // Searched ahead while they were designing: show what's in now and follow the rest.
+      const pre = searchedAhead(wanted(spec));
+      if (pre) {
+        console.log(`[apify] using the search done ahead (${Math.round((Date.now() - pre.at) / 1000)}s old${pre.latest ? `, ${pre.latest.matches.length} matches in` : ", still running"})`);
+        if (pre.latest) partial(pre.latest.matches, pre.latest.searched);
+        pre.listeners.add(partial);
+      }
+      // Otherwise matches stream into the grid as each scraper run is scored (pending until all are in).
+      const r = pre
+        ? await pre.done.finally(() => pre.listeners.delete(partial))
+        : await searchStores(wanted(spec), { max: MAX_PER_SOURCE, timeoutSecs: STORE_TIMEOUT_SECS, thumb, onPartial: partial });
       const matches = r.matches.slice(0, KEEP);
       console.log(`[apify] ${matches.length} matches in ${Date.now() - started}ms, searched ${r.searched}/${r.total}, top ${matches.slice(0, 3).map((m) => m.score).join("/") || "-"}, cost ~$${(r.usd.apify + r.usd.claude).toFixed(3)} (apify $${r.usd.apify.toFixed(3)}, claude $${r.usd.claude.toFixed(3)})`);
       if (matches.length) writeCache(spec, matches, r.searched, r.total);

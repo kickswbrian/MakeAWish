@@ -536,3 +536,46 @@ function interleave<T>(lists: T[][]): T[] {
   for (let i = 0; lists.some((l) => i < l.length); i++) for (const l of lists) if (i < l.length) out.push(l[i]);
   return out;
 }
+
+// ---------- Searching ahead ----------
+
+/**
+ * A search started before the shopper asked for it (a design just finished), so "See matches" can
+ * show results instantly. Keyed like the plan (what the product is, not its color), so tweaks
+ * reuse it. Late joiners get the ranking so far, then every update.
+ */
+export interface Ahead {
+  latest: { matches: Match[]; searched: number } | null;
+  listeners: Set<(matches: Match[], searched: number) => void>;
+  done: Promise<StoreSearch>;
+  at: number;
+}
+
+const ahead = new Map<string, Ahead>();
+/** How long a search done ahead stays good (stores change slowly). */
+const AHEAD_MS = 30 * 60_000;
+
+export function searchAhead(w: Wanted, thumb?: string | null): Ahead {
+  const key = planKey(w);
+  const hit = ahead.get(key);
+  if (hit && Date.now() - hit.at < AHEAD_MS) return hit;
+  const a: Ahead = { latest: null, listeners: new Set(), done: null as unknown as Promise<StoreSearch>, at: Date.now() };
+  a.done = searchStores(w, {
+    thumb,
+    onPartial: (matches, searched) => {
+      a.latest = { matches, searched };
+      for (const l of a.listeners) l(matches, searched);
+    },
+  });
+  // A failed search (or one that found nothing) shouldn't stick: the next try starts fresh.
+  a.done.then((r) => { if (!r.matches.length) ahead.delete(key); }, () => ahead.delete(key));
+  ahead.set(key, a);
+  if (ahead.size > 200) ahead.delete(ahead.keys().next().value!);
+  return a;
+}
+
+/** The search already running or done for this wish, if any. */
+export function searchedAhead(w: Wanted): Ahead | null {
+  const a = ahead.get(planKey(w));
+  return a && Date.now() - a.at < AHEAD_MS ? a : null;
+}
