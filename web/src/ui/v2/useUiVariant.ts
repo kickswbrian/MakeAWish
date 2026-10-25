@@ -22,7 +22,8 @@ function initial(): UiVariant {
  */
 export function useUiVariant(): { variant: UiVariant; introKey: number } {
   const [variant, setVariant] = useState<UiVariant>(initial);
-  const [introKey, setIntroKey] = useState(() => (initial() !== "1" ? 1 : 0));
+  // ?intro=0 opens straight on the wish screen (coming back from the editor).
+  const [introKey, setIntroKey] = useState(() => (initial() !== "1" && new URLSearchParams(window.location.search).get("intro") !== "0" ? 1 : 0));
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;

@@ -1095,7 +1095,17 @@ export default function Studio() {
       {mode === "voice" && (
         <>
           <header className="hdr">
-            <Link to="/wishlist" className="cbtn" aria-label="Back to your wishes"><BackIcon /></Link>
+            {v2 ? (
+              // Back to making a wish (the bubble screen), in the same UI and without the intro.
+              <button className="cbtn" aria-label="Back to making a wish" onClick={() => {
+                const q = new URLSearchParams(window.location.search);
+                q.delete("wish");
+                q.set("intro", "0");
+                window.location.assign(`/?${q}`);
+              }}><BackIcon /></button>
+            ) : (
+              <Link to="/wishlist" className="cbtn" aria-label="Back to your wishes"><BackIcon /></Link>
+            )}
             <div className="genie-pick">
               <Sparkle size={16} color="#C5D8CF" />
               <span>Genie</span>
