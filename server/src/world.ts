@@ -32,10 +32,10 @@ export function listWorld(voter: string | null, include: string | null): WorldIt
       (SELECT value FROM wish_votes v WHERE v.wish_id = w.id AND v.voter = ?) AS mine,
       (SELECT id FROM campaigns c WHERE c.wish_id = w.id ORDER BY c.created_at DESC LIMIT 1) AS campaign_id
     FROM wishes w
-    WHERE w.product_json IS NOT NULL AND (w.status = 'locked' OR w.id = ?)
+    WHERE w.product_json IS NOT NULL AND (w.status = 'locked' OR w.id = ?) AND (w.thumb IS NOT NULL OR w.id = ?)
     ORDER BY w.created_at DESC
     LIMIT 400
-  `).all(voter ?? "", include ?? "") as Row[];
+  `).all(voter ?? "", include ?? "", include ?? "") as Row[];
   const items: WorldItem[] = [];
   for (const r of rows) {
     if (r.id !== include && r.best != null && r.best >= EXISTS_SCORE) continue;
@@ -48,6 +48,7 @@ export function listWorld(voter: string | null, include: string | null): WorldIt
       category: product.category ?? null,
       priceUsd: product.targetPriceUsd ?? null,
       thumb: r.thumb,
+      color: product.parts[product.rootId]?.material.color ?? null,
       score: r.up - r.down,
       up: r.up,
       down: r.down,

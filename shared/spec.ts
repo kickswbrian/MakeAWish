@@ -92,6 +92,8 @@ export interface WorldItem {
   category: string | null;
   priceUsd: number | null;
   thumb: string | null;
+  /** The main part's color (hex), so the world can group bubbles by color. */
+  color: string | null;
   /** Upvotes minus downvotes. */
   score: number;
   up: number;
