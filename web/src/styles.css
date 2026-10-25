@@ -519,10 +519,13 @@ p { margin: 0; }
 
 /* ---------- Part builder: bigger stage once a product exists ---------- */
 .app.has-product { max-width: 860px; }
-.product-size { flex: none; text-align: center; font-size: 12.5px; font-weight: 600; color: var(--ink-55); letter-spacing: .02em; height: 16px; margin-top: -2px; font-variant-numeric: tabular-nums; }
-/* Vertical budget: header 72 + title 40 + size 16 + waveform 50 + speech 96 + matches pill 68 + dock 86 ≈ 430. */
+.product-size { flex: none; position: relative; z-index: 3; text-align: center; font-size: 12.5px; font-weight: 600; color: var(--ink-55); letter-spacing: .02em; height: 16px; margin-top: -2px; font-variant-numeric: tabular-nums; }
+/* Vertical budget: header 72 + title 40 + size 14 + gap 22 (the bubble floats up 12px) + waveform 50
+   + speech 124 (five caption lines) + matches pill 70 + dock 86 = 478; the type box adds 64. */
+.app.has-product { --chrome: 478px; }
+.app.has-product.typing { --chrome: 542px; }
 .app.has-product .orb-slot {
-  --bubble: clamp(260px, min(92vw, calc(100dvh - 452px)), 640px); top: 132px;
+  --bubble: clamp(220px, min(92vw, calc(100dvh - var(--chrome))), 640px); top: 148px;
   /* The first product changes the bubble's size and place at once: settle it in place rather than
      sliding (width and left can't transition with it, so a slide flies in from a corner). */
   transition: opacity .4s ease; animation: bubbleSettle .5s var(--spring) both;
@@ -532,11 +535,14 @@ p { margin: 0; }
    wish (Studio sets stage-pending until then), so the content fades in once it's really there. */
 .app.has-product .b-content { transition: opacity .3s ease; }
 .app.stage-pending .b-content { opacity: 0; transition: none; }
-.app.has-product .orb-space { --bubble: clamp(260px, min(92vw, calc(100dvh - 452px)), 640px); margin-top: 8px; }
+.app.has-product .orb-space { --bubble: clamp(220px, min(92vw, calc(100dvh - var(--chrome))), 640px); margin-top: 22px; }
+/* Long genie lines stay inside their box (scrolling in the rare case they outgrow the budget). */
+.app.has-product .speech { min-height: 0; overflow-y: auto; justify-content: safe center; scrollbar-width: none; }
+.app.has-product .line.long { font-size: 17px; line-height: 23px; }
 .app.has-product .wavebox { height: 40px; margin-top: 10px; }
 .app.has-product .wavebox svg { height: 40px; }
 .title-product {
-  flex: none; margin-top: 8px; font-size: 26px; line-height: 32px; letter-spacing: -0.03em; text-align: center;
+  flex: none; position: relative; z-index: 3; margin-top: 8px; font-size: 26px; line-height: 32px; letter-spacing: -0.03em; text-align: center;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: fadeIn .5s ease both;
 }
 .b-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 20; }

@@ -786,6 +786,7 @@ export default function Studio() {
   const wishCount = loadWishlist().length;
   const selPart = selection ? product.parts[selection.partId] : undefined;
   const editing = mode === "voice" && !!selPart;
+  const typeboxOpen = typing || voice.mode === "text";
 
   // ---------- UI variation 2 (press 2; 1 goes back) ----------
   const { variant, introKey } = useUiVariant();
@@ -855,8 +856,9 @@ export default function Studio() {
     }
   }, [v2, typing]);
 
+  // "typing" (main #17) budgets room for the in-flow type box; v2's box floats at the cursor, so not there.
   return (
-    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${stagePending ? "stage-pending" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""} ${v2 && mode === "voice" && hasProduct ? "v2-product" : ""}`}>
+    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${mode === "voice" && typeboxOpen && !v2 ? "typing" : ""} ${stagePending ? "stage-pending" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""} ${v2 && mode === "voice" && hasProduct ? "v2-product" : ""}`}>
       {v2 && <IntroWords phase={phase} onSkip={skipIntro} />}
       <Glows />
       {showConfetti && <Celebration image={snapshot} line={campaign ? `Funded · ${campaign.captured || campaign.held} of ${campaign.targetBackers}` : undefined} onDone={() => setShowConfetti(false)} />}
@@ -1050,7 +1052,7 @@ export default function Studio() {
               </button>
             </div>
           )}
-          {(typing || voice.mode === "text" || (v2Landing && (voice.micStatus === "denied" || voice.micStatus === "failed"))) && (
+          {(typeboxOpen || (v2Landing && (voice.micStatus === "denied" || voice.micStatus === "failed"))) && (
             <form
               className={`typebox ${v2 ? "v2-typebox" : ""}`}
               style={{

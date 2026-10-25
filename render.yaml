@@ -3,19 +3,15 @@ services:
   - type: web
     name: wish-it
     runtime: node
-    plan: starter # persistent disks need a paid plan
+    plan: free # sleeps after 15 min idle; no disk, so SQLite resets on restart or redeploy
     buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
-    disk:
-      name: wishit-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: NODE_VERSION
         value: "22"
       # Production mode: strict rate limits, Socket.IO locked to PUBLIC_URL, generic 500s, and a boot
-      # check that refuses to start without ADMIN_TOKEN, an https PUBLIC_URL and (with Stripe) a webhook secret.
+      # check that refuses to start without ADMIN_TOKEN and an https PUBLIC_URL.
       - key: NODE_ENV
         value: production
       # Daily caps on paid calls across all users (0 = no cap). Past a cap the app uses its free fallback.
@@ -25,8 +21,6 @@ services:
         value: "60"
       - key: DAILY_CARTESIA_TOKENS
         value: "600"
-      - key: DATA_DIR
-        value: /var/data
       - key: PUBLIC_URL
         sync: false
       - key: DEMO_MODE
@@ -40,10 +34,4 @@ services:
       - key: APIFY_TOKEN
         sync: false
       - key: APIFY_ACTOR
-        sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_PUBLISHABLE_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
         sync: false
