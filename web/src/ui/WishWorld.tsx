@@ -112,8 +112,10 @@ export function WishWorld({ wishId, yourTitle, yourThumb, landed, onLaunch, onRe
   const selected = all.find((it) => it.id === sel) ?? null;
   // The open card's real model (the thumbnail stands in until it arrives).
   const [model, setModel] = useState<Product | null>(null);
+  const [modelShown, setModelShown] = useState(false);
   useEffect(() => {
     setModel(null);
+    setModelShown(false);
     if (!sel) return;
     let cancelled = false;
     void api.getWish(sel).then((w) => !cancelled && setModel(w.product)).catch(() => {});
@@ -270,11 +272,21 @@ export function WishWorld({ wishId, yourTitle, yourThumb, landed, onLaunch, onRe
           <div className="world-card">
             <button className="world-close" aria-label="Close" onClick={() => setSel(null)}>×</button>
             {/* The real model: drag to turn it, scroll to zoom. */}
-            <div className={`world-card-model ${model ? "live" : ""}`}>
+            <div className={`world-card-model ${modelShown ? "shown" : ""}`}>
               {selected.thumb ? <img src={selected.thumb} alt="" /> : <CategoryIcon category={selected.category ?? "generic"} size={120} />}
               {model && (
                 <div className="world-card-stage">
-                  <Stage key={model.id} product={model} framing="bubble" transparent interactive preload={false} />
+                  <Stage
+                    key={model.id}
+                    product={model}
+                    framing="bubble"
+                    transparent
+                    interactive
+                    preload={false}
+                    // Full size from the first frame (no pop-in springs); hand over once textures have had a beat.
+                    animate={false}
+                    onShown={() => window.setTimeout(() => setModelShown(true), 450)}
+                  />
                 </div>
               )}
             </div>

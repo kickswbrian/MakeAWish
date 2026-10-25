@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CLOSE_SCORE, describeProduct, EXISTS_SCORE, type Match, type MatchesResponse, type Product } from "@wishit/shared";
 import { ArrowOut, BackIcon, CategoryIcon, HeartIcon, LockIcon, MicIcon, MinusIcon, PlusIcon, SpinIcon, Sparkle } from "./Icons.tsx";
 
@@ -57,16 +57,49 @@ function dedupe(matches: Match[]): Match[] {
 }
 
 /** Store filter chips, the best match as a hero, the rest in a 2-column grid. Skeletons while searching. */
-/** The sort, as one dropdown pill (next to "N sites searched"). */
-export function SortSelect({ value, onChange, res }: { value: SortKey; onChange: (k: SortKey) => void; res: MatchesResponse | null }) {
+/** The sort, as one custom dropdown pill (at the right of "N sites searched"). */
+export function SortSelect({ value, onChange }: { value: SortKey; onChange: (k: SortKey) => void; res?: MatchesResponse | null }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("pointerdown", away);
+    window.addEventListener("keydown", esc);
+    return () => {
+      window.removeEventListener("pointerdown", away);
+      window.removeEventListener("keydown", esc);
+    };
+  }, [open]);
+  const label = SORTS.find((x) => x.key === value)?.label ?? "";
   return (
-    <label className="sort-pill">
-      <span className="sr-only">Sort matches</span>
-      <select value={value} onChange={(e) => onChange(e.target.value as SortKey)}>
-        {SORTS.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}
-      </select>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-    </label>
+    <div ref={box} className={`sort-dd ${open ? "open" : ""}`}>
+      <button className="sort-dd-btn" aria-haspopup="listbox" aria-expanded={open} aria-label={`Sort matches: ${label}`} onClick={() => setOpen((o) => !o)}>
+        {label}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+      {open && (
+        <div className="sort-dd-menu" role="listbox" aria-label="Sort matches">
+          {SORTS.map((x) => (
+            <button
+              key={x.key}
+              className="sort-dd-opt"
+              role="option"
+              aria-selected={x.key === value}
+              onClick={() => {
+                onChange(x.key);
+                setOpen(false);
+              }}
+            >
+              {x.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

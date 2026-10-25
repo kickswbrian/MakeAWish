@@ -989,7 +989,6 @@ p { margin: 0; }
 .wbub-name { max-width: 100%; font-size: 15px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: "Bricolage Grotesque", var(--font); }
 .wbub:hover .wbub-name { white-space: normal; overflow: visible; text-align: center; }
 .wbub-votes { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink-70); }
-.wbub-votes svg:last-of-type { margin-left: 8px; }
 .world-empty { position: absolute; left: 0; right: 0; bottom: 120px; text-align: center; color: var(--ink-55); font-size: 16px; pointer-events: none; }
 
 /* Details: a card over the world, the model on the left, the words and votes on the right. */
@@ -1232,3 +1231,30 @@ p { margin: 0; }
 
 /* Breathing room between the description and the votes / Remix row. */
 .world-card .world-votes { margin-top: 18px; }
+
+/* Remix at the far right of the vote row. */
+.world-card .world-votes { justify-content: space-between; }
+/* The card's model: the thumbnail pulses until the 3D model has drawn its first frame, then hands over. */
+.world-card-model:not(.shown) img { animation: thumbPulse 1.2s ease-in-out infinite; }
+@keyframes thumbPulse { 50% { opacity: .45; } }
+.world-card-model.shown img { opacity: 0; }
+.world-card-stage { opacity: 0; transition: opacity .35s ease; animation: none; }
+.world-card-model.shown .world-card-stage { opacity: 1; }
+
+/* Sort: a custom dropdown (light green pill, menu below). */
+.sort-dd { position: relative; margin-left: auto; }
+.sort-dd-btn {
+  display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px 0 16px; border-radius: 100px;
+  background: #DCEBE2; color: #1F4D3B; font-size: 14px; font-weight: 700; transition: background .15s ease;
+}
+.sort-dd-btn:hover, .sort-dd.open .sort-dd-btn { background: #CFE3D7; }
+.sort-dd-btn svg { transition: transform .2s ease; }
+.sort-dd.open .sort-dd-btn svg { transform: rotate(180deg); }
+.sort-dd-menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; min-width: 220px; padding: 6px; border-radius: 18px;
+  background: #fff; box-shadow: 0 18px 44px rgba(24, 40, 37, .16), inset 0 0 0 1px rgba(24, 40, 37, .06); animation: gbIn .2s var(--spring) both;
+}
+.sort-dd-opt { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; height: 40px; padding: 0 12px; border-radius: 12px; font-size: 14px; font-weight: 600; color: var(--ink); text-align: left; }
+.sort-dd-opt:hover, .sort-dd-opt:focus-visible { background: #EEF5F1; outline: none; }
+.sort-dd-opt[aria-selected="true"] { color: #1F4D3B; }
+.sort-dd-opt[aria-selected="true"]::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #2E7A66; }
