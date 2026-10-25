@@ -35,6 +35,7 @@ export function registerTemplates(list: Template[]) {
   }
 }
 
+export { showpieceExtras } from "./demo.ts";
 export const templateById = (id: string) => TEMPLATES.find((t) => t.id === id);
 
 /** Build a product from a template (validated through the normal patch path). */

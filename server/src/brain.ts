@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import {
-  addOrder, applyPatches, childrenOf, emptyProduct, fashionById, fixChildFrame, localOutfit, outfitProduct, floatingParts, groundPart, hangCords, isEmpty, surfaceText, unshear, levelIssues, localBox, movedBy, newCollisions, partBox, stretchUp, partsInOrder, subtreeIds, toPartSpace, toProductSpace, matchTemplate, parseIntent, ProductMetaSchema, setMeta, templateById, templateProduct,
+  addOrder, applyPatches, childrenOf, emptyProduct, fashionById, fixChildFrame, localOutfit, outfitProduct, floatingParts, groundPart, hangCords, isEmpty, surfaceText, unshear, levelIssues, localBox, movedBy, newCollisions, partBox, stretchUp, partsInOrder, subtreeIds, toPartSpace, toProductSpace, matchTemplate, parseIntent, ProductMetaSchema, setMeta, showpieceExtras, templateById, templateProduct, TEMPLATES,
   type FashionState, type FashionTemplate, type LevelIssue, type OutlineEntry, type Part, type Patch, type Product, type ProductMeta, type TurnEvent, type TurnSelection, type TurnTiming, type Vec3,
 } from "@wishit/shared";
 import { env } from "./env.ts";
@@ -442,7 +442,8 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
     }
     // New parts don't inherit a parent's squash (a flattened flower center shearing its petals).
     // Template parts were made with their squashes in mind: only what the model wrote is lifted.
-    const tpl = input.template ? templateById(input.template) : fresh ? matchTemplate(input.text) : null;
+    // Whichever template the design started from (the planner may pick one nobody showed): its root is ours.
+    const tpl = TEMPLATES.find((t) => t.parts.some((x) => x.parent === null && x.id === product.rootId));
     const tplIds = new Set(tpl?.parts.map((x) => x.id) ?? []);
     const lifted = unshear(product, [...added].filter((id) => product.parts[id] && !tplIds.has(id)), (w, u) => applyPatches(w, [u]).product);
     if (lifted.length) {
@@ -541,9 +542,11 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
     return true;
   };
 
-  // A showpiece (shared/templates/demo.ts) is already the finished design: its first build is used as is.
+  // A showpiece (shared/templates/demo.ts) asked for plainly is already the finished design: used as is.
+  // With details ("a pink flower lamp") it's customized like any template.
   const showpiece = isEmpty(input.product) || input.template ? (input.template ? templateById(input.template) : matchTemplate(input.text)) : null;
-  if (!client || forceRules || showpiece?.match) return ruleTurn(input, applyAndEmit, applyMeta, emit, timing, at, () => product, reset);
+  const plainShowpiece = !!showpiece?.match && !showpieceExtras(showpiece, input.text);
+  if (!client || forceRules || plainShowpiece) return ruleTurn(input, applyAndEmit, applyMeta, emit, timing, at, () => product, reset);
 
   try {
     // A freshly shown template is still a new design: the fast planner customizes it.
