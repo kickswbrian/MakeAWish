@@ -1,5 +1,5 @@
 import { boxGap, partBox, productBox } from "./bounds.ts";
-import { toPartSpace, toProductSpace } from "./frames.ts";
+import { eulerMatrix as fromEuler, matrixEuler as toEuler, mulMat as mul, toPartSpace, toProductSpace, transposeMat as transpose } from "./frames.ts";
 import { applyPatches, subtreeIds, type Product } from "./product.ts";
 import type { Vec3 } from "./spec.ts";
 
@@ -30,25 +30,7 @@ function frameRotation(product: Product, id: string): M3 {
   return [0, 1, 2].map((r) => [cols[0][r], cols[1][r], cols[2][r]]);
 }
 
-const mul = (a: M3, b: M3): M3 => a.map((row) => [0, 1, 2].map((c) => row[0] * b[0][c] + row[1] * b[1][c] + row[2] * b[2][c]));
-const transpose = (a: M3): M3 => [0, 1, 2].map((r) => [a[0][r], a[1][r], a[2][r]]);
 const isIdentity = (a: M3) => a.every((row, r) => row.every((v, c) => Math.abs(v - (r === c ? 1 : 0)) < 0.02));
-
-/** Euler XYZ (degrees) to a matrix, composed like the renderer: Rx * Ry * Rz. */
-function fromEuler([x, y, z]: Vec3): M3 {
-  const [a, b, c] = [x * DEG, y * DEG, z * DEG];
-  const rx: M3 = [[1, 0, 0], [0, Math.cos(a), -Math.sin(a)], [0, Math.sin(a), Math.cos(a)]];
-  const ry: M3 = [[Math.cos(b), 0, Math.sin(b)], [0, 1, 0], [-Math.sin(b), 0, Math.cos(b)]];
-  const rz: M3 = [[Math.cos(c), -Math.sin(c), 0], [Math.sin(c), Math.cos(c), 0], [0, 0, 1]];
-  return mul(mul(rx, ry), rz);
-}
-
-/** A rotation matrix back to Euler XYZ degrees (three.js's decomposition). */
-function toEuler(m: M3): Vec3 {
-  const y = Math.asin(Math.max(-1, Math.min(1, m[0][2])));
-  const [x, z] = Math.abs(m[0][2]) < 0.9999999 ? [Math.atan2(-m[1][2], m[2][2]), Math.atan2(-m[0][1], m[0][0])] : [Math.atan2(m[2][1], m[1][1]), 0];
-  return [x, y, z].map((v) => Math.round((v / DEG) * 10) / 10) as Vec3;
-}
 
 type Update = { op: "update"; id: string; changes: Record<string, unknown> };
 

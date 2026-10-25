@@ -3,7 +3,7 @@ import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { Html, PivotControls } from "@react-three/drei";
 import { a, useSpring } from "@react-spring/three";
 import * as THREE from "three";
-import { Brush, Evaluator, SUBTRACTION } from "three-bvh-csg";
+import { Brush, Evaluator, INTERSECTION, SUBTRACTION } from "three-bvh-csg";
 import { geometryKey, buildGeometry } from "./geometry.ts";
 import { applyMaterial, createMaterial, setFoldMap } from "./materials.ts";
 import { buildKit } from "./kit/index.ts";
@@ -143,15 +143,16 @@ const evaluator = new Evaluator();
 evaluator.attributes = ["position", "uv", "normal"];
 evaluator.useGroups = false;
 
-function carve(base: THREE.BufferGeometry, cutters: { geometry: THREE.BufferGeometry; matrix: THREE.Matrix4 }[]): THREE.BufferGeometry {
+function carve(base: THREE.BufferGeometry, cutters: { geometry: THREE.BufferGeometry; matrix: THREE.Matrix4; keep?: boolean }[]): THREE.BufferGeometry {
   try {
     let result = new Brush(base);
     result.updateMatrixWorld();
-    for (const c of cutters) {
+    // Intersections first (shape the body from two views), then the cuts into it.
+    for (const c of [...cutters].sort((a, b) => Number(!!b.keep) - Number(!!a.keep))) {
       const b = new Brush(c.geometry);
       c.matrix.decompose(b.position, b.quaternion, b.scale);
       b.updateMatrixWorld();
-      result = evaluator.evaluate(result, b, SUBTRACTION);
+      result = evaluator.evaluate(result, b, c.keep ? INTERSECTION : SUBTRACTION);
     }
     const g = result.geometry;
     g.computeBoundingBox();
@@ -183,7 +184,7 @@ const PartMesh = memo(function PartMesh({ part, cutters, selected }: { part: Par
   const cutKey = cutters.length
     ? cutters.map((c) => {
         const rel = partMatrix(ctx.product, part.id).invert().multiply(partMatrix(ctx.product, c.id));
-        return geometryKey(c.geometry) + rel.elements.map((v) => v.toFixed(4)).join(",");
+        return (c.csg?.op ?? "") + geometryKey(c.geometry) + rel.elements.map((v) => v.toFixed(4)).join(",");
       }).join("|")
     : "";
   // Mesh parts (prepared garment pieces) appear once their model has loaded.
@@ -222,7 +223,7 @@ const PartMesh = memo(function PartMesh({ part, cutters, selected }: { part: Par
     const cuts = cutters
       .filter((c) => c.geometry)
       .slice(0, 8)
-      .map((c) => ({ geometry: buildGeometry(c.geometry!), matrix: inv.clone().multiply(partMatrix(ctx.product, c.id)) }));
+      .map((c) => ({ geometry: buildGeometry(c.geometry!), matrix: inv.clone().multiply(partMatrix(ctx.product, c.id)), keep: c.csg?.op === "intersect" }));
     const out = carve(base, cuts);
     for (const c of cuts) c.geometry.dispose();
     if (out !== base) base.dispose();

@@ -77,7 +77,17 @@ function partNames(product: Product): string[] {
 }
 
 function wanted(product: Product): Wanted {
-  return { name: product.title, category: product.category, description: product.description, query: matchQuery(product), target_price_usd: product.targetPriceUsd, parts: partNames(product) };
+  return { name: product.title, category: product.category, description: product.description, query: matchQuery(product), target_price_usd: product.targetPriceUsd, parts: partNames(product), asks: featureAsks(product.id) };
+}
+
+/**
+ * What the shopper added after the first wish ("add Sonic to it"): the genie doesn't always fold a new
+ * feature into the description or search words, so the search would still look for a plain temple buggy.
+ * Only turns that added parts count, so recolors and resizes keep reusing the same (paid) search.
+ */
+function featureAsks(wishId: string): string[] {
+  const turns = getWish(wishId)?.transcript.filter((t) => t.role === "user") ?? [];
+  return turns.slice(1).filter((t) => t.adds).map((t) => t.text.replace(/\s+/g, " ").trim().slice(0, 100)).slice(-3);
 }
 
 const aheadTimers = new Map<string, NodeJS.Timeout>();

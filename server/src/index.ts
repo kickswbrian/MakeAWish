@@ -179,7 +179,8 @@ app.post("/api/wish/:id/turn", ...limits.turn, wrap(async (req, res) => {
     if (abort.signal.aborted) return;
     if (!speculative) {
       saveProduct(id, result.product);
-      if (result.say) appendTranscript(id, [{ role: "user", text, at: started }, { role: "genie", text: result.say, at: Date.now() }]);
+      const adds = Object.keys(result.product.parts).some((pid) => !product.parts[pid]);
+      if (result.say) appendTranscript(id, [{ role: "user", text, at: started, ...(adds ? { adds } : {}) }, { role: "genie", text: result.say, at: Date.now() }]);
       emit(`wish:${id}`, EVENTS.productUpdated, { wishId: id, product: result.product });
       // Plan the "does it exist" search in the background, so See matches goes straight to the stores.
       prepareMatches(result.product);
