@@ -263,3 +263,19 @@ test("repeat: one petal becomes a complete ring; offset steps rungs", async () =
   assert.deepEqual(["rung", "rung_2", "rung_3"].map((id) => p.product.parts[id]?.transform.position[1]), [-0.1, -0.15, -0.2]);
   assert.ok(!("repeat" in p.product.parts.petal_2));
 });
+
+test("surfaceText: lettering buried in a sign moves onto its face; text already on it stays", async () => {
+  const { surfaceText, toProductSpace } = await import("./index.ts");
+  const text = (z: number): unknown => ({ id: "words", name: "Words", kind: "primitive", parent: "board", geometry: { type: "text", params: { text: "HELLO", size: 0.05, depth: 0.004 } }, transform: { position: [0, 0, z] }, material: { preset: "metal_polished", color: "#222222" } });
+  const sign = (z: number) => applyPatches(emptyProduct("sign"), [
+    { op: "add", part: { id: "board", name: "Board", kind: "primitive", parent: null, geometry: { type: "roundedBox", params: { width: 0.5, height: 0.3, depth: 0.04 } }, material: { preset: "wood", color: "#8B5A2B" } } },
+    { op: "add", part: text(z) },
+  ]).product;
+  const buried = sign(0);
+  const fix = surfaceText(buried, ["words"]);
+  assert.equal(fix.length, 1);
+  const moved = applyPatches(buried, fix).product;
+  const z = toProductSpace(moved, "words", [0, 0, 0])[2];
+  assert.ok(Math.abs(z - 0.021) < 1e-3, `z ${z}`);
+  assert.deepEqual(surfaceText(sign(0.021), ["words"]), []);
+});
