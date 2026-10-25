@@ -85,7 +85,8 @@ app.post("/api/agent/campaigns/:id/pledges", limits.agent, express.raw({ type: "
 app.use(express.json({ limit: "400kb" }));
 
 // Every :id is a short lowercase id (util.newId); anything else can't exist.
-app.param("id", (_req, _res, next, id: string) => next(/^[a-z0-9]{1,20}$/.test(id) ? undefined : notFound()));
+// Hyphens too: the seeded Wish World wishes are world-seed01 and so on.
+app.param("id", (_req, _res, next, id: string) => next(/^[a-z0-9-]{1,20}$/.test(id) ? undefined : notFound()));
 
 
 app.get("/api/config", (_req, res) => {
