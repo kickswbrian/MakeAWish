@@ -84,6 +84,25 @@ export const CreateCampaignBody = z.object({
 });
 export type CreateCampaignBody = z.infer<typeof CreateCampaignBody>;
 
+/** A past wish floating in the wish world (searched, and nothing like it existed). */
+export interface WorldItem {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  priceUsd: number | null;
+  thumb: string | null;
+  /** Upvotes minus downvotes. */
+  score: number;
+  up: number;
+  down: number;
+  /** This browser's vote. */
+  myVote: -1 | 0 | 1;
+  campaignId: string | null;
+  createdAt: number;
+}
+export const WishVoteBody = z.object({ voter: z.string().regex(/^[A-Za-z0-9-]{8,64}$/), value: z.union([z.literal(-1), z.literal(0), z.literal(1)]) });
+
 /** An upvote (or taking it back). `voter` is a random id the browser keeps. */
 export const VoteBody = z.object({ voter: z.string().regex(/^[A-Za-z0-9-]{8,64}$/), up: z.boolean() });
 

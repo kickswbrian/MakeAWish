@@ -349,6 +349,7 @@ export function useVoice({ onTurn, onInterim, onEager, onResume }: Opts) {
       if (orbSignal.state === "speaking") level = tts.current?.speaking ? rms(tts.current.analyser) : fakeSpeak.current ? 0.35 + 0.3 * Math.abs(Math.sin(t / 90)) : 0;
       else if (orbSignal.state === "listening") level = rms(stt.current?.analyser) || (interimRef.current ? 0.3 + 0.2 * Math.sin(t / 70) : 0.05);
       orbSignal.level = level;
+      orbSignal.heard = activeRef.current && mutedRef.current ? rms(stt.current?.analyser) : 0;
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);

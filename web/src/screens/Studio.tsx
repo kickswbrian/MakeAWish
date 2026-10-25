@@ -18,19 +18,20 @@ import { beginTurn, endTurn, loadFresh, redo, undo, useEditor, useProduct } from
 import { useVoice, type TurnTiming } from "../voice/useVoice.ts";
 import { Glows, Heart, SpeechLine } from "../ui/Chrome.tsx";
 import { Bubble, BubbleSparks } from "../ui/Bubble.tsx";
-import { sendView } from "../three/signals.ts";
+import { orbSignal, sendView } from "../three/signals.ts";
 import { GenieBubble } from "../ui/GenieBubble.tsx";
 import { PartsList } from "../ui/PartsList.tsx";
 import { Waveform } from "../ui/Waveform.tsx";
 import { BackIcon, CategoryIcon, ChevronDown, HeartIcon, KeyboardIcon, MicIcon, MuteIcon, Sparkle } from "../ui/Icons.tsx";
-import { LaunchSheet, MatchGrid, rankMatches, summarize } from "../ui/Results.tsx";
+import { LaunchSheet, MatchGrid, rankMatches, SortSelect, summarize, type SortKey } from "../ui/Results.tsx";
 import { CampaignPanel, Celebration } from "../ui/Campaign.tsx";
+import { WishWorld } from "../ui/WishWorld.tsx";
 import Bubble3D from "../three/Bubble3D.tsx";
 import { IntroRing, IntroWords, useFramesSettled, useIntroPhase } from "../ui/v2/IntroV2.tsx";
 import { useUiVariant } from "../ui/v2/useUiVariant.ts";
 import { IdlePrompt, useIdle } from "../ui/v2/IdlePrompt.tsx";
 
-type Mode = "voice" | "results" | "campaign";
+type Mode = "voice" | "results" | "world" | "campaign";
 /** How long the wish screen takes to clear down to the bubble before it flies to the matches. */
 const LEAVE_MS = 420;
 
@@ -255,9 +256,18 @@ export default function Studio() {
   const [hint, setHint] = useState(true);
   const [exploded, setExploded] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [sort, setSort] = useState<SortKey>("best");
   // Just switched to the matches: their content comes in after the bubble lands (only then: anything
   // that mounts later, like the grid once the search returns, shows straight away).
   const [entering, setEntering] = useState(false);
+  // The wish world: the bubble flies to its middle, then becomes one of the floating bubbles there.
+  const [worldLanded, setWorldLanded] = useState(false);
+  const goWorld = useCallback(() => {
+    setWorldLanded(false);
+    modeRef.current = "world";
+    setMode("world");
+    setTimeout(() => setWorldLanded(true), 850);
+  }, []);
   useEffect(() => {
     if (!entering) return;
     const t = setTimeout(() => setEntering(false), 1600);
@@ -839,6 +849,30 @@ export default function Studio() {
     // Right away until something's been said; after that, once the last caption has had a moment.
     lastCaption ? 8000 : 0,
   );
+  // Next to a product (v2): a plain hint when nothing's being said, instead of status pills.
+  const hintIdle = useIdle(`${lastCaption?.id ?? ""}|${voice.interim}`, v2 && mode === "voice" && hasProduct && !voice.interim && !busy, lastCaption ? 15000 : 0);
+  // Talking while muted: say so, with a way to unmute (the mic stream stays open while muted).
+  const [mutedHeard, setMutedHeard] = useState(false);
+  useEffect(() => {
+    if (!v2 || !voice.active || !voice.muted || typing) {
+      setMutedHeard(false);
+      return;
+    }
+    let loud = 0;
+    let hide = 0;
+    const t = setInterval(() => {
+      loud = orbSignal.heard > 0.3 ? loud + 1 : 0;
+      if (loud >= 4) {
+        setMutedHeard(true);
+        window.clearTimeout(hide);
+        hide = window.setTimeout(() => setMutedHeard(false), 5000);
+      }
+    }, 100);
+    return () => {
+      clearInterval(t);
+      window.clearTimeout(hide);
+    };
+  }, [v2, voice.active, voice.muted, typing]);
   // Nothing on screen to type into: start typing anywhere and the box opens with that letter, centered
   // on the mouse (bottom center when there's no mouse).
   // Type-anywhere works on the wish screen and next to a product (not while a part's edit card is open).
@@ -871,6 +905,12 @@ export default function Studio() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [v2Typing, phase, typing, voice.mode]);
+  // An empty pill doesn't hang around: it closes after a few seconds with nothing in it.
+  useEffect(() => {
+    if (!v2 || !typing || text) return;
+    const t = setTimeout(() => setTyping(false), 4000);
+    return () => clearTimeout(t);
+  }, [v2, typing, text]);
   // The mic stays off while typing, until the wish is sent (or the box is closed).
   const mutedForTyping = useRef(false);
   useEffect(() => {
@@ -918,7 +958,7 @@ export default function Studio() {
   });
 
   return (
-    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${stagePending ? "stage-pending" : ""} ${leaving ? "leaving" : ""} ${entering ? "entering" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""} ${v2 && mode === "voice" && hasProduct ? "v2-product" : ""}`}>
+    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${stagePending ? "stage-pending" : ""} ${leaving ? "leaving" : ""} ${entering ? "entering" : ""} ${mode === "world" && worldLanded && !launchOpen ? "world-landed" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""} ${v2 && mode === "voice" && hasProduct ? "v2-product" : ""}`}>
       {v2 && <IntroWords phase={phase} onSkip={skipIntro} />}
       <Glows />
       {showConfetti && <Celebration image={snapshot} line={campaign ? `Funded · ${campaign.captured || campaign.held} of ${campaign.targetBackers}` : undefined} onDone={() => setShowConfetti(false)} />}
@@ -1071,7 +1111,14 @@ export default function Studio() {
                 ))}
               </div>
             ) : (
-              <SpeechLine captions={voice.captions} interim={voice.interim} />
+              <>
+                <SpeechLine captions={voice.captions} interim={voice.interim} />
+                {v2 && mutedHeard ? (
+                  <p className="line v2-muted">You&apos;re muted. <button onClick={voice.toggleMute}>Unmute?</button></p>
+                ) : v2 && hasProduct && hintIdle ? (
+                  <p className="line v2-hint">{voice.active && !voice.muted ? "Say a change, or just type it" : "Type to make a change"}</p>
+                ) : null}
+              </>
             )}
             {status.length > 0 && (
               <div className="note-row">
@@ -1081,7 +1128,9 @@ export default function Studio() {
           </div>
           {v2Landing && phase === "done" && (
             <div className="v2-captions">
-              {idle ? <IdlePrompt listening={voice.active} /> : <SpeechLine captions={voice.captions} interim={voice.interim} />}
+              {mutedHeard ? (
+                <p className="line v2-muted">You&apos;re muted. <button onClick={voice.toggleMute}>Unmute?</button></p>
+              ) : idle ? <IdlePrompt listening={voice.active} /> : <SpeechLine captions={voice.captions} interim={voice.interim} />}
               {status.some((s) => s.cls === "bad") && (
                 <div className="note-row">
                   {status.filter((s) => s.cls === "bad").map((s) => <span key={s.text} className="note bad">{s.text}</span>)}
@@ -1188,28 +1237,46 @@ export default function Studio() {
               <span>{product.title}</span>
             </button>
           </div>
-          <p className="res-sub">
-            {!matches || matches.pending
-              ? "Searching Amazon and Google Shopping…"
-              : matches.searched < matches.total
-                ? `${matches.searched} of ${matches.total} sites searched`
-                : `${matches.total} sites searched`}
-          </p>
-          <div className="res-wish">
-            <span className="res-wish-k">Your wish</span>
-            <b>{product.title}</b>
-            <button className="chip sm" onClick={() => setMode("voice")}>Keep editing</button>
+          <div className="res-sub">
+            <span>
+              {!matches || matches.pending
+                ? "Searching Amazon and Google Shopping…"
+                : matches.searched < matches.total
+                  ? `${matches.searched} of ${matches.total} sites searched`
+                  : `${matches.total} sites searched`}
+            </span>
+            {matches && !matches.pending && matches.matches.length > 0 && <SortSelect value={sort} onChange={setSort} res={matches} />}
           </div>
-          <MatchGrid res={matches} category={product.category ?? "generic"} color={root?.material.color} />
+          <div className="res-wish">
+            <EditableTitle key={product.id} title={product.title} busy={false} />
+          </div>
+          <MatchGrid res={matches} category={product.category ?? "generic"} color={root?.material.color} sort={sort} />
           <div className="bottom-fade" />
           {result && (
             <div className="bottom-cta">
-              <button className="pill big" onClick={() => setLaunchOpen(true)}>
+              <button className="pill big" onClick={goWorld}>
                 <span>{result.exists ? "Not quite yours? Wish for your exact version" : "Can't find it?"}</span>
                 <span className="pill-orb" aria-hidden="true"><Sparkle size={20} color="#F2D88A" /></span>
               </button>
             </div>
           )}
+        </>
+      )}
+
+      {mode === "world" && wishId && (
+        <>
+          <header className="hdr world-hdr">
+            <button className="cbtn" aria-label="Back to the matches" onClick={() => setMode("results")}><BackIcon /></button>
+            <span className="world-title">Wishes nobody has made yet</span>
+          </header>
+          <WishWorld
+            wishId={wishId}
+            yourTitle={product.title}
+            yourThumb={thumb}
+            landed={worldLanded}
+            onLaunch={() => setLaunchOpen(true)}
+            onEdit={() => setMode("voice")}
+          />
         </>
       )}
 
