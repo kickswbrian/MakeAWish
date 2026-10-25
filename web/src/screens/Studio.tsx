@@ -1195,7 +1195,6 @@ export default function Studio() {
               <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M8 11.5h16l-1.4 14.2a1.6 1.6 0 0 1-1.6 1.4H11a1.6 1.6 0 0 1-1.6-1.4z" />
                 <path d="M12 14v-3.5a4 4 0 0 1 8 0V14" />
-                <path className="wl-twinkle" d="M25.5 3.5c.3 1.8.8 2.3 2.6 2.6-1.8.3-2.3.8-2.6 2.6-.3-1.8-.8-2.3-2.6-2.6 1.8-.3 2.3-.8 2.6-2.6z" fill="currentColor" stroke="none" />
               </svg>
             </button>
           )}
