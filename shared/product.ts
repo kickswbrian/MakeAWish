@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { KIT_IDS } from "./kit.ts";
 import { MESH_MODELS } from "./meshes.ts";
+import { svgOutline, thinPoints } from "./svgpath.ts";
 
 /**
  * The product data model. A product is a flat map of parts with parent links; every edit is a patch.
@@ -93,6 +94,13 @@ export const GeometryParams = {
     bevel: clamp(0, 5).optional(),
     /** Treat the outline as a smooth closed curve through the points. */
     smooth: z.boolean().default(false),
+    /**
+     * An SVG path ("d") to draw instead of the shape: emblems, silhouettes, logos. Any units, y down;
+     * drawn `width` meters wide and centered. Subpaths inside others are holes. `shape` is then filled
+     * in from it (a coarse fallback).
+     */
+    svg: z.string().max(8000).optional(),
+    width: size.optional(),
   }),
   sphere: z.object({
     radius: size,
@@ -310,6 +318,16 @@ function repairPart(raw: unknown): unknown {
     p.geometry = { type, params: rest };
   }
   if (!p.kind) p.kind = p.kitAsset ? "kit" : p.meshAsset ? "mesh" : "primitive";
+  // An SVG drawing: derive the plain outline from it, so everything reading `shape` still works.
+  const geo = p.geometry as { type?: unknown; params?: Record<string, unknown> } | undefined;
+  if (geo?.type === "extrude" && geo.params && typeof geo.params.svg === "string") {
+    const width = Number(geo.params.width) > 0 ? Number(geo.params.width) : 0.05;
+    const drawn = svgOutline(geo.params.svg, width);
+    if (drawn?.shapes.length) {
+      const main = drawn.shapes[0];
+      p.geometry = { ...geo, params: { ...geo.params, width, shape: thinPoints(main.outer, LIMITS.points), holes: main.holes.slice(0, 8).map((h) => thinPoints(h, LIMITS.points)), smooth: false } };
+    }
+  }
   if (!p.material || typeof p.material !== "object") p.material = { preset: "plastic_matte", color: typeof p.color === "string" ? p.color : "#C9CCD2" };
   return p;
 }
