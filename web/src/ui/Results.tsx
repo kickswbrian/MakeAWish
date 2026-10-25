@@ -7,6 +7,35 @@ const STORE_SHORT: Record<string, string> = { amazon: "Amazon", etsy: "Etsy", go
 const STORE_DOT: Record<string, string> = { amazon: "#F2A541", etsy: "#E86A33", google_shopping: "#5B8DEF", sample: "#9AA8A3" };
 
 const money = (p: number | null) => (p == null ? null : `$${p % 1 ? p.toFixed(2) : p.toLocaleString("en-US")}`);
+/** How well a listing matches (the store search scores each listing against the design render and its photo). */
+export const matchOf = (m: Match) => m.score;
+
+export type SortKey = "best" | "price";
+const SORTS: { key: SortKey; label: string }[] = [
+  { key: "best", label: "Best match + price" },
+  { key: "price", label: "Lowest price" },
+];
+
+/**
+ * The listings worth showing (deduped; close ones only when there are any; at most 8), ordered.
+ * "best" weighs the match 70% and price 30% (cheapest in the set = full marks, unpriced = middle).
+ */
+export function rankMatches(res: MatchesResponse | null, sort: SortKey = "best"): Match[] {
+  if (!res) return [];
+  const all = dedupe([...res.matches].sort((a, b) => matchOf(b) - matchOf(a)));
+  const close = all.filter((m) => m.score >= CLOSE_SCORE);
+  const pool = (close.length ? close : all).slice(0, 8);
+  const prices = pool.flatMap((m) => (m.price == null ? [] : [m.price]));
+  const lo = Math.min(...prices), hi = Math.max(...prices);
+  const cheap = (m: Match) => (m.price == null ? 0.5 : hi > lo ? (hi - m.price) / (hi - lo) : 1);
+  const value: Record<SortKey, (m: Match) => number> = {
+    // A listing that IS the product leads (the headline says "It already exists!" about it).
+    best: (m) => (m.score >= EXISTS_SCORE ? 1000 : 0) + matchOf(m) * 0.7 + cheap(m) * 30,
+    price: (m) => (m.price == null ? -1e9 : -m.price),
+  };
+  return [...pool].sort((a, b) => value[sort](b) - value[sort](a) || matchOf(b) - matchOf(a));
+}
+
 const tier = (score: number) => (score >= EXISTS_SCORE ? "hi" : score >= CLOSE_SCORE ? "mid" : "lo");
 
 /** "★ 4.6 · 2.3k": only for listings with a real track record. */
@@ -39,10 +68,11 @@ export function MatchCard({ m, category, color, i, shared }: { m: Match; categor
   const store = STORE[m.source] ?? m.source;
   const price = money(m.price);
   const gap = m.missing.find((x) => !shared?.has(x.toLowerCase()));
+  const pct = matchOf(m);
   return (
-    <a className="mcard" href={m.url} target="_blank" rel="noreferrer" style={{ animationDelay: `${0.06 + i * 0.07}s` }} aria-label={`${m.title} on ${store}${price ? `, ${price}` : ""}, ${m.score}% match`}>
+    <a className="mcard" href={m.url} target="_blank" rel="noreferrer" style={{ animationDelay: `${0.06 + i * 0.07}s` }} aria-label={`${m.title} on ${store}${price ? `, ${price}` : ""}, ${pct}% match`}>
       <Photo m={m} category={category} color={color} size={72} />
-      <span className={`mscore ${tier(m.score)}`}>{m.score}%<small> match</small></span>
+      <span className={`mscore ${tier(pct)}`}>{pct}%<small> match</small></span>
       <div className="minfo">
         <div className="mrow">
           <span className="mstore"><i style={{ background: STORE_DOT[m.source] ?? "#9AA8A3" }} />{STORE_SHORT[m.source] ?? m.source}</span>
@@ -57,15 +87,17 @@ export function MatchCard({ m, category, color, i, shared }: { m: Match; categor
 }
 
 /** The best listing, big: photo beside the verdict, with a clear way to the store. */
-function TopMatch({ m, category, color }: { m: Match; category: string; color?: string }) {
+function TopMatch({ m, category, color, sort }: { m: Match; category: string; color?: string; sort: SortKey }) {
   const store = STORE[m.source] ?? m.source;
   const exists = m.score >= EXISTS_SCORE;
   const price = money(m.price);
+  const pct = matchOf(m);
+  const kicker = exists ? <><Sparkle size={13} color="#8A6A12" /> It exists</> : sort === "price" ? "Lowest price" : "Best pick";
   return (
-    <a className={`mtop ${exists ? "exists" : ""}`} href={m.url} target="_blank" rel="noreferrer" aria-label={`Best match: ${m.title} on ${store}${price ? `, ${price}` : ""}, ${m.score}% match`}>
+    <a className={`mtop ${exists ? "exists" : ""}`} href={m.url} target="_blank" rel="noreferrer" aria-label={`Top pick: ${m.title} on ${store}${price ? `, ${price}` : ""}, ${pct}% match`}>
       <Photo m={m} category={category} color={color} size={96} />
       <div className="minfo">
-        <span className="mkicker">{exists ? <><Sparkle size={13} color="#8A6A12" /> It exists</> : "Closest match"}<span className={`mscore inline ${tier(m.score)}`}>{m.score}%</span></span>
+        <span className="mkicker">{kicker}<span className={`mscore inline ${tier(pct)}`}>{pct}%</span></span>
         <span className="mtitle big" title={m.title}>{m.title}</span>
         <div className="mrow">
           <span className="mstore"><i style={{ background: STORE_DOT[m.source] ?? "#9AA8A3" }} />{STORE_SHORT[m.source] ?? store}<Stars m={m} /></span>
@@ -96,12 +128,8 @@ function dedupe(matches: Match[]): Match[] {
 /** Store filter chips, the best match as a hero, the rest in a 2-column grid. Skeletons while searching. */
 export function MatchGrid({ res, category, color }: { res: MatchesResponse | null; category: string; color?: string }) {
   const [filter, setFilter] = useState("all");
-  const list = useMemo(() => {
-    if (!res) return [];
-    const all = dedupe([...res.matches].sort((a, b) => b.score - a.score));
-    const close = all.filter((m) => m.score >= CLOSE_SCORE);
-    return (close.length ? close : all).slice(0, 8);
-  }, [res]);
+  const [sort, setSort] = useState<SortKey>("best");
+  const list = useMemo(() => rankMatches(res, sort), [res, sort]);
   const stores = useMemo(() => [...new Set(list.map((m) => m.source))], [list]);
   const shown = filter === "all" ? list : list.filter((m) => m.source === filter);
 
@@ -126,18 +154,27 @@ export function MatchGrid({ res, category, color }: { res: MatchesResponse | nul
   );
   return (
     <>
-      {stores.length > 1 && (
-        <div className="chips" role="tablist" aria-label="Filter by store">
-          {["all", ...stores].map((s) => (
-            <button key={s} className="chip" role="tab" aria-selected={filter === s} onClick={() => setFilter(s)}>
-              {s === "all" ? `All ${list.length}` : `${STORE_SHORT[s] ?? s} ${list.filter((m) => m.source === s).length}`}
+      <div className="chips">
+        <div className="chip-group" role="radiogroup" aria-label="Sort matches">
+          {SORTS.map((s) => (
+            <button key={s.key} className="chip" role="radio" aria-checked={sort === s.key} onClick={() => setSort(s.key)}>
+              {s.label}
             </button>
           ))}
         </div>
-      )}
+        {stores.length > 1 && (
+          <div className="chip-group" role="tablist" aria-label="Filter by store">
+            {["all", ...stores].map((s) => (
+              <button key={s} className="chip" role="tab" aria-selected={filter === s} onClick={() => setFilter(s)}>
+                {s === "all" ? `All ${list.length}` : `${STORE_SHORT[s] ?? s} ${list.filter((m) => m.source === s).length}`}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       <div className="scroll">
         {!top && <div className="empty-magic">Nothing like it anywhere. A truly original wish.</div>}
-        {top && <TopMatch key={top.url} m={{ ...top, missing: top.missing.filter((x) => !shared.has(x.toLowerCase())) }} category={category} color={color} />}
+        {top && <TopMatch key={top.url} sort={sort} m={{ ...top, missing: top.missing.filter((x) => !shared.has(x.toLowerCase())) }} category={category} color={color} />}
         {shared.size > 0 && <p className="mshared">{lacking.length === shown.length ? "None of these have" : "Most of these lack"} <b>{[...shared].slice(0, 2).join(" or ")}</b>. Yours would.</p>}
         {rest.length > 0 && (
           <div className="mgrid">

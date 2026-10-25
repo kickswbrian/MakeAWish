@@ -76,6 +76,14 @@ if (!cols.has("thumb")) db.exec("ALTER TABLE wishes ADD COLUMN thumb TEXT");
 const matchCols = (db.prepare("PRAGMA table_info(matches)").all() as { name: string }[]).map((c) => c.name);
 if (!matchCols.includes("extra_json")) db.exec("ALTER TABLE matches ADD COLUMN extra_json TEXT");
 
+// Community upvotes on live wishes: one per voter (a random id each browser keeps).
+db.exec(`CREATE TABLE IF NOT EXISTS votes (
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  voter TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (campaign_id, voter)
+)`);
+
 // Agent checkout (Visa Trusted Agent Protocol): which pledges the genie placed, and the shopper's
 // spending mandates (modelled on Visa Intelligent Commerce payment instructions).
 const pledgeCols = (db.prepare("PRAGMA table_info(pledges)").all() as { name: string }[]).map((c) => c.name);

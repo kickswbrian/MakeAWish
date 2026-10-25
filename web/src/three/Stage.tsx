@@ -331,28 +331,29 @@ function AnchorTracker({ registry, anchor }: { registry: PartRegistry; anchor?: 
  */
 export const WARMUP_DELAY_MS = 2000;
 const WARM_BATCH = 3;
-const warmMaterials: THREE.Material[] = [];
-let warmStarted = false;
+/** Warm-up progress, kept across pauses: the materials (kept alive so their programs stay compiled) and
+ *  how many batches are done. `defer` pauses it (between batches) and it picks up where it left off. */
+const warm = { mats: [] as THREE.Material[], next: 0 };
 const nextFrame = () => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 60)));
 function ShaderWarmup({ defer }: { defer: boolean }) {
   const { gl, scene, camera } = useThree();
   useEffect(() => {
-    if (warmStarted || defer) return; // once per page: the compiled programs are shared
+    if (defer || (warm.mats.length && warm.next >= warm.mats.length)) return;
     let cancelled = false;
     const start = window.setTimeout(() => {
-      warmStarted = true;
       void preloadMaterials().then(async () => {
+        if (!warm.mats.length) {
+          warm.mats = MATERIAL_PRESETS.flatMap((preset) => [
+            createMaterial({ preset, color: "#888888" }),
+            createMaterial({ preset, color: "#888888", emissive: "#ffaa55", emissiveIntensity: 1 }),
+          ]);
+        }
         const geo = new THREE.SphereGeometry(0.01, 8, 6);
-        const mats = MATERIAL_PRESETS.flatMap((preset) => [
-          createMaterial({ preset, color: "#888888" }),
-          createMaterial({ preset, color: "#888888", emissive: "#ffaa55", emissiveIntensity: 1 }),
-        ]);
-        // Keep the materials alive: disposing them would release the compiled programs again.
-        warmMaterials.push(...mats);
-        for (let i = 0; i < mats.length && !cancelled; i += WARM_BATCH) {
+        while (warm.next < warm.mats.length && !cancelled) {
           if (gl.getContext().isContextLost()) return;
+          const batch = warm.mats.slice(warm.next, warm.next + WARM_BATCH);
           const group = new THREE.Group();
-          for (const m of mats.slice(i, i + WARM_BATCH)) {
+          for (const m of batch) {
             const mesh = new THREE.Mesh(geo, m);
             mesh.castShadow = mesh.receiveShadow = true;
             mesh.position.set(0, -50, 0);
@@ -365,15 +366,17 @@ function ShaderWarmup({ defer }: { defer: boolean }) {
             // and three's async readiness check trips over a program released mid-compile.
             await gl.compileAsync(group, camera, scene);
             // Upload the batch's textures too: a first upload (with mipmaps) stalls a frame for ~0.5 s.
-            for (const m of mats.slice(i, i + WARM_BATCH)) {
+            for (const m of batch) {
               for (const v of Object.values(m)) if (v instanceof THREE.Texture && v.image) gl.initTexture(v);
             }
           } catch {
             /* warm-up is best effort */
           }
           scene.remove(group);
+          warm.next += WARM_BATCH;
           await nextFrame();
         }
+        geo.dispose();
       });
     }, WARMUP_DELAY_MS);
     return () => {
@@ -425,6 +428,9 @@ export interface StageProps {
   deferWarmup?: boolean;
   /** Frame the product closer (>1) or farther (<1) than the default fit. */
   zoom?: number;
+  /** Wait this long (ms) after a size change before resizing the drawing buffer (the old frame
+   *  stretches meanwhile). Resizing reallocates every buffer, which stalls a frame mid-animation. */
+  resizeDelay?: number;
 }
 
 /**
@@ -460,7 +466,7 @@ export default function Stage(props: StageProps) {
 function StageCanvas({
   product, framing = "bubble", interactive = true, preload, transparent = false, pedestal = true, effects = true, animate = true,
   celebrateKey = 0, selectedId = null, registry: reg, gizmo = false, focusKey = 0, anchor = null, explode = 0, onHit, onHover, onMiss, onTransform, onGl, onShown,
-  paused = false, deferWarmup = false, zoom = 1, onRestore,
+  paused = false, deferWarmup = false, zoom = 1, resizeDelay = 0, onRestore,
 }: StageProps & { onRestore: () => void }) {
   const registry = useMemo(() => reg ?? new PartRegistry(), [reg]);
   const hasProduct = !!product.parts[product.rootId];
@@ -481,6 +487,9 @@ function StageCanvas({
   return (
     <Canvas
       frameloop={paused ? "never" : "always"}
+      // Size the buffer from the layout box, not the on-screen rect: mid-transition the bubble is scaled
+      // (the FLIP between wish and matches) and a buffer measured then would stay blurry.
+      resize={{ offsetSize: true, debounce: resizeDelay ? { scroll: 50, resize: resizeDelay } : 0 }}
       shadows="soft"
       camera={{ position: [-1.5, 1.75, FRAMES[framing].d * 0.9], fov: 34, near: 0.05, far: 200 }}
       dpr={dpr}

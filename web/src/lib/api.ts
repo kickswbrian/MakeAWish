@@ -28,7 +28,8 @@ export const api = {
   createCampaign: (body: { wishId: string; priceCents: number; targetBackers: number; deadlineAt: number }) =>
     req<Campaign>("POST", "/api/campaigns", body),
   campaign: (id: string) => req<Campaign>("GET", `/api/campaigns/${id}`),
-  campaigns: (sort?: "held") => req<Campaign[]>("GET", `/api/campaigns${sort ? `?sort=${sort}` : ""}`),
+  vote: (id: string, voter: string, up: boolean) => req<Campaign>("POST", `/api/campaigns/${id}/vote`, { voter, up }),
+  campaigns: (sort?: "held" | "votes") => req<Campaign[]>("GET", `/api/campaigns${sort ? `?sort=${sort}` : ""}`),
   pledge: (id: string, email: string) => req<PledgeResponse>("POST", `/api/campaigns/${id}/pledges`, { email }),
   pledgeStatus: (id: string) => req<{ id: string; status: string; failReason: string | null }>("GET", `/api/pledges/${id}`),
   mockConfirm: (pledgeId: string, card: string) => req<{ ok: boolean; reason?: string }>("POST", `/api/mock/pledges/${pledgeId}/confirm`, { card }),

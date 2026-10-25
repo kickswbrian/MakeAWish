@@ -10,6 +10,7 @@ import { fanfare } from "../lib/sound.ts";
 import { Celebration, Countdown, DemandBar, PurchaseOrder } from "../ui/Campaign.tsx";
 import { Glows, Wordmark } from "../ui/Chrome.tsx";
 import { Bubble, BubbleSparks } from "../ui/Bubble.tsx";
+import { Upvote } from "../ui/Upvote.tsx";
 import { Sparkle } from "../ui/Icons.tsx";
 
 const Stage = lazy(() => import("../three/Stage.tsx"));
@@ -168,7 +169,10 @@ export default function Pledge() {
       {c.status === "funded" && status === "captured" ? null : (
         <div className="panel">
           <div>
-            <h2>{c.name}</h2>
+            <div className="pledge-title">
+              <h2>{c.name}</h2>
+              <Upvote c={c} big />
+            </div>
             <div className="price-line" style={{ marginTop: 6 }}>
               {money(c.priceCents)} · charged only if {c.targetBackers} people commit
             </div>
