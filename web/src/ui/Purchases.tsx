@@ -28,7 +28,11 @@ export function Purchases({ onClose }: { onClose: () => void }) {
       <div className="pur-panel">
         <button className="world-close" aria-label="Close" onClick={onClose}>×</button>
         <h2>Your purchases</h2>
-        <p className="pur-sub">Everything your genie bought for you. Test orders, so tracking is simulated.</p>
+        <p className="pur-sub">Everything your genie bought for you.</p>
+        <div className="pur-card" aria-label="Payment method">
+          <span className="pur-visa">VISA</span>
+          <span><b>Visa •••• 4242</b><small>Your genie pays with this card using Visa's Trusted Agent Protocol. Test card: demo orders, simulated tracking.</small></span>
+        </div>
         {orders && !orders.length && <p className="pur-empty">Nothing yet. Tap Purchase on a match and your genie buys it for you.</p>}
         <div className="pur-list">
           {orders?.map((o) => (

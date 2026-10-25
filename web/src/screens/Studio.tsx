@@ -616,6 +616,15 @@ export default function Studio() {
     if (live.current !== turn) return; // superseded by a newer turn
     live.current = null;
     endTurn();
+    // The genie sometimes builds without naming it: name the wish after what was asked for.
+    {
+      const cur = useProduct.getState().product;
+      if (cur.title === "Untitled wish" && !isEmpty(cur)) {
+        const words = utterance.replace(/^(i (wish|want)( there was)?|make( me)?|can you make|build( me)?)\s+/i, "").replace(/^(an?|the)\s+/i, "").trim();
+        const name = words.split(/\s+/).slice(0, 5).join(" ").replace(/[.!?,]+$/, "");
+        if (name) useProduct.getState().meta({ title: name.charAt(0).toUpperCase() + name.slice(1) });
+      }
+    }
     // A speculative turn persisted nothing on the server; now that it's confirmed, record it.
     if (turn.body.speculative && !turn.error && saidText) void api.transcript(wishId, utterance, saidText).catch(() => {});
     stopHum();
