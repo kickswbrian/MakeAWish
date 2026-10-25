@@ -3,6 +3,7 @@ import { displayBox } from "./modules/display.ts";
 import { MESH_MODELS } from "./meshes.ts";
 import { subtreeIds, type Part, type Product } from "./product.ts";
 import { toPartSpace, toProductSpace } from "./frames.ts";
+import { svgOutline } from "./svgpath.ts";
 import type { Vec3 } from "./spec.ts";
 
 /**
@@ -76,6 +77,8 @@ export function localBox(part: Part): Box | null {
       return { min: [-r, Math.min(...pts.map((p) => p[1])), -r], max: [r, Math.max(...pts.map((p) => p[1])), r] };
     }
     case "extrude": {
+      const drawn = g.params.svg ? svgOutline(g.params.svg, g.params.width ?? 0.05) : null;
+      if (drawn) return { min: [-drawn.width / 2, -drawn.height / 2, -g.params.depth / 2], max: [drawn.width / 2, drawn.height / 2, g.params.depth / 2] };
       const xs = g.params.shape.map((p) => p[0]), ys = g.params.shape.map((p) => p[1]);
       const b = g.params.bevel ?? 0;
       return { min: [Math.min(...xs) - b, Math.min(...ys) - b, -g.params.depth / 2], max: [Math.max(...xs) + b, Math.max(...ys) + b, g.params.depth / 2] };
@@ -380,26 +383,30 @@ function overlapShare(a: Box, b: Box): number {
 /**
  * Collisions an edit just made: a part in `only` now deeply overlaps a part of similar size (a new
  * upper seat inside a pillow) that it didn't overlap before. Pairs that already overlapped stay
- * (designs tuck cushions into each other on purpose), as do parents, posts and small fittings set
- * into bigger parts (a cup holder in an armrest). Boxes are coarse, so only big overlaps count.
+ * (designs tuck cushions into each other on purpose), as do pairs of parts added together (a charm's
+ * head and body), parents, posts and small fittings set into bigger parts (a cup holder in an
+ * armrest). Boxes are coarse, so only big overlaps count.
  */
 export function newCollisions(before: Product, after: Product, only: Iterable<string>): LevelIssue[] {
   const now = solidBoxes(after);
   const was = solidBoxes(before);
   const out: LevelIssue[] = [];
   const seen = new Set<string>();
+  // Solids only: a ring, a shell or a swept cord is mostly empty inside its box.
+  const solid = (p?: Part) => p?.kind === "primitive" && ["roundedBox", "sphere", "capsule", "cylinder", "extrude"].includes(p.geometry?.type ?? "") && !(p.geometry?.type === "cylinder" && p.geometry.params.open);
   for (const id of only) {
     const box = now.get(id);
-    if (!box || isPost(box)) continue;
+    if (!box || isPost(box) || !solid(after.parts[id])) continue;
     const mine = new Set(subtreeIds(after, id));
     for (let p = after.parts[id]?.parent; p && !mine.has(p); p = after.parts[p]?.parent) mine.add(p);
     for (const [o, b] of now) {
-      if (mine.has(o) || isPost(b) || seen.has(`${o}|${id}`)) continue;
+      if (mine.has(o) || isPost(b) || seen.has(`${o}|${id}`) || !solid(after.parts[o])) continue;
       const big = Math.max(volume(box), volume(b)), small = Math.min(volume(box), volume(b));
       if (small < big / 8) continue;
       const share = overlapShare(box, b);
-      if (share < 0.4) continue;
+      if (share < 0.5) continue;
       const pb = was.get(id), ob = was.get(o);
+      if (!before.parts[id] && !before.parts[o]) continue;
       if (pb && ob && overlapShare(pb, ob) >= 0.2) continue;
       seen.add(`${id}|${o}`);
       out.push({ kind: "collides", id, other: o, share: Math.round(share * 100) / 100 });

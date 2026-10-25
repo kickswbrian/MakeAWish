@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { mergeVertices, toCreasedNormals } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import type { Geometry, GeometryOf } from "@wishit/shared";
+import { svgOutline, type Geometry, type GeometryOf } from "@wishit/shared";
 import { boxProjectUVs, scaleUVs } from "./uv.ts";
 
 /**
@@ -203,19 +203,26 @@ function extrude(p: GeometryOf<"extrude">["params"]) {
     const out = p.smooth ? resample(v, Math.min(200, Math.max(48, pts.length * 12)), true) : v;
     return out.map((q) => new THREE.Vector2(q.x, q.y));
   };
-  let outline = toShapePts(p.shape);
-  if (THREE.ShapeUtils.isClockWise(outline)) outline = outline.reverse();
-  const shape = new THREE.Shape(outline);
-  for (const h of p.holes ?? []) {
-    let hp = toShapePts(h);
-    if (!THREE.ShapeUtils.isClockWise(hp)) hp = hp.reverse();
-    shape.holes.push(new THREE.Path(hp));
-  }
-  const box = new THREE.Box2().setFromPoints(outline);
+  const build = (outer: THREE.Vector2[], holes: THREE.Vector2[][]) => {
+    if (THREE.ShapeUtils.isClockWise(outer)) outer = outer.reverse();
+    const shape = new THREE.Shape(outer);
+    for (let hp of holes) {
+      if (!THREE.ShapeUtils.isClockWise(hp)) hp = hp.reverse();
+      shape.holes.push(new THREE.Path(hp));
+    }
+    return shape;
+  };
+  const v2 = (pts: [number, number][]) => pts.map(([x, y]) => new THREE.Vector2(x, y));
+  // A drawn SVG path: every piece of the drawing, at full detail.
+  const drawn = p.svg ? svgOutline(p.svg, p.width ?? 0.05) : null;
+  const shapes = drawn?.shapes.length
+    ? drawn.shapes.map((s) => build(v2(s.outer), s.holes.map(v2)))
+    : [build(toShapePts(p.shape), (p.holes ?? []).map(toShapePts))];
+  const box = new THREE.Box2().setFromPoints(shapes.flatMap((s) => s.getPoints()));
   const extent = Math.min(box.max.x - box.min.x, box.max.y - box.min.y);
   const bevel = Math.max(0, Math.min(p.bevel ?? Math.min(p.depth * 0.2, extent * 0.06, 0.012), p.depth / 2 - 1e-5, extent * 0.25));
   const core = Math.max(1e-5, p.depth - bevel * 2);
-  let geo: THREE.BufferGeometry = new THREE.ExtrudeGeometry(shape, {
+  let geo: THREE.BufferGeometry = new THREE.ExtrudeGeometry(shapes, {
     depth: core,
     curveSegments: 24,
     bevelEnabled: bevel > 1e-5,
