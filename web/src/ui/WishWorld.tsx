@@ -333,7 +333,7 @@ export function WishWorld({ wishId = "", yourTitle = "", yourThumb = null, lande
           setTidy((t) => !t);
           setSel(null);
           setGliding(true);
-          setView({ x: 0, y: 0, z: tidy ? 1 : 0.75 });
+          setView({ x: 0, y: tidy ? 0 : 36, z: tidy ? 1 : 0.68 });
         }}>
           {tidy ? "Let them float" : "Organize"}
         </button>
