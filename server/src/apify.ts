@@ -69,8 +69,15 @@ function actorSpec(product: Product) {
 }
 
 /** What the direct search plans and scores against. */
+/** The design's part names, deduped and without sides or numbering ("Petal 1".."Petal 4" -> "petal"). */
+function partNames(product: Product): string[] {
+  const names = Object.values(product.parts).map((p) =>
+    p.name.toLowerCase().replace(/\b(left|right|front|back|top|bottom|upper|lower|inner|outer)\b/g, "").replace(/\d+/g, "").replace(/\s+/g, " ").trim());
+  return [...new Set(names.filter((n) => n.length > 2))].slice(0, 30);
+}
+
 function wanted(product: Product): Wanted {
-  return { name: product.title, category: product.category, description: product.description, query: matchQuery(product), target_price_usd: product.targetPriceUsd };
+  return { name: product.title, category: product.category, description: product.description, query: matchQuery(product), target_price_usd: product.targetPriceUsd, parts: partNames(product) };
 }
 
 const aheadTimers = new Map<string, NodeJS.Timeout>();

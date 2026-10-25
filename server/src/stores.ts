@@ -39,7 +39,8 @@ export const STORE_NAMES = Object.keys(STORES);
 export type Listing = Omit<Match, "score" | "missing" | "why"> & { query?: string };
 
 /** What the shopper wished for, as the planner and scorer see it. */
-export type Wanted = { name?: string; category?: string; description?: string; query?: string; target_price_usd?: number };
+/** `parts`: the design's distinct part names, so add-ons the description leaves out (a flower on a plush) still count. */
+export type Wanted = { name?: string; category?: string; description?: string; query?: string; target_price_usd?: number; parts?: string[] };
 
 const first = (...vals: unknown[]) => vals.find((v) => v !== undefined && v !== null && v !== "");
 
@@ -212,12 +213,12 @@ const PlanSchema = z.object({
 
 const clean = (q: string) => q.toLowerCase().replace(/[^a-z0-9 &'-]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
 const wantedText = (w: Wanted) =>
-  [w.name && `Name: ${w.name}`, w.category && `Kind of product: ${w.category}`, w.description && `Description: ${w.description}`, w.target_price_usd && `Target price: $${w.target_price_usd}`]
+  [w.name && `Name: ${w.name}`, w.category && `Kind of product: ${w.category}`, w.description && `Description: ${w.description}`, w.parts?.length && `Parts in their 3D design: ${w.parts.join(", ")}`, w.target_price_usd && `Target price: $${w.target_price_usd}`]
     .filter(Boolean)
     .join("\n");
 
 const plans = new Map<string, Promise<SearchPlan>>();
-const planKey = (w: Wanted) => hash(JSON.stringify([w.name, w.category, w.description, w.query]));
+const planKey = (w: Wanted) => hash(JSON.stringify([w.name, w.category, w.description, w.query, w.parts]));
 
 /**
  * The search plan for a wish, cached: call it early (a design just finished) and the search at
@@ -253,9 +254,9 @@ async function makePlan(w: Wanted): Promise<SearchPlan> {
             `- sold_as: the name it's sold under if it exists (e.g. a dress that turns into a skirt is a "convertible dress"; a mug that holds coffee at a set temperature is a "temperature control smart mug"), else "".\n` +
             `- queries: 3 store searches, 2-5 words each, the way shoppers type them (no filler like "with", "that", "turns into"), most specific first:\n` +
             `  1. what it's sold as (a brand or model name only when one well-known product is exactly this). If it doesn't exist, the closest real thing stores actually stock that does its main job (jet shoes: "motorized electric shoes"), never the invented idea itself;\n` +
-            `  2. the product noun plus its defining feature, in shopper words;\n` +
+            `  2. the product noun plus its defining feature, in shopper words. A distinctive add-on in their parts list counts, even when the description leaves it out (a cow plush holding a flower: "cow plush with flower");\n` +
             `  3. a broader search: the plain product with its single most important feature.\n` +
-            `- must_have: usually ONE short phrase for the core idea (two only when the wish combines two separate functions, like "heated" and "canopy roof"), what a shopper would accept as "that's it". Name what it DOES, never how the description says it's built: a dress that unzips into a skirt -> "converts into a skirt" (not "zip-off top"); a backpack with a stand in its back panel -> "built-in laptop stand" (not "built into back panel"). Never things every product of its kind has, nor color, material or size unless they are the point.`,
+            `- must_have: usually ONE short phrase for the core idea (two only when the wish combines two separate functions, like "heated" and "canopy roof"), what a shopper would accept as "that's it". Name what it DOES, never how the description says it's built: a dress that unzips into a skirt -> "converts into a skirt" (not "zip-off top"); a backpack with a stand in its back panel -> "built-in laptop stand" (not "built into back panel"). Never things every product of its kind has, nor color, material or size unless they are the point. A distinctive add-on from the parts list (a flower, a hood, a speaker) is often the point.`,
         }],
       },
       { timeout: 15_000 },
