@@ -285,7 +285,10 @@ export default function Studio() {
     if (!src) return;
     const w = await api.createWish();
     await api.saveProduct(w.id, { ...src.product, id: w.id }, src.thumb ?? undefined).catch(() => {});
-    window.location.assign(`/?wish=${w.id}`);
+    // Keep the rest of the query (?ui=2 / ?ui=3), so the copy opens in the same UI.
+    const q = new URLSearchParams(window.location.search);
+    q.set("wish", w.id);
+    window.location.assign(`/?${q}`);
   }, []);
   const goWorld = useCallback(() => {
     setWorldLanded(false);
