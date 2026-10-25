@@ -291,7 +291,7 @@ app.post("/api/campaigns/:id/agent-pledge", limits.agentPledge, wrap(async (req,
 }));
 
 /** "Purchase" on a match card: the genie buys that listing for the shopper (a test-mode order). */
-app.post("/api/wish/:id/agent-buy", limits.agentPledge, wrap(async (req, res) => {
+app.post("/api/wish/:id/agent-buy", limits.agentBuy, wrap(async (req, res) => {
   const url = String(req.body?.url ?? "");
   if (!/^https?:\/\//.test(url) || url.length > 2000) throw badRequest("Which listing?");
   const r = await agentBuy(req.params.id, url);

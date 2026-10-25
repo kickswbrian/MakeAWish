@@ -264,7 +264,7 @@ export function WishWorld({ wishId = "", yourTitle = "", yourThumb = null, lande
         })}
       </div>
 
-      {items && all.length <= 1 && <p className="world-empty">No other wishes floating here yet. Yours is the first.</p>}
+      {items && all.length <= (wishId ? 1 : 0) && <p className="world-empty">{wishId ? "No other wishes floating here yet. Yours is the first." : "No wishes floating here yet."}</p>}
 
       {selected && (
         <div

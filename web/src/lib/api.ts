@@ -10,7 +10,8 @@ async function req<T>(method: string, path: string, body?: unknown, headers?: Re
   });
   const data = await res.json().catch(() => ({}));
   // Server errors are { error: { code, message, requestId } }.
-  if (!res.ok) throw new Error((data as { error?: { message?: string } }).error?.message ?? `Request failed (${res.status})`);
+  // ...or, from the agent checkout, { ok: false, outcome } saying why the merchant refused.
+  if (!res.ok) throw new Error((data as { error?: { message?: string } }).error?.message ?? (data as { outcome?: string }).outcome ?? `Request failed (${res.status})`);
   return data as T;
 }
 
