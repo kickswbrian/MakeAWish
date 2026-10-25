@@ -408,6 +408,7 @@ function expandRepeat(raw: unknown): unknown[] {
   const rep = patch?.op === "add" && patch.part && typeof patch.part === "object" ? (patch.part.repeat as Record<string, unknown> | undefined) : undefined;
   if (!rep || typeof rep !== "object") return [raw];
   const { repeat: _drop, ...base } = patch.part!;
+  if (typeof base.parent !== "string") return [{ ...patch, part: base }];
   const count = Math.max(1, Math.min(48, Math.round(Number(rep.count) || 1)));
   const vec = (v: unknown): Vec3 | null => (Array.isArray(v) && v.length === 3 && v.every((n) => Number.isFinite(Number(n))) ? (v.map(Number) as Vec3) : null);
   const offset = vec(rep.offset);

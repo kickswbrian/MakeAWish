@@ -152,7 +152,10 @@ function carve(base: THREE.BufferGeometry, cutters: { geometry: THREE.BufferGeom
       const b = new Brush(c.geometry);
       c.matrix.decompose(b.position, b.quaternion, b.scale);
       b.updateMatrixWorld();
-      result = evaluator.evaluate(result, b, c.keep ? INTERSECTION : SUBTRACTION);
+      const next = evaluator.evaluate(result, b, c.keep ? INTERSECTION : SUBTRACTION);
+      // A misplaced intersect tool keeps nothing: ignore it rather than make the body vanish.
+      if (c.keep && (next.geometry.getAttribute("position")?.count ?? 0) < 3) continue;
+      result = next;
     }
     const g = result.geometry;
     g.computeBoundingBox();
@@ -222,7 +225,8 @@ const PartMesh = memo(function PartMesh({ part, cutters, selected }: { part: Par
     // Each cut is a full BVH boolean; cap them so a runaway product can't freeze the page.
     const cuts = cutters
       .filter((c) => c.geometry)
-      .slice(0, 8)
+      .sort((a, b) => Number(b.csg?.op === "intersect") - Number(a.csg?.op === "intersect"))
+      .slice(0, 16)
       .map((c) => ({ geometry: buildGeometry(c.geometry!), matrix: inv.clone().multiply(partMatrix(ctx.product, c.id)), keep: c.csg?.op === "intersect" }));
     const out = carve(base, cuts);
     for (const c of cuts) c.geometry.dispose();
