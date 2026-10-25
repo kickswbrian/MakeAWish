@@ -99,6 +99,7 @@ export const limits = {
    * is signature-checked before anything is held, so this only bounds load. */
   agent: limiter("agent", MIN, 40, "Too many agent requests. Slow down a little."),
   agentPledge: limiter("agent-pledge", 10 * MIN, 10, "Too many genie pledges. Try again in a few minutes."),
+  agentBuy: limiter("agent-buy", 10 * MIN, 30, "Too many genie purchases. Try again in a few minutes."),
   confirm: limiter("confirm", 10 * MIN, 10, "Too many card attempts. Try again in a few minutes."),
   voiceToken: limiter("voice-token", 10 * MIN, 20, "Voice is busy. Try again in a few minutes."),
   /** Failed admin attempts only, against token guessing. */

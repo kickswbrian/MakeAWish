@@ -4,7 +4,7 @@ import http from "node:http";
 import path from "node:path";
 import { Server } from "socket.io";
 import {
-  CreateCampaignBody, EVENTS, isEmpty, parseProduct, PledgeBody, templateById, VoteBody,
+  CreateCampaignBody, EVENTS, isEmpty, parseProduct, PledgeBody, templateById, VoteBody, WishVoteBody,
   type Campaign, type ConfigResponse, type MatchesResponse, type OutlineEntry, type PledgeResponse, type TurnEvent, type TurnSelection,
 } from "@wishit/shared";
 import { setIo, emit } from "./bus.ts";
@@ -17,8 +17,10 @@ import {
 import { assertSafeConfig, env, isProd, logConfig, paymentMode, WEB_DIST } from "./env.ts";
 import { findMatches, getMatches, prepareMatches } from "./apify.ts";
 import { resetDemo } from "./demo.ts";
+import { listWorld, voteWish } from "./world.ts";
 import { handleStripeEvent, mockConfirm, stripe } from "./payments.ts";
 import { agentAttack, agentPledge, handleAgentPledge, type Attack } from "./agent.ts";
+import { agentBuy, handleAgentOrder, ORDER_PATH } from "./orders.ts";
 import { lookupKey } from "./tap.ts";
 import { isInternal } from "./internal.ts";
 import { appendTranscript, createWish, getWish, saveProduct, saveThumb, setWishStatus, toWishDTO } from "./wishes.ts";
@@ -81,10 +83,18 @@ app.post("/api/agent/campaigns/:id/pledges", limits.agent, express.raw({ type: "
   res.status(r.status).json(r.body);
 }));
 
+// Agent purchase of a store listing, merchant side (same TAP checks; raw body for the digest).
+app.post(ORDER_PATH, limits.agent, express.raw({ type: "application/json", limit: "20kb" }), (req, res) => {
+  const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+  const r = handleAgentOrder({ host: req.headers.host ?? "", path: req.originalUrl.split("?")[0], headers: req.headers, rawBody });
+  res.status(r.status).json(r.body);
+});
+
 app.use(express.json({ limit: "400kb" }));
 
 // Every :id is a short lowercase id (util.newId); anything else can't exist.
-app.param("id", (_req, _res, next, id: string) => next(/^[a-z0-9]{1,20}$/.test(id) ? undefined : notFound()));
+// Hyphens too: the seeded Wish World wishes are world-seed01 and so on.
+app.param("id", (_req, _res, next, id: string) => next(/^[a-z0-9-]{1,20}$/.test(id) ? undefined : notFound()));
 
 
 app.get("/api/config", (_req, res) => {
@@ -245,6 +255,20 @@ app.post("/api/campaigns", limits.createCampaign, (req, res) => {
   res.json(createCampaign(w.id, priceCents, targetBackers, deadlineAt));
 });
 
+// ---------- Wish world ----------
+
+const voterParam = (v: unknown) => (typeof v === "string" && /^[A-Za-z0-9-]{8,64}$/.test(v) ? v : null);
+app.get("/api/world", limits.read, (req, res) => {
+  const include = typeof req.query.include === "string" ? req.query.include : null;
+  res.json(listWorld(voterParam(req.query.voter), include));
+});
+
+app.post("/api/wish/:id/vote", limits.vote, (req, res) => {
+  const parsed = WishVoteBody.safeParse(req.body);
+  if (!parsed.success) throw badRequest("Invalid vote");
+  res.json(assertFound(voteWish(req.params.id, parsed.data.voter, parsed.data.value), "Wish"));
+});
+
 app.post("/api/campaigns/:id/vote", limits.vote, (req, res) => {
   const parsed = VoteBody.safeParse(req.body);
   if (!parsed.success) throw badRequest("Invalid vote");
@@ -263,6 +287,14 @@ app.post("/api/campaigns/:id/agent-pledge", limits.agentPledge, wrap(async (req,
   const maxCents = Math.round(Number(req.body?.maxCents ?? c.priceCents));
   if (!Number.isFinite(maxCents) || maxCents < 50 || maxCents > 1_000_000) throw badRequest("Pick a spending limit.");
   const r = await agentPledge(c.id, email, maxCents);
+  res.status(r.status).json(r.body);
+}));
+
+/** "Purchase" on a match card: the genie buys that listing for the shopper (a test-mode order). */
+app.post("/api/wish/:id/agent-buy", limits.agentBuy, wrap(async (req, res) => {
+  const url = String(req.body?.url ?? "");
+  if (!/^https?:\/\//.test(url) || url.length > 2000) throw badRequest("Which listing?");
+  const r = await agentBuy(req.params.id, url);
   res.status(r.status).json(r.body);
 }));
 

@@ -1,17 +1,16 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CLOSE_SCORE, describeProduct, EXISTS_SCORE, type Match, type MatchesResponse, type Product } from "@wishit/shared";
+import { api } from "../lib/api.ts";
 import { ArrowOut, BackIcon, CategoryIcon, HeartIcon, LockIcon, MicIcon, MinusIcon, PlusIcon, SpinIcon, Sparkle } from "./Icons.tsx";
 
 const STORE: Record<string, string> = { amazon: "Amazon", etsy: "Etsy", google_shopping: "Google Shopping", sample: "Sample" };
-const STORE_SHORT: Record<string, string> = { amazon: "Amazon", etsy: "Etsy", google_shopping: "Google", sample: "Sample" };
-const STORE_DOT: Record<string, string> = { amazon: "#F2A541", etsy: "#E86A33", google_shopping: "#5B8DEF", sample: "#9AA8A3" };
 
 const money = (p: number | null) => (p == null ? null : `$${p % 1 ? p.toFixed(2) : p.toLocaleString("en-US")}`);
 /** How well a listing matches (the store search scores each listing against the design render and its photo). */
 export const matchOf = (m: Match) => m.score;
 
 export type SortKey = "best" | "price";
-const SORTS: { key: SortKey; label: string }[] = [
+export const SORTS: { key: SortKey; label: string }[] = [
   { key: "best", label: "Best match + price" },
   { key: "price", label: "Lowest price" },
 ];
@@ -36,23 +35,6 @@ export function rankMatches(res: MatchesResponse | null, sort: SortKey = "best")
   return [...pool].sort((a, b) => value[sort](b) - value[sort](a) || matchOf(b) - matchOf(a));
 }
 
-const tier = (score: number) => (score >= EXISTS_SCORE ? "hi" : score >= CLOSE_SCORE ? "mid" : "lo");
-
-/** "★ 4.6 · 2.3k": only for listings with a real track record. */
-function Stars({ m }: { m: Match }) {
-  if (!m.rating) return null;
-  const n = m.reviews ?? 0;
-  const count = n >= 1000 ? `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1).replace(/\.0$/, "")}k` : n ? String(n) : "";
-  return (
-    <span className="mstars" aria-label={`Rated ${m.rating} out of 5${n ? ` from ${n.toLocaleString("en-US")} reviews` : ""}`}>
-      <b aria-hidden="true">★</b>{m.rating.toFixed(1)}{count && <small> · {count}</small>}
-    </span>
-  );
-}
-
-/** "No cedar wood" reads better than a bare noun phrase. */
-const lacks = (m: string) => (/^(no|not|doesn|lacks|missing)\b/i.test(m) ? m : `No ${m}`);
-
 /** The product photo, or the wish's category icon when the store sent none (or it fails to load). */
 function Photo({ m, category, color, size }: { m: Match; category: string; color?: string; size: number }) {
   const [broken, setBroken] = useState(false);
@@ -60,56 +42,6 @@ function Photo({ m, category, color, size }: { m: Match; category: string; color
     <div className="mphoto">
       {m.image && !broken ? <img src={m.image} alt="" loading="lazy" onError={() => setBroken(true)} /> : <CategoryIcon category={category} color={color} size={size} />}
     </div>
-  );
-}
-
-/** One listing: the whole card opens it in the store. */
-export function MatchCard({ m, category, color, i, shared }: { m: Match; category: string; color?: string; i: number; shared?: Set<string> }) {
-  const store = STORE[m.source] ?? m.source;
-  const price = money(m.price);
-  const gap = m.missing.find((x) => !shared?.has(x.toLowerCase()));
-  const pct = matchOf(m);
-  return (
-    <a className="mcard" href={m.url} target="_blank" rel="noreferrer" style={{ animationDelay: `${0.06 + i * 0.07}s` }} aria-label={`${m.title} on ${store}${price ? `, ${price}` : ""}, ${pct}% match`}>
-      <Photo m={m} category={category} color={color} size={72} />
-      <span className={`mscore ${tier(pct)}`}>{pct}%<small> match</small></span>
-      <div className="minfo">
-        <div className="mrow">
-          <span className="mstore"><i style={{ background: STORE_DOT[m.source] ?? "#9AA8A3" }} />{STORE_SHORT[m.source] ?? m.source}</span>
-          {price && <span className="mprice">{price}</span>}
-        </div>
-        <span className="mtitle" title={m.title}>{m.title}</span>
-        <Stars m={m} />
-        {m.why ? <span className="mwhy">{m.why}</span> : gap && <span className="mlack" title={m.missing.map(lacks).join(", ")}>{lacks(gap)}</span>}
-      </div>
-    </a>
-  );
-}
-
-/** The best listing, big: photo beside the verdict, with a clear way to the store. */
-function TopMatch({ m, category, color, sort }: { m: Match; category: string; color?: string; sort: SortKey }) {
-  const store = STORE[m.source] ?? m.source;
-  const exists = m.score >= EXISTS_SCORE;
-  const price = money(m.price);
-  const pct = matchOf(m);
-  const kicker = exists ? <><Sparkle size={13} color="#8A6A12" /> It exists</> : sort === "price" ? "Lowest price" : "Best pick";
-  return (
-    <a className={`mtop ${exists ? "exists" : ""}`} href={m.url} target="_blank" rel="noreferrer" aria-label={`Top pick: ${m.title} on ${store}${price ? `, ${price}` : ""}, ${pct}% match`}>
-      <Photo m={m} category={category} color={color} size={96} />
-      <div className="minfo">
-        <span className="mkicker">{kicker}<span className={`mscore inline ${tier(pct)}`}>{pct}%</span></span>
-        <span className="mtitle big" title={m.title}>{m.title}</span>
-        <div className="mrow">
-          <span className="mstore"><i style={{ background: STORE_DOT[m.source] ?? "#9AA8A3" }} />{STORE_SHORT[m.source] ?? store}<Stars m={m} /></span>
-          {price && <span className="mprice big">{price}</span>}
-        </div>
-        {m.why && <span className="mwhy big">{m.why}</span>}
-        {m.missing.length > 0 && (
-          <div className="mlacks">{m.missing.slice(0, 3).map((x) => <span key={x} className="mlack">{lacks(x)}</span>)}</div>
-        )}
-        <span className="mgo">View on {STORE_SHORT[m.source] ?? store} <ArrowOut size={16} /></span>
-      </div>
-    </a>
   );
 }
 
@@ -126,63 +58,135 @@ function dedupe(matches: Match[]): Match[] {
 }
 
 /** Store filter chips, the best match as a hero, the rest in a 2-column grid. Skeletons while searching. */
-export function MatchGrid({ res, category, color }: { res: MatchesResponse | null; category: string; color?: string }) {
-  const [filter, setFilter] = useState("all");
-  const [sort, setSort] = useState<SortKey>("best");
-  const list = useMemo(() => rankMatches(res, sort), [res, sort]);
-  const stores = useMemo(() => [...new Set(list.map((m) => m.source))], [list]);
-  const shown = filter === "all" ? list : list.filter((m) => m.source === filter);
+/** The sort, as one custom dropdown pill (at the right of "N sites searched"). */
+export function SortSelect({ value, onChange }: { value: SortKey; onChange: (k: SortKey) => void; res?: MatchesResponse | null }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("pointerdown", away);
+    window.addEventListener("keydown", esc);
+    return () => {
+      window.removeEventListener("pointerdown", away);
+      window.removeEventListener("keydown", esc);
+    };
+  }, [open]);
+  const label = SORTS.find((x) => x.key === value)?.label ?? "";
+  return (
+    <div ref={box} className={`sort-dd ${open ? "open" : ""}`}>
+      <button className="sort-dd-btn" aria-haspopup="listbox" aria-expanded={open} aria-label={`Sort matches: ${label}`} onClick={() => setOpen((o) => !o)}>
+        {label}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+      {open && (
+        <div className="sort-dd-menu" role="listbox" aria-label="Sort matches">
+          {SORTS.map((x) => (
+            <button
+              key={x.key}
+              className="sort-dd-opt"
+              role="option"
+              aria-selected={x.key === value}
+              onClick={() => {
+                onChange(x.key);
+                setOpen(false);
+              }}
+            >
+              {x.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
+type BuyState = { step: "idle" | "confirm" | "buying" | "done" | "failed"; orderId?: string; why?: string };
+
+/**
+ * One listing as a product card: a big photo, then the store, name and price. "Purchase" has the genie
+ * buy it right here (confirm the price, then a signed agent checkout); the store link opens the listing.
+ */
+function MatchCard({ m, category, color, i, wishId }: { m: Match; category: string; color?: string; i: number; wishId?: string }) {
+  const store = STORE[m.source] ?? m.source;
+  const price = money(m.price);
+  const [buy, setBuy] = useState<BuyState>({ step: "idle" });
+  useEffect(() => {
+    if (buy.step !== "confirm") return;
+    const t = setTimeout(() => setBuy({ step: "idle" }), 5000); // an unconfirmed tap times out
+    return () => clearTimeout(t);
+  }, [buy.step]);
+  const purchase = async () => {
+    if (!wishId) return;
+    if (buy.step === "idle" || buy.step === "failed") return setBuy({ step: "confirm" });
+    if (buy.step !== "confirm") return;
+    setBuy({ step: "buying" });
+    try {
+      const r = await api.agentBuy(wishId, m.url);
+      setBuy(r.ok ? { step: "done", orderId: r.orderId } : { step: "failed", why: r.outcome });
+    } catch (err) {
+      setBuy({ step: "failed", why: (err as Error).message });
+    }
+  };
+  return (
+    <div className={`mcardx ${buy.step === "done" ? "bought" : ""}`} style={{ animationDelay: `${0.05 + i * 0.06}s` }}>
+      <a className="mx-link" href={m.url} target="_blank" rel="noreferrer" aria-label={`${m.title} on ${store}${price ? `, ${price}` : ""} (opens the store)`}>
+        <Photo m={m} category={category} color={color} size={96} />
+      </a>
+      <span className="mx-body">
+        <a className="mx-site" href={m.url} target="_blank" rel="noreferrer">{store} <ArrowOut size={12} /></a>
+        <span className="mx-name" title={m.title}>{m.title}</span>
+        {buy.step === "done" ? (
+          <span className="mx-done" role="status">
+            <b>Bought by your genie</b>
+            <small>Test order {buy.orderId?.toUpperCase()} · {price} · verified agent checkout</small>
+          </span>
+        ) : (
+          <span className="mx-foot">
+            <span className="mx-price">{price ?? "—"}</span>
+            {m.price != null && wishId && (
+              <button className={`mx-buy ${buy.step}`} disabled={buy.step === "buying"} onClick={() => void purchase()}>
+                {buy.step === "confirm" ? `Confirm ${price}` : buy.step === "buying" ? "Genie is buying…" : "Purchase"}
+              </button>
+            )}
+          </span>
+        )}
+        {buy.step === "failed" && <span className="mx-fail" role="alert">{buy.why ?? "That didn't go through."} Tap Purchase to try again.</span>}
+      </span>
+    </div>
+  );
+}
+
+/** The listings as product cards, best first (by the chosen sort). Skeleton cards while searching. */
+export function MatchGrid({ res, category, color, sort = "best", wishId }: { res: MatchesResponse | null; category: string; color?: string; sort?: SortKey; wishId?: string }) {
+  const list = useMemo(() => rankMatches(res, sort), [res, sort]);
   if (!res || (res.pending && !res.matches.length)) {
     return (
       <div className="scroll">
-        <div className="msearch" role="status"><span className="mpulse" aria-hidden="true" />Searching Amazon and Google Shopping…</div>
-        <div className="mtop ghost" aria-hidden="true"><div className="mphoto" /><div className="minfo"><b /><b /><b className="short" /></div></div>
-        <div className="mgrid" aria-hidden="true">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="mcard ghost" style={{ animationDelay: `${i * 0.08}s` }}><div className="mphoto" /><div className="minfo"><b /><b className="short" /></div></div>
+        <div className="mcards" aria-hidden="true">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="mcardx ghost" style={{ animationDelay: `${i * 0.08}s` }}><div className="mphoto" /><span className="mx-body"><b /><b /><b className="short" /></span></div>
           ))}
         </div>
       </div>
     );
   }
-  const [top, ...rest] = shown;
-  // A gap every lacking listing shares ("cedar wood") is said once, not on every card.
-  const lacking = shown.filter((m) => m.missing.length);
-  const shared = new Set(
-    lacking.length > 1 ? lacking[0].missing.map((x) => x.toLowerCase()).filter((x) => lacking.every((m) => m.missing.some((y) => y.toLowerCase() === x))) : [],
-  );
+  // A gap every listing shares ("cedar wood") is said once, in plain words.
+  const lacking = list.filter((m) => m.missing.length);
+  const shared = lacking.length > 1 ? lacking[0].missing.filter((x) => lacking.every((m) => m.missing.some((y) => y.toLowerCase() === x.toLowerCase()))) : [];
   return (
-    <>
-      <div className="chips">
-        <div className="chip-group" role="radiogroup" aria-label="Sort matches">
-          {SORTS.map((s) => (
-            <button key={s.key} className="chip" role="radio" aria-checked={sort === s.key} onClick={() => setSort(s.key)}>
-              {s.label}
-            </button>
-          ))}
+    <div className="scroll">
+      {!list.length && <div className="empty-magic">Nothing like it anywhere. A truly original wish.</div>}
+      {list.length > 0 && (
+        <div className="mcards">
+          {list.map((m, i) => <MatchCard key={m.url + i} m={m} category={category} color={color} i={i} wishId={wishId} />)}
         </div>
-        {stores.length > 1 && (
-          <div className="chip-group" role="tablist" aria-label="Filter by store">
-            {["all", ...stores].map((s) => (
-              <button key={s} className="chip" role="tab" aria-selected={filter === s} onClick={() => setFilter(s)}>
-                {s === "all" ? `All ${list.length}` : `${STORE_SHORT[s] ?? s} ${list.filter((m) => m.source === s).length}`}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="scroll">
-        {!top && <div className="empty-magic">Nothing like it anywhere. A truly original wish.</div>}
-        {top && <TopMatch key={top.url} sort={sort} m={{ ...top, missing: top.missing.filter((x) => !shared.has(x.toLowerCase())) }} category={category} color={color} />}
-        {shared.size > 0 && <p className="mshared">{lacking.length === shown.length ? "None of these have" : "Most of these lack"} <b>{[...shared].slice(0, 2).join(" or ")}</b>. Yours would.</p>}
-        {rest.length > 0 && (
-          <div className="mgrid">
-            {rest.map((m, i) => <MatchCard key={m.url + i} m={m} category={category} color={color} i={i} shared={shared} />)}
-          </div>
-        )}
-      </div>
-    </>
+      )}
+      {shared.length > 0 && <p className="mshared">{lacking.length === list.length ? "None of these have" : "Most of these lack"} {shared.slice(0, 2).join(" or ")}. Yours would.</p>}
+    </div>
   );
 }
 

@@ -1,5 +1,5 @@
 import type {
-  Campaign, CartesiaTokenResponse, ConfigResponse, MatchesResponse, PledgeResponse, Product, WishDTO,
+  Campaign, CartesiaTokenResponse, ConfigResponse, MatchesResponse, PledgeResponse, Product, WishDTO, WorldItem,
 } from "@wishit/shared";
 
 async function req<T>(method: string, path: string, body?: unknown, headers?: Record<string, string>): Promise<T> {
@@ -10,7 +10,8 @@ async function req<T>(method: string, path: string, body?: unknown, headers?: Re
   });
   const data = await res.json().catch(() => ({}));
   // Server errors are { error: { code, message, requestId } }.
-  if (!res.ok) throw new Error((data as { error?: { message?: string } }).error?.message ?? `Request failed (${res.status})`);
+  // ...or, from the agent checkout, { ok: false, outcome } saying why the merchant refused.
+  if (!res.ok) throw new Error((data as { error?: { message?: string } }).error?.message ?? (data as { outcome?: string }).outcome ?? `Request failed (${res.status})`);
   return data as T;
 }
 
@@ -28,6 +29,11 @@ export const api = {
   createCampaign: (body: { wishId: string; priceCents: number; targetBackers: number; deadlineAt: number }) =>
     req<Campaign>("POST", "/api/campaigns", body),
   campaign: (id: string) => req<Campaign>("GET", `/api/campaigns/${id}`),
+  world: (voter: string, include?: string) => req<WorldItem[]>("GET", `/api/world?voter=${encodeURIComponent(voter)}${include ? `&include=${encodeURIComponent(include)}` : ""}`),
+  voteWish: (id: string, voter: string, value: -1 | 0 | 1) =>
+    req<{ score: number; up: number; down: number; myVote: -1 | 0 | 1 }>("POST", `/api/wish/${id}/vote`, { voter, value }),
+  agentBuy: (wishId: string, url: string) =>
+    req<{ ok: boolean; outcome: string; orderId?: string; amountCents?: number; checks: { name: string; ok: boolean; detail: string }[] }>("POST", `/api/wish/${wishId}/agent-buy`, { url }),
   vote: (id: string, voter: string, up: boolean) => req<Campaign>("POST", `/api/campaigns/${id}/vote`, { voter, up }),
   campaigns: (sort?: "held" | "votes") => req<Campaign[]>("GET", `/api/campaigns${sort ? `?sort=${sort}` : ""}`),
   pledge: (id: string, email: string) => req<PledgeResponse>("POST", `/api/campaigns/${id}/pledges`, { email }),
