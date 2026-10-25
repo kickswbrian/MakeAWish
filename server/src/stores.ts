@@ -55,6 +55,20 @@ function toPrice(v: unknown): number | null {
   return Number.isFinite(n) && n > 0 ? toPrice(n) : null;
 }
 
+/**
+ * Prices in another currency. Google Shopping sometimes answers through a foreign proxy even with
+ * countryCode "us" ("AED 1,147.66", "₫2,749,000", "₹9,914"), and reading those as dollars showed a
+ * $99,780 couch. Dollar look-alikes (CA$, A$, R$) are foreign too.
+ */
+function foreignCurrency(item: any): boolean {
+  const code = first(item.currency, item.priceCurrency, item.currencyCode, item.price?.currency) as string | undefined;
+  if (typeof code === "string" && code.trim() && !/^(usd|\$|us\$)$/i.test(code.trim())) return true;
+  const raw = first(item.price, item.priceValue, item.currentPrice, item.extracted_price);
+  if (typeof raw !== "string") return false;
+  const lead = raw.replace(/ /g, " ").trim().split(/\d/)[0].trim();
+  return lead !== "" && !/^(\$|us\s?\$|usd)$/i.test(lead);
+}
+
 /** "4.5 out of 5 stars" / 4.5 / {rating: 4.5} -> 4.5, within 0-5. */
 function toRating(v: unknown): number | null {
   if (v == null) return null;
@@ -87,7 +101,7 @@ export function normalize(source: string, item: any): Listing | null {
     url = `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(`${title}${seller ? ` ${seller}` : ""}`)}`;
   }
   const img = first(item.thumbnailImage, item.imageUrl, item.productImage, item.image, item.thumbnail, item.mainImage, Array.isArray(item.images) ? item.images[0] : undefined, Array.isArray(item.imageUrls) ? item.imageUrls[0] : undefined) as any;
-  if (!title || !url) return null;
+  if (!title || !url || foreignCurrency(item)) return null;
   let image: string | null = typeof img === "string" ? img : img?.url ?? null;
   if (image && image.startsWith("data:") && image.length > 20_000) image = null; // huge inline thumbnails
   // Which query found it: Google names it, Amazon gives back the search URL it crawled.
