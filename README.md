@@ -33,7 +33,7 @@ Built at Cal Hacks 13.0 for the Visa (Reimagining Shopping), Apify and Cartesia 
 
 **Purchase without leaving the app.** Each match card has a Purchase button: confirm the price and the genie buys it as a Visa Trusted Agent Protocol agent. It signs the checkout under a one-listing, ten-minute mandate, and the merchant side verifies the signature, the payment container and the mandate. The listing and price come from the server's own search results. Wish it isn't the store, so these are test-mode orders: no real Amazon or Google checkout happens and no card is charged.
 
-**UI variation 2.** Press `2` in the studio for the cinematic version: a "Want it? Wish it." intro, a 3D glass bubble, type-anywhere input and a cleaner editor. Press `3` for the same thing holding on the title until you click (good for presenting), and `1` to go back. `?ui=2` / `?ui=3` work in links.
+**UI variation 2 (the default).** A "Want it? Wish it." intro, a 3D glass bubble, type-anywhere input and a cleaner editor. Press `2` in the studio to toggle to the classic UI and back, `3` to hold on the title until you click (good for presenting). `?ui=1` / `?ui=2` / `?ui=3` work in links.
 
 **27 fashion templates**, each with controls (length, fit, leg shape, rise, sleeves, and more), material slots and named zones where detail modules attach, plus 27 hand-built product templates (backpacks, sneakers, lamps, speakers, helmets…):
 
