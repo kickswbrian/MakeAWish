@@ -855,6 +855,11 @@ export default function Studio() {
             onGl={onGl}
             onShown={setShownId}
             paused={introHidden}
+            deferWarmup={!settled || (v2 && phase !== "done")}
+            // The v2 wish screen: the showroom piece bigger in its bubble, and without the ambient
+            // occlusion and bloom passes, which fill the canvas in white (the glass bubble is the backdrop).
+            zoom={v2Landing ? 1.3 : 1}
+            effects={!v2Landing}
           />
         </Bubble>
         {v2 && <Bubble3D revealed={phase === "bubble" || phase === "done"} paused={introHidden} />}
@@ -965,8 +970,12 @@ export default function Studio() {
           )}
           {(typing || voice.mode === "text" || (v2Landing && (voice.micStatus === "denied" || voice.micStatus === "failed"))) && (
             <form
-              className="typebox"
-              style={v2Landing && typing && typeAt ? { position: "fixed", left: typeAt.x, top: typeAt.y, bottom: "auto", transform: "none", translate: "-50% -50%" } : undefined}
+              className={`typebox ${v2 ? "v2-typebox" : ""}`}
+              style={{
+                ...(v2Landing && typing && typeAt ? { position: "fixed", left: typeAt.x, top: typeAt.y, bottom: "auto", transform: "none", translate: "-50% -50%" } : {}),
+                // v2 wish screen: a short pill that widens as the wish gets longer.
+                ...(v2Landing ? { width: `min(calc(${text ? text.length + 2 : 15}ch + 76px), 620px, calc(100vw - 32px))` } : {}),
+              }}
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!text.trim()) return;

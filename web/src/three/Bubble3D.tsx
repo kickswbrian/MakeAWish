@@ -38,13 +38,14 @@ const shellFrag = /* glsl */ `
     vec3 pastel = mix(vec3(0.976, 0.776, 0.863), vec3(0.949, 0.847, 0.541), 0.5 + 0.5 * sin(band * 3.0));
     pastel = mix(pastel, vec3(0.773, 0.847, 0.812), 0.5 + 0.5 * sin(band * 2.0 + 1.7));
     vec3 col = mix(pastel, film, 0.4);
-    col = mix(vec3(1.0), col, 0.5 + 0.5 * fres);
+    col = mix(vec3(1.0), col, 0.7 + 0.3 * fres);
     vec3 l1 = normalize(vec3(-0.55, 0.65, 0.6));
     vec3 l2 = normalize(vec3(0.65, -0.45, 0.45));
-    float s1 = pow(max(dot(n, normalize(l1 + v)), 0.0), 110.0);
-    float s2 = pow(max(dot(n, normalize(l2 + v)), 0.0), 36.0) * 0.3;
-    float a = (0.04 + fres * 0.78 + uAmp * fres * 0.35) * uAlpha;
-    if (uBack > 0.5) { a *= 0.3; s1 = 0.0; }
+    // Highlights kept small and soft: a hint of glass, not a glare over the product.
+    float s1 = pow(max(dot(n, normalize(l1 + v)), 0.0), 160.0) * 0.45;
+    float s2 = pow(max(dot(n, normalize(l2 + v)), 0.0), 60.0) * 0.12;
+    float a = (fres * 0.62 + uAmp * fres * 0.35) * uAlpha;
+    if (uBack > 0.5) { a *= 0.18; s1 = 0.0; s2 = 0.0; }
     gl_FragColor = vec4(col + (s1 + s2) * 1.1, clamp(a + (s1 + s2) * uAlpha, 0.0, 1.0));
   }`;
 

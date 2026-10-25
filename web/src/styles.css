@@ -747,7 +747,9 @@ p { margin: 0; }
 @keyframes v2wipe { to { transform: scaleX(1); } }
 @keyframes v2swipe { 0% { transform: none; } 25% { transform: translateX(3vw); opacity: 1; } 100% { transform: translateX(-130vw); opacity: 0; } }
 
-.v2-ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 5; }
+.v2-ring { position: absolute; inset: 0; pointer-events: none; z-index: 5; transform-style: preserve-3d; }
+.v2-ring-defs { position: absolute; }
+.v2-ring-layer { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 /* The loop: a thick arc that whips around twice while it grows into a closed circle; a thin arc spins the
    other way just outside. Stroke animation only (no filters), so it stays cheap to draw. */
 .v2-ring-spin { transform-origin: 50px 50px; animation: v2ringWhip .8s cubic-bezier(.65, 0, .35, 1) both; }
@@ -781,7 +783,8 @@ p { margin: 0; }
 .bubble3d { position: absolute; inset: -10%; pointer-events: none; z-index: 4; }
 .v2 .b-swirl, .v2 .b-tint, .v2 .b-glint, .v2 .b-hl1, .v2 .b-hl2, .v2 .b-hl3, .v2 .b-rim, .v2 .bshadow { display: none; }
 .v2 .bfloat { animation: none; scale: 1; }
-.v2 .bubble { background: radial-gradient(circle at 50% 55%, rgba(255, 255, 255, .06) 0 55%, rgba(255, 255, 255, .3) 80%, rgba(220, 231, 226, .35) 100%); box-shadow: 0 40px 90px rgba(197, 216, 207, .3); }
+/* The 3D shell is the bubble's only edge: the flat disc's white fill and wide shadow sat just off it. */
+.v2 .bubble { background: transparent; box-shadow: none; }
 
 /* The wish screen: only the (much bigger) bubble, the showroom swapping inside it, and captions. */
 /* clip, not hidden: the bubble's canvas overhangs it, and hidden still lets the page scroll sideways. */
@@ -789,7 +792,7 @@ p { margin: 0; }
 /* One centered stack: the bubble, the voice waves under it, then the captions. */
 .app.v2-landing {
   max-width: none;
-  --bubble: clamp(240px, min(78vw, calc(100dvh - 360px)), 620px);
+  --bubble: clamp(250px, min(82vw, calc(100dvh - 330px)), 670px);
   /* Weighted to the bottom of the screen: as much room as fits above, but never more than 22% of it. */
   --stack-top: max(16px, min(22dvh, calc(100dvh - var(--bubble) - 196px - 5dvh)));
 }
@@ -810,14 +813,20 @@ p { margin: 0; }
   text-align: center; pointer-events: none; animation: fadeOnly .8s ease both;
 }
 .v2-captions .line {
-  max-width: 920px; font-family: "Fraunces", Georgia, serif; font-optical-sizing: auto; font-weight: 700;
-  font-size: clamp(28px, 3.3vw, 42px); line-height: 1.18; letter-spacing: -0.012em;
+  max-width: 920px; font-family: "Bricolage Grotesque", var(--font); font-optical-sizing: auto; font-weight: 700;
+  font-size: clamp(28px, 3.3vw, 42px); line-height: 1.15; letter-spacing: -0.02em;
 }
 .v2-captions .line.interim { font-weight: 600; }
 .v2-captions .note-row { pointer-events: auto; }
 .v2-prompt { color: var(--ink-55); }
 .v2-landing .typebox {
-  position: absolute; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+  /* translate, not transform: the fade-in animates transform and would undo the centering. */
+  position: absolute; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); translate: -50% 0;
   width: min(560px, calc(100% - 32px)); margin: 0; z-index: 7; animation: fadeIn .35s ease both;
 }
 .typebox .send-icon { width: 52px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+/* v2: one pill with the Enter icon inside it; on the wish screen it starts narrow and grows with the text. */
+.v2-typebox { display: block; position: relative; }
+.v2-landing .v2-typebox { transition: width .22s cubic-bezier(.2, .9, .3, 1); }
+.v2-typebox input { width: 100%; padding-right: 58px; }
+.v2-typebox .send-icon { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 50%; }
