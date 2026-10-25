@@ -26,6 +26,7 @@ import { BackIcon, CategoryIcon, ChevronDown, HeartIcon, KeyboardIcon, MicIcon, 
 import { LaunchSheet, MatchGrid, rankMatches, SortSelect, summarize, type SortKey } from "../ui/Results.tsx";
 import { CampaignPanel, Celebration } from "../ui/Campaign.tsx";
 import { WishWorld } from "../ui/WishWorld.tsx";
+import { remixWish } from "../lib/remix.ts";
 import Bubble3D from "../three/Bubble3D.tsx";
 import { IntroRing, IntroWords, useFramesSettled, useIntroPhase } from "../ui/v2/IntroV2.tsx";
 import { useUiVariant } from "../ui/v2/useUiVariant.ts";
@@ -279,17 +280,7 @@ export default function Studio() {
   const [entering, setEntering] = useState(false);
   // The wish world: the bubble flies to its middle, then becomes one of the floating bubbles there.
   const [worldLanded, setWorldLanded] = useState(false);
-  /** Remix a wish from the Wish World: a new wish starting from a copy of it, opened in the editor. */
-  const remix = useCallback(async (id: string) => {
-    const src = await api.getWish(id).catch(() => null);
-    if (!src) return;
-    const w = await api.createWish();
-    await api.saveProduct(w.id, { ...src.product, id: w.id }, src.thumb ?? undefined).catch(() => {});
-    // Keep the rest of the query (?ui=2 / ?ui=3), so the copy opens in the same UI.
-    const q = new URLSearchParams(window.location.search);
-    q.set("wish", w.id);
-    window.location.assign(`/?${q}`);
-  }, []);
+  const remix = useCallback((id: string) => remixWish(id), []);
   const goWorld = useCallback(() => {
     setWorldLanded(false);
     modeRef.current = "world";
@@ -1295,7 +1286,7 @@ export default function Studio() {
           <div className="res-wish">
             <EditableTitle key={product.id} title={product.title} busy={false} />
           </div>
-          <MatchGrid res={matches} category={product.category ?? "generic"} color={root?.material.color} sort={sort} />
+          <MatchGrid res={matches} category={product.category ?? "generic"} color={root?.material.color} sort={sort} wishId={wishId ?? undefined} />
           <div className="bottom-fade" />
           {result && (
             <div className="bottom-cta">

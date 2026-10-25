@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CLOSE_SCORE, describeProduct, EXISTS_SCORE, type Match, type MatchesResponse, type Product } from "@wishit/shared";
+import { api } from "../lib/api.ts";
 import { ArrowOut, BackIcon, CategoryIcon, HeartIcon, LockIcon, MicIcon, MinusIcon, PlusIcon, SpinIcon, Sparkle } from "./Icons.tsx";
 
 const STORE: Record<string, string> = { amazon: "Amazon", etsy: "Etsy", google_shopping: "Google Shopping", sample: "Sample" };
@@ -103,27 +104,64 @@ export function SortSelect({ value, onChange }: { value: SortKey; onChange: (k: 
   );
 }
 
-/** One listing as a product card: a big photo, then the store, name, price and a way to buy it. */
-function MatchCard({ m, category, color, i }: { m: Match; category: string; color?: string; i: number }) {
+type BuyState = { step: "idle" | "confirm" | "buying" | "done" | "failed"; orderId?: string; why?: string };
+
+/**
+ * One listing as a product card: a big photo, then the store, name and price. "Purchase" has the genie
+ * buy it right here (confirm the price, then a signed agent checkout); the store link opens the listing.
+ */
+function MatchCard({ m, category, color, i, wishId }: { m: Match; category: string; color?: string; i: number; wishId?: string }) {
   const store = STORE[m.source] ?? m.source;
   const price = money(m.price);
+  const [buy, setBuy] = useState<BuyState>({ step: "idle" });
+  useEffect(() => {
+    if (buy.step !== "confirm") return;
+    const t = setTimeout(() => setBuy({ step: "idle" }), 5000); // an unconfirmed tap times out
+    return () => clearTimeout(t);
+  }, [buy.step]);
+  const purchase = async () => {
+    if (!wishId) return;
+    if (buy.step === "idle" || buy.step === "failed") return setBuy({ step: "confirm" });
+    if (buy.step !== "confirm") return;
+    setBuy({ step: "buying" });
+    try {
+      const r = await api.agentBuy(wishId, m.url);
+      setBuy(r.ok ? { step: "done", orderId: r.orderId } : { step: "failed", why: r.outcome });
+    } catch (err) {
+      setBuy({ step: "failed", why: (err as Error).message });
+    }
+  };
   return (
-    <a className="mcardx" href={m.url} target="_blank" rel="noreferrer" style={{ animationDelay: `${0.05 + i * 0.06}s` }} aria-label={`${m.title} on ${store}${price ? `, ${price}` : ""}`}>
-      <Photo m={m} category={category} color={color} size={96} />
+    <div className={`mcardx ${buy.step === "done" ? "bought" : ""}`} style={{ animationDelay: `${0.05 + i * 0.06}s` }}>
+      <a className="mx-link" href={m.url} target="_blank" rel="noreferrer" aria-label={`${m.title} on ${store}${price ? `, ${price}` : ""} (opens the store)`}>
+        <Photo m={m} category={category} color={color} size={96} />
+      </a>
       <span className="mx-body">
-        <span className="mx-site">{store}</span>
+        <a className="mx-site" href={m.url} target="_blank" rel="noreferrer">{store} <ArrowOut size={12} /></a>
         <span className="mx-name" title={m.title}>{m.title}</span>
-        <span className="mx-foot">
-          <span className="mx-price">{price ?? "—"}</span>
-          <span className="mx-buy">Buy <ArrowOut size={15} /></span>
-        </span>
+        {buy.step === "done" ? (
+          <span className="mx-done" role="status">
+            <b>Bought by your genie</b>
+            <small>Test order {buy.orderId?.toUpperCase()} · {price} · verified agent checkout</small>
+          </span>
+        ) : (
+          <span className="mx-foot">
+            <span className="mx-price">{price ?? "—"}</span>
+            {m.price != null && wishId && (
+              <button className={`mx-buy ${buy.step}`} disabled={buy.step === "buying"} onClick={() => void purchase()}>
+                {buy.step === "confirm" ? `Confirm ${price}` : buy.step === "buying" ? "Genie is buying…" : "Purchase"}
+              </button>
+            )}
+          </span>
+        )}
+        {buy.step === "failed" && <span className="mx-fail" role="alert">{buy.why ?? "That didn't go through."} Tap Purchase to try again.</span>}
       </span>
-    </a>
+    </div>
   );
 }
 
 /** The listings as product cards, best first (by the chosen sort). Skeleton cards while searching. */
-export function MatchGrid({ res, category, color, sort = "best" }: { res: MatchesResponse | null; category: string; color?: string; sort?: SortKey }) {
+export function MatchGrid({ res, category, color, sort = "best", wishId }: { res: MatchesResponse | null; category: string; color?: string; sort?: SortKey; wishId?: string }) {
   const list = useMemo(() => rankMatches(res, sort), [res, sort]);
   if (!res || (res.pending && !res.matches.length)) {
     return (
@@ -144,7 +182,7 @@ export function MatchGrid({ res, category, color, sort = "best" }: { res: Matche
       {!list.length && <div className="empty-magic">Nothing like it anywhere. A truly original wish.</div>}
       {list.length > 0 && (
         <div className="mcards">
-          {list.map((m, i) => <MatchCard key={m.url + i} m={m} category={category} color={color} i={i} />)}
+          {list.map((m, i) => <MatchCard key={m.url + i} m={m} category={category} color={color} i={i} wishId={wishId} />)}
         </div>
       )}
       {shared.length > 0 && <p className="mshared">{lacking.length === list.length ? "None of these have" : "Most of these lack"} {shared.slice(0, 2).join(" or ")}. Yours would.</p>}

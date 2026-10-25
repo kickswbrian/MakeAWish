@@ -31,6 +31,8 @@ Built at Cal Hacks 13.0 for the Visa (Reimagining Shopping), Apify and Cartesia 
 
 **Wish World.** If nothing matches, "Can't find it?" flies your bubble into a field of past wishes nobody has made yet. Pan and zoom around it, hover a bubble for its votes, click it for the details, and up- or downvote. **Organize** lines the bubbles up by popularity. Your own bubble launches the campaign.
 
+**Purchase without leaving the app.** Each match card has a Purchase button: confirm the price and the genie buys it as a Visa Trusted Agent Protocol agent. It signs the checkout under a one-listing, ten-minute mandate, and the merchant side verifies the signature, the payment container and the mandate. The listing and price come from the server's own search results. Wish it isn't the store, so these are test-mode orders: no real Amazon or Google checkout happens and no card is charged.
+
 **UI variation 2.** Press `2` in the studio for the cinematic version: a "Want it? Wish it." intro, a 3D glass bubble, type-anywhere input and a cleaner editor. Press `3` for the same thing holding on the title until you click (good for presenting), and `1` to go back. `?ui=2` / `?ui=3` work in links.
 
 **27 fashion templates**, each with controls (length, fit, leg shape, rise, sleeves, and more), material slots and named zones where detail modules attach, plus 27 hand-built product templates (backpacks, sneakers, lamps, speakers, helmets…):
@@ -148,7 +150,8 @@ npm run build && npm start                     # production: one process serves 
 | `/` | The studio: wish, edit, matches, campaign launch. `?debug` shows latency. |
 | `/c/:id` | Mobile pledge page: email, card, hold, then captured or released. |
 | `/campaign/:id` | Laptop campaign view: QR code, live demand bar. `?admin` adds "Force deadline". |
-| `/wishlist` | Your wishes and the live "Most wished" board, ranked by community upvotes. |
+| `/wishlist` | Where to next: your next wish, or the Wish World. |
+| `/world` | The Wish World on its own. |
 | `/debug?t=<template>&bare` | Render any template full screen, e.g. `?t=jeans_slim`. |
 | `/lab/materials`, `/lab/kit` | Every material preset and kit part under studio light. |
 
