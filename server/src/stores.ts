@@ -40,7 +40,7 @@ export type Listing = Omit<Match, "score" | "missing" | "why"> & { query?: strin
 
 /** What the shopper wished for, as the planner and scorer see it. */
 /** `parts`: the design's distinct part names, so add-ons the description leaves out (a flower on a plush) still count. */
-export type Wanted = { name?: string; category?: string; description?: string; query?: string; target_price_usd?: number; parts?: string[] };
+export type Wanted = { name?: string; category?: string; description?: string; query?: string; target_price_usd?: number; parts?: string[]; asks?: string[] };
 
 const first = (...vals: unknown[]) => vals.find((v) => v !== undefined && v !== null && v !== "");
 
@@ -228,13 +228,14 @@ const PlanSchema = z.object({
 
 const clean = (q: string) => q.toLowerCase().replace(/[^a-z0-9 &'-]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
 const wantedText = (w: Wanted) =>
-  [w.name && `Name: ${w.name}`, w.category && `Kind of product: ${w.category}`, w.description && `Description: ${w.description}`, w.parts?.length && `Parts in their 3D design: ${w.parts.join(", ")}`, w.target_price_usd && `Target price: $${w.target_price_usd}`]
+  [w.name && `Name: ${w.name}`, w.category && `Kind of product: ${w.category}`, w.description && `Description: ${w.description}`, w.parts?.length && `Parts in their 3D design: ${w.parts.join(", ")}`, w.target_price_usd && `Target price: $${w.target_price_usd}`, w.asks?.length && `Features the shopper added afterwards (the searches and must_have must include them): ${w.asks.map((a) => `"${a}"`).join("; ")}`]
     .filter(Boolean)
     .join("\n");
 
 const plans = new Map<string, Promise<SearchPlan>>();
 // Parts help the planner but aren't part of the key: adding a part shouldn't start a new (paid) search.
-const planKey = (w: Wanted) => hash(JSON.stringify([w.name, w.category, w.description, w.query]));
+// Features added later (asks) are: a new feature is a new product to look for.
+const planKey = (w: Wanted) => hash(JSON.stringify([w.name, w.category, w.description, w.query, w.asks ?? []]));
 
 /**
  * The search plan for a wish, cached: call it early (a design just finished) and the search at
@@ -281,7 +282,9 @@ async function makePlan(w: Wanted): Promise<SearchPlan> {
     if (!out) throw new Error(response.stop_reason === "refusal" ? "refusal" : "no parsed output");
     // The shopper's own words first ("double decker couch" is a real product people sell under that name),
     // then the planner's: invented ideas often exist under exactly the name the shopper used.
-    const queries = [...new Set([...fallback.queries, ...out.queries.map(clean)].filter((q) => q.length > 2))].slice(0, 3);
+    // Once features were added later, those words are stale (still "temple buggy"): the planner's go first.
+    const ordered = w.asks?.length ? [...out.queries.map(clean), ...fallback.queries] : [...fallback.queries, ...out.queries.map(clean)];
+    const queries = [...new Set(ordered.filter((q) => q.length > 2))].slice(0, 3);
     const plan: SearchPlan = {
       exists: out.exists,
       soldAs: out.sold_as.trim() || null,

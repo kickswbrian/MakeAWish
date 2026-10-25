@@ -246,3 +246,20 @@ test("hangCords: a pull cord under a tilted shade hangs straight down, its charm
   // Hanging already: nothing to do.
   assert.deepEqual(hangCords(fixed, ["pull_cord", "bird"]), []);
 });
+
+test("repeat: one petal becomes a complete ring; offset steps rungs", async () => {
+  const { toProductSpace } = await import("./index.ts");
+  const p = applyPatches(emptyProduct("flower"), [
+    { op: "add", part: { id: "head", name: "Head", kind: "primitive", parent: null, geometry: { type: "sphere", params: { radius: 0.02 } }, material: { preset: "plastic_matte", color: "#F2C230" } } },
+    { op: "add", part: { id: "petal", name: "Petal", kind: "primitive", parent: "head", geometry: { type: "capsule", params: { radius: 0.008, length: 0.03 } }, transform: { position: [0, 0, 0.035], rotation: [90, 0, 0] }, material: { preset: "plastic_matte", color: "#ffffff" }, repeat: { count: 8, around: "y" } } },
+    { op: "add", part: { id: "rung", name: "Rung", kind: "primitive", parent: "head", geometry: { type: "cylinder", params: { radiusTop: 0.002, radiusBottom: 0.002, height: 0.05 } }, transform: { position: [0, -0.1, 0] }, material: { preset: "wood", color: "#8B5A2B" }, repeat: { count: 3, offset: [0, -0.05, 0] } } },
+  ]);
+  assert.equal(p.rejected.length, 0, JSON.stringify(p.rejected));
+  const petals = Object.keys(p.product.parts).filter((id) => id.startsWith("petal"));
+  assert.equal(petals.length, 8);
+  // Evenly spaced around Y at the same radius.
+  const angles = petals.map((id) => { const [x, , z] = toProductSpace(p.product, id, [0, 0, 0]); assert.ok(Math.abs(Math.hypot(x, z) - 0.035) < 1e-3); return Math.round((Math.atan2(x, z) * 180) / Math.PI + 360) % 360; }).sort((a, b) => a - b);
+  assert.deepEqual(angles, [0, 45, 90, 135, 180, 225, 270, 315]);
+  assert.deepEqual(["rung", "rung_2", "rung_3"].map((id) => p.product.parts[id]?.transform.position[1]), [-0.1, -0.15, -0.2]);
+  assert.ok(!("repeat" in p.product.parts.petal_2));
+});
