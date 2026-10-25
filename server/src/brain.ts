@@ -4,6 +4,7 @@ import {
   type FashionState, type FashionTemplate, type LevelIssue, type OutlineEntry, type Part, type Patch, type Product, type ProductMeta, type TurnEvent, type TurnSelection, type TurnTiming, type Vec3,
 } from "@wishit/shared";
 import { env } from "./env.ts";
+import { closestDesign } from "./offline.ts";
 import { JsonStreamScanner } from "./jsonstream.ts";
 import { systemPrompt } from "./prompt.ts";
 import { applyControls, applyMaterials, applyModule, outfitContext, outfitProps, wishStyleLine, type OutfitSink } from "./outfit.ts";
@@ -361,7 +362,12 @@ async function streamToolOnce(model: string, tool: string, user: string, h: Call
  * Run one turn, streaming events through `emit` as they happen. Resolves with the final product.
  * Never throws for model errors: falls back to the offline genie.
  */
-export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, signal: AbortSignal, forceRules = false): Promise<TurnResult> {
+export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, outer: AbortSignal, forceRules = false): Promise<TurnResult> {
+  // The turn's own signal: the client's cancel, or the watchdog below when Claude doesn't answer.
+  const watchdog = new AbortController();
+  const signal = watchdog.signal;
+  if (outer.aborted) watchdog.abort();
+  else outer.addEventListener("abort", () => watchdog.abort(), { once: true });
   touchBrain();
   const t0 = performance.now();
   const timing: TurnTiming = { calls: 0, inputTokens: 0, cachedTokens: 0, outputTokens: 0 };
@@ -548,6 +554,16 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
   const plainShowpiece = !!showpiece?.match && !showpieceExtras(showpiece, input.text);
   if (!client || forceRules || plainShowpiece) return ruleTurn(input, applyAndEmit, applyMeta, emit, timing, at, () => product, reset);
 
+  // No network (or a stalled API): if Claude hasn't started answering in 6 s, use the offline genie.
+  const sentAt = at();
+  const stall = setInterval(() => {
+    if (timing.firstToken !== undefined || signal.aborted) return clearInterval(stall);
+    if (at() - sentAt > STALL_MS) {
+      clearInterval(stall);
+      console.warn(`[brain] no answer from Claude in ${STALL_MS / 1000}s, using the offline genie`);
+      watchdog.abort();
+    }
+  }, 250);
   try {
     // A freshly shown template is still a new design: the fast planner customizes it.
     let mode: "create" | "edit" = isEmpty(product) || input.template ? "create" : "edit";
@@ -612,9 +628,13 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
     if (fashion) return await createOutfit(input, ctx, fashion);
     return await settle(await createDesign(input, ctx));
   } catch (err) {
-    if (signal.aborted) throw err;
+    if (outer.aborted) throw err;
     console.warn("[brain] LLM failed, using rules:", (err as Error).message);
+    // Anything the stalled call streamed is dropped: the offline genie starts from the shopper's product.
+    if (signal.aborted) product = input.product;
     return ruleTurn(input, applyAndEmit, applyMeta, emit, timing, at, () => product, reset);
+  } finally {
+    clearInterval(stall);
   }
 }
 
@@ -889,6 +909,12 @@ function ruleTurn(
     say = `Your ${tpl.name.toLowerCase()} is taking shape. Tap any part to change it.`;
   } else if (lock) {
     say = "Your wish is sealed. Let's see if anyone has made it already.";
+  } else if (isEmpty(product) && closestDesign(input.text)) {
+    // Offline: the closest design the genie already built, rather than nothing.
+    const d = closestDesign(input.text)!;
+    applyAndEmit(addOrder(Object.values(d.parts), d.rootId).map((part) => ({ op: "add", part })));
+    applyMeta({ title: d.title, category: d.category, description: d.description, targetPriceUsd: d.targetPriceUsd });
+    say = `Here's the closest one from my workshop, the ${d.title}. Tap any part to change it.`;
   } else {
     say = isEmpty(product)
       ? "My magic is resting right now, but try a backpack, a lamp, a helmet or a mug."
@@ -899,6 +925,7 @@ function ruleTurn(
   return { product: current(), say, lock, brain: "rules", timing, rejected: 0 };
 }
 
+const STALL_MS = 6000;
 let lastActivity = Date.now();
 /** Mark genie activity (keeps the prompt cache warm while people are around). */
 export const touchBrain = () => (lastActivity = Date.now());
