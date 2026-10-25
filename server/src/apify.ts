@@ -142,6 +142,14 @@ function save(wishId: string, matches: Match[], searched: number, total: number,
   emit(`wish:${wishId}`, EVENTS.matchesReady, { wishId, ...getMatches(wishId) });
 }
 
+/** Photo links from the search done ahead (or cached) for a wish, so the browser can fetch them early. */
+export function previewImages(wishId: string): string[] {
+  const wish = getWish(wishId);
+  if (!wish || !wish.product.description) return [];
+  const found = readCache(wish.product)?.matches ?? searchedAhead(wanted(wish.product))?.latest?.matches ?? [];
+  return [...new Set(found.map((m) => m.image).filter((u): u is string => !!u && /^https?:\/\//.test(u)))].slice(0, 16);
+}
+
 export function readCache(spec: Product) {
   const row = db.prepare("SELECT * FROM apify_cache WHERE query_hash = ?").get(keyFor(spec)) as
     | { results_json: string; searched: number; total: number; fetched_at: number } | undefined;
