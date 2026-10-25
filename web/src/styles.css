@@ -1375,3 +1375,13 @@ button.mx-buy.buying { background: var(--ink-55); cursor: progress; }
 .pur-card b { display: block; font-size: 15px; }
 .pur-card small { display: block; font-size: 12.5px; color: var(--ink-55); margin-top: 2px; }
 .pur-visa { flex: none; display: grid; place-items: center; width: 52px; height: 34px; border-radius: 7px; background: linear-gradient(135deg, #1A1F71, #2B3A9F); color: #F7B600; font-size: 12px; font-weight: 900; font-style: italic; letter-spacing: .04em; }
+
+/* Room around the match cards so their shadows aren't clipped by the scroll box. */
+.mcards { padding: 6px 14px 30px; margin: -6px -14px 0; }
+
+/* Wish World header: back and home on the left, the title on the right. Going home shrinks the world away. */
+.world-hdr { justify-content: space-between; }
+.world-nav { display: inline-flex; gap: 10px; }
+.world-title { font-size: 28px; }
+.world.world-leaving .world-plane { transition: transform .5s cubic-bezier(.6, 0, .4, 1), opacity .45s ease; transform: translate(0, 0) scale(.2) !important; opacity: 0; }
+.world-hdr.world-leaving, .world.world-leaving .world-bar { opacity: 0; transition: opacity .3s ease; }

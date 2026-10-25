@@ -15,7 +15,7 @@
         "pastels",
         "soft girl"
       ],
-      "vibe": "Sweet and playful: pastels, gingham, bows, ruffles, puff sleeves, lace trim, pearl buttons, tiny hearts.",
+      "vibe": "Pinterest-cute for women 20-45: sweet and grown-up, never sexy or childish. Gingham, bows, puff sleeves, pearl buttons, lace trim; knee/midi skirts, regular tops, relaxed fit. No bodycon, plunge or low rise.",
       "palette": {
         "main": {
           "baby pink": "#F7C5D5",
@@ -38,9 +38,9 @@
       "fabrics": {
         "top": [
           "gingham",
-          "jersey",
+          "cotton",
           "rib_knit",
-          "cotton"
+          "jersey"
         ],
         "outerwear": [
           "knit",
@@ -62,7 +62,7 @@
         "dress": [
           "gingham",
           "cotton",
-          "satin"
+          "knit"
         ],
         "bag": [
           "quilted",
@@ -91,13 +91,13 @@
       },
       "controls": {
         "fit": [
-          "fitted",
-          "regular"
+          "regular",
+          "fitted"
         ],
         "length": [
-          "cropped",
-          "mini",
-          "regular"
+          "regular",
+          "knee",
+          "midi"
         ],
         "leg": [
           "wide",
@@ -124,6 +124,31 @@
         ],
         "thickness": [
           "thin"
+        ],
+        "top.length": [
+          "regular",
+          "long"
+        ],
+        "skirt.length": [
+          "knee",
+          "midi",
+          "mini"
+        ],
+        "dress.length": [
+          "knee",
+          "midi"
+        ],
+        "outerwear.length": [
+          "cropped",
+          "regular"
+        ],
+        "bottom.length": [
+          "regular",
+          "ankle"
+        ],
+        "outerwear.fit": [
+          "fitted",
+          "regular"
         ]
       },
       "hardware": "gold",
@@ -372,10 +397,11 @@
           "fringe"
         ],
         "fabrics": [
-          "wool_suiting",
-          "tweed",
+          "leather_pebbled",
           "mesh_fabric",
-          "leather_pebbled"
+          "satin",
+          "tweed",
+          "wool_suiting"
         ],
         "colors": [
           "black",
@@ -389,6 +415,9 @@
           ],
           "leg": [
             "skinny"
+          ],
+          "rise": [
+            "low"
           ]
         }
       }

@@ -17,6 +17,13 @@ export const HeartIcon = ({ size = 24, filled, color = INK }: P & { filled?: boo
   </svg>
 );
 
+export const HomeIcon = ({ size = 21 }: P) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M4 11.5 12 5l8 6.5" />
+    <path d="M6.5 10v9h11v-9" />
+  </svg>
+);
+
 export const BackIcon = ({ size = 22 }: P) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={INK} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5" /><path d="M11 6l-6 6 6 6" /></svg>
 );
