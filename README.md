@@ -141,7 +141,7 @@ npm test                 # shared + server tests (patches, fashion compiler, sty
 npm run typecheck        # shared + server + web
 npm run brain:test       # genie latency bench; results in web/public/bench/*.json
 npm run demo:reset -- --planter-deadline=120   # demo starting state (server running)
-npm run world:seed       # fill the Wish World with demo wishes and votes (safe to re-run)
+npm run world:seed       # refresh the Wish World demo wishes and votes (also runs on startup when empty)
 npm run build && npm start                     # production: one process serves API + web
 ```
 

@@ -18,6 +18,7 @@ import { assertSafeConfig, env, isProd, logConfig, paymentMode, WEB_DIST } from 
 import { findMatches, getMatches, prepareMatches } from "./apify.ts";
 import { resetDemo } from "./demo.ts";
 import { listWorld, voteWish } from "./world.ts";
+import { seedWorldIfEmpty } from "./worldSeed.ts";
 import { handleStripeEvent, mockConfirm, stripe } from "./payments.ts";
 import { agentAttack, agentPledge, handleAgentPledge, type Attack } from "./agent.ts";
 import { agentBuy, handleAgentOrder, ORDER_PATH } from "./orders.ts";
@@ -351,7 +352,9 @@ app.post("/api/admin/campaigns/:id/expire", limits.admin, requireAdmin, wrap(asy
 /** One command puts the demo in its starting state (see scripts/demo-reset.ts). */
 app.post("/api/admin/demo/reset", limits.admin, requireAdmin, wrap(async (req, res) => {
   const secs = Math.max(30, Math.min(3600, Number(req.body?.planterDeadlineSecs ?? 120) || 120));
-  res.json(await resetDemo(secs));
+  const out = await resetDemo(secs);
+  seedWorldIfEmpty(); // the reset clears every wish, the Wish World's demo ones too
+  res.json(out);
 }));
 
 // ---------- Cartesia ----------
@@ -378,6 +381,7 @@ if (fs.existsSync(WEB_DIST)) {
 app.use(errorHandler);
 
 startCampaignTimers();
+seedWorldIfEmpty();
 server.listen(env.port, () => {
   logConfig();
   void prewarm();
