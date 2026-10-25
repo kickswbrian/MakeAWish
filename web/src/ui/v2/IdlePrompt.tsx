@@ -25,11 +25,14 @@ export function IdlePrompt({ listening }: { listening: boolean }) {
   }, []);
   const lines = listening ? LISTENING : ASLEEP;
   const text = lines[n % lines.length];
+  // The live region stays put; only the words inside re-animate, so screen readers hear each line.
   return (
-    <p key={text} className="line v2-prompt" aria-live="polite">
-      {text.split(" ").map((w, i) => (
-        <span key={i} className="w" style={{ ["--i" as string]: i }}>{w}</span>
-      ))}
+    <p className="line v2-prompt" aria-live="polite">
+      <span key={text}>
+        {text.split(" ").map((w, i) => (
+          <span key={i} className="w" style={{ ["--i" as string]: i }}>{w}</span>
+        ))}
+      </span>
     </p>
   );
 }
