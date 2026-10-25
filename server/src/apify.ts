@@ -87,7 +87,9 @@ function wanted(product: Product): Wanted {
  */
 function featureAsks(wishId: string): string[] {
   const turns = getWish(wishId)?.transcript.filter((t) => t.role === "user") ?? [];
-  return turns.slice(1).filter((t) => t.adds).map((t) => t.text.replace(/\s+/g, " ").trim().slice(0, 100)).slice(-3);
+  // Only since the current design started ("actually, make me a lamp" leaves Sonic behind).
+  const start = turns.map((t) => !!t.fresh).lastIndexOf(true);
+  return turns.slice(Math.max(1, start + 1)).filter((t) => t.adds).map((t) => t.text.replace(/\s+/g, " ").trim().slice(0, 100)).slice(-3);
 }
 
 const aheadTimers = new Map<string, NodeJS.Timeout>();

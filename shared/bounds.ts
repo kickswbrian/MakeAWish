@@ -111,10 +111,11 @@ export function partBox(product: Product, id: string): Box | null {
   for (const c of Object.values(product.parts)) {
     if (c.csg?.op !== "intersect" || c.csg.withPartId !== id) continue;
     const k = rawBox(product, c.id);
-    if (!k) continue;
+    // A tool that misses the part keeps nothing; the renderer ignores it, and so do the bounds.
+    if (!k || [0, 1, 2].some((i) => Math.min(own.max[i], k.max[i]) <= Math.max(own.min[i], k.min[i]))) continue;
     for (let i = 0; i < 3; i++) {
       own.min[i] = Math.max(own.min[i], k.min[i]);
-      own.max[i] = Math.max(own.min[i], Math.min(own.max[i], k.max[i]));
+      own.max[i] = Math.min(own.max[i], k.max[i]);
     }
   }
   return own;
