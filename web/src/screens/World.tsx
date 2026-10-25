@@ -2,11 +2,13 @@ import { Link, useLocation } from "react-router-dom";
 import { Glows } from "../ui/Chrome.tsx";
 import { BackIcon, HomeIcon } from "../ui/Icons.tsx";
 import { goHome } from "../lib/goHome.ts";
+import { useDemoKeys } from "../lib/demoKeys.ts";
 import { WishWorld } from "../ui/WishWorld.tsx";
 import { remixWish } from "../lib/remix.ts";
 
 /** The Wish World on its own (from the wishes page): every wish nobody has made yet. */
 export default function World() {
+  useDemoKeys(true);
   const fromStudio = (useLocation().state as { from?: string } | null)?.from === "studio";
   const q = new URLSearchParams(window.location.search);
   if (fromStudio) q.set("intro", "0");

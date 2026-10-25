@@ -12,7 +12,7 @@ import type { Vec3 } from "./spec.ts";
 
 type M3 = number[][];
 const DEG = Math.PI / 180;
-const CORD = /cord|string|chain|pull|thread|lanyard|rope|strand|twine|tassel/i;
+const CORD = /cord|chain|pull[ _-]?string|string|thread|lanyard|rope|strand|twine|tassel/i;
 
 const sub = (a: Vec3, b: Vec3): Vec3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const len = (a: Vec3) => Math.hypot(a[0], a[1], a[2]);
@@ -77,7 +77,9 @@ export function hangCords(product: Product, added: Iterable<string>): Update[] {
     const top = line[0], end = line[line.length - 1];
     const drawn = line.slice(1).reduce((s, p, k) => s + len(sub(p, line[k])), 0);
     const dir = sub(end, top);
-    if (drawn < 0.005 || -dir[1] / (len(dir) || 1) > Math.cos(8 * DEG)) continue; // already hangs straight
+    const down = -dir[1] / (len(dir) || 1);
+    // Already hangs straight, or lies sideways (a guitar string, a drawer pull): not a hanging cord.
+    if (drawn < 0.005 || down > Math.cos(8 * DEG) || down < Math.cos(75 * DEG)) continue;
     // A pull cord is drawn straight; a curved one (a drawstring round a hood, string lights) is meant to be.
     const span = len(dir) || 1;
     const off = (p: Vec3) => { const t = sub(p, top); const k = (t[0] * dir[0] + t[1] * dir[1] + t[2] * dir[2]) / (span * span); return len(sub(t, dir.map((v) => v * k) as Vec3)); };
@@ -100,7 +102,8 @@ export function hangCords(product: Product, added: Iterable<string>): Update[] {
       const size = Math.max(...b.max.map((v, i) => v - b.min[i]));
       return len(sub(toProductSpace(work, p.id, [0, 0, 0]), end)) <= Math.max(0.03, 1.5 * size);
     };
-    const loose = Object.values(work.parts).filter((p) => p.id !== id && fresh.has(p.id) && p.parent === cord.parent && nearEnd(p));
+    const isCord = (p: Product["parts"][string]) => CORD.test(`${p.id} ${p.name}`);
+    const loose = Object.values(work.parts).filter((p) => p.id !== id && fresh.has(p.id) && p.parent === cord.parent && !isCord(p) && nearEnd(p));
     const charmIds = new Set([...Object.values(work.parts).filter((p) => p.parent === id), ...loose].flatMap((p) => subtreeIds(work, p.id)));
     const others = Object.keys(work.parts).filter((o) => o !== id && !charmIds.has(o) && !holderTree.has(o));
     const touchesOthers = (pid: string) => {

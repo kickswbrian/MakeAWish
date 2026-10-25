@@ -34,7 +34,7 @@ export const MATERIAL_PRESETS = [
 ] as const;
 export type MaterialPreset = (typeof MATERIAL_PRESETS)[number];
 
-export const GEOMETRY_TYPES = ["roundedBox", "lathe", "tube", "extrude", "sphere", "cylinder", "capsule", "torus"] as const;
+export const GEOMETRY_TYPES = ["roundedBox", "lathe", "tube", "extrude", "sphere", "cylinder", "capsule", "torus", "text"] as const;
 export type GeometryType = (typeof GEOMETRY_TYPES)[number];
 
 export const LIMITS = { parts: 160, points: 96, idLength: 40 } as const;
@@ -99,7 +99,7 @@ export const GeometryParams = {
      * drawn `width` meters wide and centered. Subpaths inside others are holes. `shape` is then filled
      * in from it (a coarse fallback).
      */
-    svg: z.string().max(8000).optional(),
+    svg: z.string().max(30000).optional(),
     width: size.optional(),
   }),
   sphere: z.object({
@@ -121,6 +121,20 @@ export const GeometryParams = {
     /** Arc in degrees (180 = a half ring, e.g. a handle). Starts at +X, sweeps through +Y. */
     arc: deg(1, 360, 360),
   }),
+  /** Real lettering: the words in 3D letters, facing +Z, centered, extruded by depth along Z. */
+  text: z.object({
+    /** The words ("\n" breaks a line). */
+    text: z.string().min(1).max(80),
+    /** Capital-letter height in meters. */
+    size,
+    depth: size,
+    font: z.enum(["sans", "serif", "round"]).default("sans"),
+    bevel: clamp(0, 1).optional(),
+    /** The most room it has, in meters: longer words shrink to fit. */
+    width: size.optional(),
+    /** Wrap around a round surface of this radius (a mug, a bottle), bending back toward -Z. */
+    curve: size.optional(),
+  }),
 } satisfies Record<GeometryType, z.ZodTypeAny>;
 
 export type GeometryOf<T extends GeometryType> = { type: T; params: z.infer<(typeof GeometryParams)[T]> };
@@ -135,6 +149,7 @@ export const GeometrySchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("cylinder"), params: GeometryParams.cylinder }),
   z.object({ type: z.literal("capsule"), params: GeometryParams.capsule }),
   z.object({ type: z.literal("torus"), params: GeometryParams.torus }),
+  z.object({ type: z.literal("text"), params: GeometryParams.text }),
 ]) as unknown as z.ZodType<Geometry>;
 
 const hex = z.string().transform((s, ctx) => {
