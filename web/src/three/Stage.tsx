@@ -9,6 +9,7 @@ import { Particles } from "./Particles.tsx";
 import { anchorSignal, fx, orbSignal, viewSignal } from "./signals.ts";
 import { ProductView, PartRegistry, type PartHit } from "./parts/ProductView.tsx";
 import { createMaterial, preloadMaterials } from "./parts/materials.ts";
+import { preloadMeshModels } from "./parts/mesh.ts";
 import { MATERIAL_PRESETS } from "@wishit/shared";
 
 export type Framing = "voice" | "product" | "top" | "side" | "mini" | "bubble" | "debug" | "edit";
@@ -360,7 +361,9 @@ function ShaderWarmup({ defer }: { defer: boolean }) {
           }
           scene.add(group);
           try {
-            await gl.compileAsync(scene, camera);
+            // Only the warm-up group (with the scene's lights): product materials may recompile meanwhile,
+            // and three's async readiness check trips over a program released mid-compile.
+            await gl.compileAsync(group, camera, scene);
             // Upload the batch's textures too: a first upload (with mipmaps) stalls a frame for ~0.5 s.
             for (const m of mats.slice(i, i + WARM_BATCH)) {
               for (const v of Object.values(m)) if (v instanceof THREE.Texture && v.image) gl.initTexture(v);
@@ -465,7 +468,10 @@ function StageCanvas({
   const warm = preload ?? interactive;
   useEffect(() => {
     // After the first screen is up (see ShaderWarmup): 13 MB of textures at load slows the first frames.
-    if (!warm || deferWarmup) return;
+    if (!warm) return;
+    // Garment and bag base models load behind the first wish, so a fashion template shows at once.
+    void preloadMeshModels();
+    if (deferWarmup) return;
     const t = window.setTimeout(() => void preloadMaterials(), WARMUP_DELAY_MS);
     return () => window.clearTimeout(t);
   }, [warm, deferWarmup]);

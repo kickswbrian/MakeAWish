@@ -5,11 +5,12 @@ import { a, useSpring } from "@react-spring/three";
 import * as THREE from "three";
 import { Brush, Evaluator, SUBTRACTION } from "three-bvh-csg";
 import { geometryKey, buildGeometry } from "./geometry.ts";
-import { applyMaterial, createMaterial } from "./materials.ts";
+import { applyMaterial, createMaterial, setFoldMap } from "./materials.ts";
 import { buildKit } from "./kit/index.ts";
+import { meshFoldNormal, meshGeometry, meshModelReady, onMeshModelLoaded } from "./mesh.ts";
 import { addHulls, hullMaterial } from "./hull.ts";
 import { fx } from "../signals.ts";
-import type { Part, Product, Vec3 } from "@wishit/shared";
+import { fashionById, type Part, type Product, type Vec3 } from "@wishit/shared";
 
 /** A tap on a part: point and normal in that part's local frame, plus a flush-mount rotation. */
 export interface PartHit {
@@ -41,6 +42,26 @@ export class PartRegistry {
     m.updateWorldMatrix(true, true);
     return out.setFromObject(m);
   }
+}
+
+/**
+ * Bounds of `obj` in `frame`'s coordinates. Box3.setFromObject measures in WORLD space, which only
+ * matches the part's frame before the kit joins the scene: a kit rebuilt later (a recolor, new
+ * params) would get a box out on the stage, throwing off sizes, framing and outlines.
+ */
+function boundsIn(obj: THREE.Object3D, frame: THREE.Object3D | null, out: THREE.Box3): THREE.Box3 {
+  out.makeEmpty();
+  obj.updateWorldMatrix(true, true);
+  const inv = frame ? frame.matrixWorld.clone().invert() : new THREE.Matrix4();
+  const m = new THREE.Matrix4();
+  const b = new THREE.Box3();
+  obj.traverse((o) => {
+    const g = (o as THREE.Mesh).geometry as THREE.BufferGeometry | undefined;
+    if (!g?.isBufferGeometry || !g.attributes.position) return;
+    if (!g.boundingBox) g.computeBoundingBox();
+    out.union(b.copy(g.boundingBox!).applyMatrix4(m.multiplyMatrices(inv, o.matrixWorld)));
+  });
+  return out;
 }
 
 const DEG = Math.PI / 180;
@@ -102,6 +123,8 @@ const ViewCtx = createContext<Ctx | null>(null);
 const castsShadow = (m: Part["material"]) => m.preset !== "glass" && (m.opacity ?? 1) > 0.6;
 
 const isOpenSurface = (p: Part) => {
+  // Garment pieces are single cloth layers: the inside shows at necklines, cuffs and hems.
+  if (p.kind === "mesh") return true;
   const g = p.geometry;
   if (!g) return false;
   if (g.type === "sphere") return g.params.angle < 179;
@@ -163,7 +186,27 @@ const PartMesh = memo(function PartMesh({ part, cutters, selected }: { part: Par
         return geometryKey(c.geometry) + rel.elements.map((v) => v.toFixed(4)).join(",");
       }).join("|")
     : "";
+  // Mesh parts (prepared garment pieces) appear once their model has loaded.
+  const meshModel = part.kind === "mesh" ? (part.meshAsset ?? "").split("/")[0] : "";
+  const [meshLoads, setMeshLoads] = useState(0);
+  useEffect(() => {
+    if (!meshModel || meshModelReady(meshModel)) return;
+    return onMeshModelLoaded(() => setMeshLoads((n) => n + 1));
+  }, [meshModel]);
+  const meshKey = part.kind === "mesh" ? `${part.meshAsset}|${JSON.stringify(part.kitParams ?? {})}|${meshLoads}` : "";
+  // Baked folds and seams of the base model, layered over the fabric preset.
+  useEffect(() => {
+    if (part.kind === "mesh" && part.meshAsset) setFoldMap(mat, meshFoldNormal(part.meshAsset));
+  }, [mat, part.kind, part.meshAsset, meshLoads]);
   const geometry = useMemo(() => {
+    if (part.kind === "mesh") {
+      try {
+        return part.meshAsset ? meshGeometry(part.meshAsset, part.kitParams) : null;
+      } catch (err) {
+        console.warn(`[parts] ${part.id}: mesh ${part.meshAsset} failed`, err);
+        return null;
+      }
+    }
     if (part.kind !== "primitive" || !part.geometry) return null;
     let base: THREE.BufferGeometry;
     try {
@@ -185,7 +228,7 @@ const PartMesh = memo(function PartMesh({ part, cutters, selected }: { part: Par
     if (out !== base) base.dispose();
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geometryKey(part.geometry), part.kind, cutKey]);
+  }, [geometryKey(part.geometry), part.kind, cutKey, meshKey]);
   useEffect(() => () => geometry?.dispose(), [geometry]);
 
   // Shape morph: when the new geometry has the same topology as the old one (same type, same
@@ -223,12 +266,12 @@ const PartMesh = memo(function PartMesh({ part, cutters, selected }: { part: Par
     }
   });
 
-  const kitKey = part.kind === "kit" ? `${part.kitAsset}:${JSON.stringify(part.kitParams ?? {})}:${JSON.stringify(part.material)}` : "";
+  const kitKey = part.kind === "kit" ? `${part.kitAsset}:${JSON.stringify(part.kitParams ?? {})}:${JSON.stringify(part.material)}:${JSON.stringify(part.kitPath ?? null)}:${JSON.stringify(part.kitNormals ?? null)}` : "";
   const kit = useMemo(() => {
     if (part.kind !== "kit" || !part.kitAsset) return null;
     let g: THREE.Group;
     try {
-      g = buildKit(part.kitAsset, part.kitParams ?? {}, part.material);
+      g = buildKit(part.kitAsset, part.kitParams ?? {}, part.material, part.kitPath ? { points: part.kitPath, normals: part.kitNormals } : undefined);
     } catch (err) {
       console.warn(`[parts] ${part.id}: kit ${part.kitAsset} failed to build`, err);
       g = new THREE.Group();
@@ -266,10 +309,7 @@ const PartMesh = memo(function PartMesh({ part, cutters, selected }: { part: Par
   useLayoutEffect(() => {
     const box = new THREE.Box3();
     if (geometry) box.copy(geometry.boundingBox!);
-    else if (kit) {
-      kit.updateMatrixWorld(true);
-      box.setFromObject(kit);
-    }
+    else if (kit) boundsIn(kit, holder.current ?? kit.parent, box);
     ctx.registry.boxes.set(part.id, box);
     if (holder.current) ctx.registry.meshes.set(part.id, holder.current);
   }, [geometry, kit, part.id, ctx.registry]);
@@ -667,6 +707,8 @@ export function ProductView({
   useEffect(() => {
     dirty.current = true;
   }, [product]);
+  // A mesh base loading after its kit modules changes the box (a bag would ground at its strap keepers).
+  useEffect(() => onMeshModelLoaded(() => (dirty.current = true)), []);
   useEffect(() => {
     registry.root = inner.current;
   }, [registry]);
@@ -678,7 +720,7 @@ export function ProductView({
     if (dirty.current) {
       const box = productBox(product, registry);
       if (box) {
-        dirty.current = false;
+        dirty.current = Object.values(product.parts).some((p) => p.meshAsset && !meshModelReady(p.meshAsset.split("/")[0]));
         const size = box.getSize(new THREE.Vector3());
         // Tall things fit by height; wide things must also stay within the pedestal's footprint.
         const want = Math.min(fitSize / Math.max(size.y, 1e-4), (fitSize * 0.86) / Math.max(size.x, size.z, 1e-4));
@@ -761,14 +803,18 @@ export function ProductView({
   );
 }
 
-/** Product-space bounds from transform data and each part's geometry box. Null until all boxes exist. */
-export function productBox(product: Product, registry: PartRegistry): THREE.Box3 | null {
+/**
+ * Product-space bounds from transform data and each part's geometry box. Null until all boxes exist.
+ * With `productOnly`, a fashion template's display (dress form, jewelry bust, stands) is left out.
+ */
+export function productBox(product: Product, registry: PartRegistry, productOnly = false): THREE.Box3 | null {
+  const display = productOnly ? new Set(fashionById(product.fashion?.template)?.slots.display?.parts ?? []) : null;
   // Wait for the root; parts that can't render (failed, hidden) simply don't count.
   if (!registry.boxes.get(product.rootId)) return null;
   const box = new THREE.Box3();
   const tmp = new THREE.Box3();
   for (const p of Object.values(product.parts)) {
-    if (p.csg) continue;
+    if (p.csg || display?.has(p.id) || (productOnly && p.id.startsWith("display_"))) continue;
     const b = registry.boxes.get(p.id);
     if (!b) continue;
     if (b.isEmpty()) continue;
@@ -797,7 +843,7 @@ export function outlineOf(product: Product, registry: PartRegistry): { id: strin
 /** Real-world size (meters) of one part including its scale, or of the whole product (no id). */
 export function sizeOf(product: Product, registry: PartRegistry, id?: string): Vec3 | null {
   if (!id) {
-    const b = productBox(product, registry);
+    const b = productBox(product, registry, true);
     if (!b) return null;
     const v = b.getSize(new THREE.Vector3());
     return [v.x, v.y, v.z];

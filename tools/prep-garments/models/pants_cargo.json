@@ -1,0 +1,475 @@
+{
+  "credit": "\"Cargo Pants\" by Alexandru Jardan (https://sketchfab.com/3d-models/cargo-pants-15af6dd7d5274fc5be6e09e245154761), CC-BY-4.0",
+  "height": 1.03,
+  "budget": 30000,
+  "fold": "pants_normal",
+  "fold_size": 1024,
+  "rules": [
+    {
+      "name": "belt_loops",
+      "when": "src.startswith('Cube.019')"
+    },
+    {
+      "name": "pockets_l",
+      "when": "not src.startswith('Cube.011') and icx < 0"
+    },
+    {
+      "name": "pockets_r",
+      "when": "not src.startswith('Cube.011')"
+    },
+    {
+      "name": "waistband",
+      "when": "ph < 0.09 and pw > 0.15 and pcy > 0.95"
+    },
+    {
+      "name": "leg_l",
+      "when": "x < 0"
+    },
+    {
+      "name": "leg_r",
+      "when": "True"
+    }
+  ],
+  "zones": {
+    "waistband": {
+      "kind": "ring",
+      "center": [
+        0.01,
+        0.988,
+        0
+      ],
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "radius": 0.35,
+      "samples": 48,
+      "label": "waistband",
+      "part": "waistband"
+    },
+    "waistband_top": {
+      "kind": "ring",
+      "center": [
+        0.01,
+        1.012,
+        0
+      ],
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "radius": 0.35,
+      "samples": 48,
+      "label": "waistband top edge",
+      "part": "waistband"
+    },
+    "belt_loops": {
+      "kind": "ring",
+      "center": [
+        0.01,
+        0.988,
+        0
+      ],
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "radius": 0.35,
+      "samples": 48,
+      "label": "belt loop line",
+      "part": "waistband"
+    },
+    "fly": {
+      "kind": "line",
+      "from": [
+        0.034,
+        0.96,
+        0.4
+      ],
+      "to": [
+        0.034,
+        0.79,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "samples": 12,
+      "label": "front fly"
+    },
+    "pocket_front_left": {
+      "near": [
+        -0.205,
+        0.86,
+        0.08
+      ],
+      "room": [
+        0.05,
+        0.15
+      ],
+      "bend": 0.12,
+      "label": "left front side pocket",
+      "part": "pockets_l"
+    },
+    "pocket_front_right": {
+      "near": [
+        0.215,
+        0.86,
+        0.07
+      ],
+      "room": [
+        0.05,
+        0.15
+      ],
+      "bend": 0.12,
+      "label": "right front side pocket",
+      "part": "pockets_r"
+    },
+    "pocket_back_left": {
+      "from": [
+        -0.124,
+        0.82,
+        -0.4
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.12,
+        0.1
+      ],
+      "bend": 0.15,
+      "label": "left back flap pocket"
+    },
+    "pocket_back_right": {
+      "from": [
+        0.131,
+        0.82,
+        -0.4
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.12,
+        0.1
+      ],
+      "bend": 0.15,
+      "label": "right back flap pocket"
+    },
+    "flap_button_back_left": {
+      "from": [
+        -0.124,
+        0.853,
+        -0.4
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.02,
+        0.02
+      ],
+      "label": "left back flap button",
+      "part": "pockets_l"
+    },
+    "flap_button_back_right": {
+      "from": [
+        0.131,
+        0.851,
+        -0.4
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.02,
+        0.02
+      ],
+      "label": "right back flap button",
+      "part": "pockets_r"
+    },
+    "flap_button_left": {
+      "from": [
+        -0.4,
+        0.636,
+        0.027
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "room": [
+        0.02,
+        0.02
+      ],
+      "label": "left cargo flap button",
+      "part": "pockets_l"
+    },
+    "flap_button_right": {
+      "from": [
+        0.4,
+        0.622,
+        0.0
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "room": [
+        0.02,
+        0.02
+      ],
+      "label": "right cargo flap button",
+      "part": "pockets_r"
+    },
+    "thigh_left": {
+      "from": [
+        -0.4,
+        0.57,
+        0.025
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "room": [
+        0.16,
+        0.18
+      ],
+      "bend": 0.12,
+      "label": "left thigh cargo pocket",
+      "part": "leg_l"
+    },
+    "thigh_right": {
+      "from": [
+        0.4,
+        0.56,
+        0.0
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "room": [
+        0.16,
+        0.18
+      ],
+      "bend": 0.12,
+      "label": "right thigh cargo pocket",
+      "part": "leg_r"
+    },
+    "knee_left": {
+      "from": [
+        -0.165,
+        0.33,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.1,
+        0.1
+      ],
+      "bend": 0.1,
+      "label": "left knee",
+      "part": "leg_l"
+    },
+    "knee_right": {
+      "from": [
+        0.175,
+        0.33,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.1,
+        0.1
+      ],
+      "bend": 0.1,
+      "label": "right knee",
+      "part": "leg_r"
+    },
+    "back_patch": {
+      "from": [
+        -0.08,
+        0.99,
+        -0.4
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.08,
+        0.04
+      ],
+      "bend": 0.3,
+      "label": "back waistband patch",
+      "part": "waistband"
+    },
+    "yoke_back": {
+      "kind": "line",
+      "from": [
+        0.14,
+        0.93,
+        -0.4
+      ],
+      "to": [
+        -0.14,
+        0.93,
+        -0.4
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "samples": 16,
+      "label": "back yoke line"
+    },
+    "outseam_left": {
+      "kind": "line",
+      "from": [
+        -0.4,
+        0.96,
+        -0.06
+      ],
+      "to": [
+        -0.4,
+        0.04,
+        -0.06
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "samples": 28,
+      "label": "left outseam",
+      "part": "leg_l"
+    },
+    "outseam_right": {
+      "kind": "line",
+      "from": [
+        0.4,
+        0.04,
+        -0.06
+      ],
+      "to": [
+        0.4,
+        0.96,
+        -0.06
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "samples": 28,
+      "label": "right outseam",
+      "part": "leg_r"
+    },
+    "inseam_left": {
+      "kind": "line",
+      "from": [
+        0,
+        0.66,
+        0.0
+      ],
+      "to": [
+        -0.09,
+        0.04,
+        0.0
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "samples": 20,
+      "label": "left inseam",
+      "part": "leg_l"
+    },
+    "inseam_right": {
+      "kind": "line",
+      "from": [
+        0.09,
+        0.04,
+        0.0
+      ],
+      "to": [
+        0,
+        0.66,
+        0.0
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "samples": 20,
+      "label": "right inseam",
+      "part": "leg_r"
+    },
+    "hem_left": {
+      "kind": "ring",
+      "center": [
+        -0.17,
+        0.035,
+        0.0
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "radius": 0.14,
+      "samples": 36,
+      "label": "left hem",
+      "part": "leg_l"
+    },
+    "hem_right": {
+      "kind": "ring",
+      "center": [
+        0.18,
+        0.035,
+        0.0
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "radius": 0.14,
+      "samples": 36,
+      "label": "right hem",
+      "part": "leg_r"
+    }
+  }
+}
