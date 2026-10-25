@@ -729,9 +729,10 @@ export default function Studio() {
   const wishCount = loadWishlist().length;
   const selPart = selection ? product.parts[selection.partId] : undefined;
   const editing = mode === "voice" && !!selPart;
+  const typeboxOpen = typing || voice.mode === "text";
 
   return (
-    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${stagePending ? "stage-pending" : ""}`}>
+    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${mode === "voice" && typeboxOpen ? "typing" : ""} ${stagePending ? "stage-pending" : ""}`}>
       <Glows />
       {showConfetti && <Celebration image={snapshot} line={campaign ? `Funded · ${campaign.captured || campaign.held} of ${campaign.targetBackers}` : undefined} onDone={() => setShowConfetti(false)} />}
       {debug && perf && <div className="perf">{perf}</div>}
@@ -876,7 +877,7 @@ export default function Studio() {
               <Sparkle size={18} color="#182825" /> See matches
             </button>
           )}
-          {(typing || voice.mode === "text") && (
+          {typeboxOpen && (
             <form
               className="typebox"
               onSubmit={(e) => {
