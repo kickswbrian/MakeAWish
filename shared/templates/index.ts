@@ -16,6 +16,8 @@ export interface Template {
   parts: Part[];
   /** Built from this fashion template (see shared/fashion): controls, zones and detail modules apply. */
   fashion?: string;
+  /** Picks this template wherever it matches the whole wish, before the keyword rules (demo showpieces). */
+  match?: RegExp;
 }
 
 export const TEMPLATES: Template[] = [...ALL_TEMPLATES];
@@ -89,6 +91,9 @@ const MODIFIERS: Record<string, string[]> = {
 
 /** The template a wish clearly asks for, by keyword. */
 export function matchTemplate(text: string): Template | null {
+  const lower = text.toLowerCase();
+  const showpiece = TEMPLATES.find((t) => t.match?.test(lower));
+  if (showpiece) return showpiece;
   // A shape twist ("a lamp shaped like a mushroom") is a new design, not a stock template.
   if (/\bshaped\b|\bshape of\b|\blooks? like\b|\binspired by\b|\bin the style of\b|\bthemed\b/.test(text.toLowerCase())) return null;
   // Only the product noun counts, not its accessories: "a car with a cup holder" is not a mug.
