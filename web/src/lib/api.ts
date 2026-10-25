@@ -26,6 +26,7 @@ export const api = {
   transcript: (id: string, user: string, genie: string) => req<{ ok: boolean }>("POST", `/api/wish/${id}/transcript`, { user, genie }),
   lock: (id: string) => req<{ ok: boolean }>("POST", `/api/wish/${id}/lock`),
   matches: (id: string) => req<MatchesResponse>("GET", `/api/wish/${id}/matches`),
+  previewImages: (id: string) => req<string[]>("GET", `/api/wish/${id}/preview-images`),
   createCampaign: (body: { wishId: string; priceCents: number; targetBackers: number; deadlineAt: number }) =>
     req<Campaign>("POST", "/api/campaigns", body),
   campaign: (id: string) => req<Campaign>("GET", `/api/campaigns/${id}`),

@@ -310,6 +310,32 @@ export default function Studio() {
   const [showIdx, setShowIdx] = useState(0);
   const gl = useRef<THREE.WebGLRenderer | null>(null);
   const wishId = wish?.id ?? null;
+
+  // Match photos ahead of time: the store search starts while the design settles, so fetch its photos
+  // into the browser cache then, and the matches screen opens with every picture already there.
+  const preloaded = useRef(new Set<string>());
+  useEffect(() => {
+    if (!wishId || !product.description) return;
+    let cancelled = false;
+    const pull = () =>
+      void api.previewImages(wishId).then((urls) => {
+        if (cancelled) return;
+        for (const u of urls) {
+          if (preloaded.current.has(u)) continue;
+          preloaded.current.add(u);
+          const img = new Image();
+          img.decoding = "async";
+          img.src = u;
+        }
+      }).catch(() => {});
+    // The search takes a few seconds once the design settles: look twice.
+    const a = window.setTimeout(pull, 5000), b = window.setTimeout(pull, 14000);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(a);
+      window.clearTimeout(b);
+    };
+  }, [wishId, product.description, product.title]);
   const modeRef = useRef(mode);
   modeRef.current = mode;
   const voiceRef = useRef<ReturnType<typeof useVoice> | null>(null);
