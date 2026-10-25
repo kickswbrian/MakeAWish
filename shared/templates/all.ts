@@ -27,9 +27,10 @@ import { sofa } from "./sofa.ts";
 import { drone } from "./drone.ts";
 import { keyboard } from "./keyboard.ts";
 import { bicycle } from "./bicycle.ts";
+import { DEMO_TEMPLATES } from "./demo.ts";
 
 /** Every built-in template, in catalog order. */
 export const ALL_TEMPLATES: Template[] = [
   backpack, toteBag, convertibleDress, sneaker, bikeHelmet, headphones, speaker, suitcase, deskLamp, waterBottle, mug, planter, smartwatch, sunglasses, kettle, umbrella, officeChair, skateboard, teddyBear, smartphone,
-  hoodie, coffeeMaker, laptopStand, guitar, sofa, drone, keyboard, bicycle,
+  hoodie, coffeeMaker, laptopStand, guitar, sofa, drone, keyboard, bicycle, ...DEMO_TEMPLATES,
 ].filter((t): t is Template => !!t);
