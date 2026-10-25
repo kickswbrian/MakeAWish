@@ -1,0 +1,147 @@
+{
+ "credit": "\"Worn-out fabric shoulder bag\" by Abdur Razzak Sawon (https://sketchfab.com/3d-models/worn-out-fabric-shoulder-bag-186925376343478298c554a4ca650064), CC-BY-4.0",
+ "height": 0.75,
+ "budget": 20000,
+ "rules": [
+  {
+   "name": "strap",
+   "when": "y > 0.435"
+  },
+  {
+   "name": "body",
+   "when": "True"
+  }
+ ],
+ "fold": "place_holder",
+ "fold_size": 1024,
+ "zones": {
+  "front_center": {
+   "from": [
+    0,
+    0.31,
+    0.3
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.12,
+    0.1
+   ],
+   "bend": 0.3,
+   "label": "front center, upper",
+   "part": "body"
+  },
+  "front_panel": {
+   "from": [
+    0.01,
+    0.178,
+    0.3
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.14,
+    0.1
+   ],
+   "bend": 0.3,
+   "label": "front panel (patch spot)",
+   "part": "body"
+  },
+  "back_panel": {
+   "from": [
+    0,
+    0.2,
+    -0.3
+   ],
+   "dir": [
+    0,
+    0,
+    1
+   ],
+   "room": [
+    0.16,
+    0.16
+   ],
+   "bend": 0.3,
+   "label": "back panel",
+   "part": "body"
+  },
+  "top_edge": {
+   "kind": "ring",
+   "center": [
+    -0.012,
+    0.412,
+    0
+   ],
+   "axis": [
+    0,
+    -1,
+    0
+   ],
+   "radius": 0.3,
+   "samples": 72,
+   "label": "top hem",
+   "part": "body"
+  },
+  "side_left": {
+   "from": [
+    -0.3,
+    0.15,
+    0
+   ],
+   "dir": [
+    1,
+    0,
+    0
+   ],
+   "room": [
+    0.04,
+    0.1
+   ],
+   "label": "left side seam",
+   "part": "body"
+  },
+  "side_right": {
+   "from": [
+    0.3,
+    0.15,
+    0
+   ],
+   "dir": [
+    -1,
+    0,
+    0
+   ],
+   "room": [
+    0.04,
+    0.1
+   ],
+   "label": "right side seam",
+   "part": "body"
+  },
+  "strap_anchor_left": {
+   "near": [
+    -0.1,
+    0.425,
+    0.01
+   ],
+   "label": "left strap seam",
+   "part": "body"
+  },
+  "strap_anchor_right": {
+   "near": [
+    0.077,
+    0.425,
+    0.01
+   ],
+   "label": "right strap seam",
+   "part": "body"
+  }
+ }
+}

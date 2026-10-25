@@ -35,7 +35,12 @@ export const env = {
   cartesiaKey: s("CARTESIA_API_KEY"),
   cartesiaVersion: s("CARTESIA_VERSION") ?? "2026-08-14",
   apifyToken: s("APIFY_TOKEN"),
-  apifyActor: s("APIFY_ACTOR"), // optional, e.g. "yourname~wish-matcher"; without it the server calls the store scrapers directly
+  apifyActor: s("APIFY_ACTOR"), // optional, e.g. "yourname~wish-matcher"; used only with MATCH_VIA_ACTOR=1
+  /**
+   * Route searches through the deployed matcher Actor instead of calling the store scrapers here.
+   * Off by default: the server's own search (planned queries, photo scoring) is newer than the Actor.
+   */
+  matchViaActor: s("MATCH_VIA_ACTOR") === "1",
   stripeSecret: s("STRIPE_SECRET_KEY"),
   stripePublishable: s("STRIPE_PUBLISHABLE_KEY"),
   stripeWebhookSecret: s("STRIPE_WEBHOOK_SECRET"),
@@ -48,7 +53,6 @@ export const env = {
   budget: {
     llmTurns: n("DAILY_LLM_TURNS", 1500),
     apifySearches: n("DAILY_APIFY_SEARCHES", 60),
-    visualScores: n("DAILY_VISUAL_SCORES", 120),
     cartesiaTokens: n("DAILY_CARTESIA_TOKENS", 600),
   },
 };
@@ -76,7 +80,7 @@ export function logConfig() {
       `[wish-it] ${env.publicUrl}  demoMode=${env.demoMode}  ${isProd ? "PRODUCTION" : "development"}`,
       `  brain    ${on(env.anthropicKey)} ${env.anthropicKey ? `design=${env.designModel} edit=${env.editModel}` : "(rule-based fallback)"}`,
       `  cartesia ${on(env.cartesiaKey)} ${env.cartesiaKey ? "" : "(browser speech fallback)"}`,
-      `  apify    ${on(env.apifyToken)} ${!env.apifyToken ? "(sample matches)" : env.apifyActor ? `via ${env.apifyActor}` : "Google Shopping + Amazon scrapers, called directly"}`,
+      `  apify    ${on(env.apifyToken)} ${!env.apifyToken ? "(sample matches)" : env.apifyActor && env.matchViaActor ? `via ${env.apifyActor}` : "Google Shopping + Amazon scrapers, called directly"}`,
       `  stripe   ${paymentMode === "stripe" ? "on  test mode" : "off (simulated payments)"}${paymentMode === "stripe" && !env.stripeWebhookSecret ? "  WARNING: no STRIPE_WEBHOOK_SECRET, relying on polling" : ""}`,
     ].join("\n"),
   );

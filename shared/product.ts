@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { KIT_IDS } from "./kit.ts";
+import { MESH_MODELS } from "./meshes.ts";
 
 /**
  * The product data model. A product is a flat map of parts with parent links; every edit is a patch.
@@ -15,11 +16,20 @@ import { KIT_IDS } from "./kit.ts";
  * - tube sweeps through [x, y, z] points given in the part's own frame.
  * - extrude takes an [x, y] outline in the XY plane and extrudes it along Z, centered on z = 0.
  * - A part with `csg` is an invisible cutter carved out of part `csg.withPartId`.
+ * - kind "mesh" shows one named piece of a prepared base model (meshAsset = "<model>/<node>"),
+ *   e.g. a jacket sleeve; kitParams drive its deformers (crop, fit) where the model has them.
+ * - Path kits (stitching, zippers, chains, trims) follow kitPath, [x, y, z] points in the part's
+ *   frame, with optional per-point surface normals in kitNormals.
+ * - zone names the template attachment zone a detail part was placed on, so it can follow the
+ *   garment when its controls change (cropped, oversized).
  */
 
 export const MATERIAL_PRESETS = [
   "nylon", "leather", "canvas", "metal_brushed", "plastic_matte", "plastic_gloss", "rubber", "wood", "glass",
   "metal_polished", "ceramic", "cotton", "knit", "satin", "denim", "suede", "concrete", "marble", "cork",
+  // Fashion fabrics, finishes and jewelry.
+  "jersey", "rib_knit", "cable_knit", "fleece", "sherpa", "linen", "wool_suiting", "tweed", "corduroy", "velvet",
+  "denim_light", "leather_pebbled", "patent_leather", "mesh_fabric", "lace", "gingham", "quilted", "pearl", "gem", "horn",
 ] as const;
 export type MaterialPreset = (typeof MATERIAL_PRESETS)[number];
 
@@ -158,11 +168,15 @@ export const PartSchema = z
   .object({
     id: PartId,
     name: z.string().trim().min(1).max(60).catch("Part"),
-    kind: z.enum(["primitive", "kit"]),
+    kind: z.enum(["primitive", "kit", "mesh"]),
     geometry: GeometrySchema.optional(),
     kitAsset: z.string().optional(),
     /** Per-kit options, see the catalog (e.g. zipper length). */
     kitParams: z.record(KitParam).optional(),
+    kitPath: z.array(vec3).min(2).max(LIMITS.points).optional(),
+    kitNormals: z.array(vec3).max(LIMITS.points).optional(),
+    meshAsset: z.string().max(80).optional(),
+    zone: z.string().max(LIMITS.idLength).optional(),
     parent: PartId.nullable().default(null),
     transform: TransformSchema.default({}),
     material: MaterialSchema,
@@ -171,15 +185,22 @@ export const PartSchema = z
   .superRefine((p, ctx) => {
     if (p.kind === "primitive" && !p.geometry) ctx.addIssue({ code: "custom", message: "primitive part needs geometry" });
     if (p.kind === "kit" && !(p.kitAsset && KIT_IDS.has(p.kitAsset))) ctx.addIssue({ code: "custom", message: `unknown kit asset ${p.kitAsset}` });
+    if (p.kind === "mesh" && !(p.meshAsset && MESH_MODELS[p.meshAsset.split("/")[0]]?.nodes.includes(p.meshAsset.split("/")[1] ?? ""))) {
+      ctx.addIssue({ code: "custom", message: `unknown mesh asset ${p.meshAsset}` });
+    }
   });
 
 export type Part = {
   id: string;
   name: string;
-  kind: "primitive" | "kit";
+  kind: "primitive" | "kit" | "mesh";
   geometry?: Geometry;
   kitAsset?: string;
   kitParams?: Record<string, number | boolean | string>;
+  kitPath?: [number, number, number][];
+  kitNormals?: [number, number, number][];
+  meshAsset?: string;
+  zone?: string;
   parent: string | null;
   transform: Transform;
   material: PartMaterial;
@@ -198,6 +219,16 @@ export interface Product {
   targetPriceUsd?: number;
   parts: Record<string, Part>;
   rootId: string;
+  /** Set when the product was built from a fashion template: its id and control values (fit, length...). */
+  fashion?: FashionState;
+}
+
+export interface FashionState {
+  template: string;
+  controls: Record<string, string>;
+  styles?: string[];
+  /** Current material of each template slot (shell, hardware...), so a slot change finds its parts. */
+  slots?: Record<string, PartMaterial>;
 }
 
 export type Patch =
@@ -278,7 +309,7 @@ function repairPart(raw: unknown): unknown {
     const { type, ...rest } = g;
     p.geometry = { type, params: rest };
   }
-  if (!p.kind) p.kind = p.kitAsset ? "kit" : "primitive";
+  if (!p.kind) p.kind = p.kitAsset ? "kit" : p.meshAsset ? "mesh" : "primitive";
   if (!p.material || typeof p.material !== "object") p.material = { preset: "plastic_matte", color: typeof p.color === "string" ? p.color : "#C9CCD2" };
   return p;
 }
@@ -288,11 +319,16 @@ export function parsePart(raw: unknown): { part: Part } | { error: string } {
   const r = PartSchema.safeParse(repairPart(raw));
   if (!r.success) return { error: r.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ") };
   const part = r.data as Part;
-  if (part.kind === "kit") delete part.geometry;
-  else {
+  if (part.kind !== "primitive") delete part.geometry;
+  if (part.kind !== "kit") {
     delete part.kitAsset;
-    delete part.kitParams;
+    delete part.kitPath;
+    delete part.kitNormals;
   }
+  if (part.kind === "primitive") delete part.kitParams;
+  if (part.kind !== "mesh") delete part.meshAsset;
+  if (part.kitNormals && part.kitPath && part.kitNormals.length !== part.kitPath.length) delete part.kitNormals;
+  if (!part.zone) delete part.zone;
   return { part };
 }
 
@@ -419,6 +455,24 @@ export function parseProduct(raw: unknown): Product | null {
   const rootId = typeof r.rootId === "string" ? r.rootId : "";
   const list = parts.slice(0, LIMITS.parts).filter((x): x is Record<string, unknown> & { id: string } => !!x && typeof x === "object" && typeof (x as { id?: unknown }).id === "string");
   const { product } = applyPatches(base, addOrder(list, rootId).map((part) => ({ op: "add", part })));
+  const f = r.fashion as Partial<FashionState> | undefined;
+  if (f && typeof f.template === "string" && f.controls && typeof f.controls === "object") {
+    const controls: Record<string, string> = {};
+    for (const [k, v] of Object.entries(f.controls)) if (typeof v === "string") controls[k.slice(0, 30)] = v.slice(0, 30);
+    const slots: Record<string, PartMaterial> = {};
+    if (f.slots && typeof f.slots === "object") {
+      for (const [k, v] of Object.entries(f.slots).slice(0, 16)) {
+        const m = MaterialSchema.safeParse(v);
+        if (m.success) slots[k.slice(0, 30)] = m.data;
+      }
+    }
+    product.fashion = {
+      template: f.template.slice(0, 40),
+      controls,
+      ...(Array.isArray(f.styles) ? { styles: f.styles.filter((x): x is string => typeof x === "string").slice(0, 4) } : {}),
+      ...(Object.keys(slots).length ? { slots } : {}),
+    };
+  }
   return product;
 }
 

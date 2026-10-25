@@ -5,16 +5,12 @@ import { ArrowOut, BackIcon, CategoryIcon, HeartIcon, LockIcon, MicIcon, MinusIc
 const STORE: Record<string, string> = { amazon: "Amazon", etsy: "Etsy", google_shopping: "Google Shopping", sample: "Sample" };
 
 const money = (p: number | null) => (p == null ? null : `$${p % 1 ? p.toFixed(2) : p.toLocaleString("en-US")}`);
-/**
- * How well a listing matches: the description score, blended with how much its photo looks like the
- * render once Claude has compared them (visual match, server/src/visual.ts).
- */
-export const matchOf = (m: Match) => (m.visual != null ? Math.round(m.visual * 0.6 + m.score * 0.4) : m.score);
+/** How well a listing matches (the store search scores each listing against the design render and its photo). */
+export const matchOf = (m: Match) => m.score;
 
-export type SortKey = "best" | "look" | "price";
+export type SortKey = "best" | "price";
 export const SORTS: { key: SortKey; label: string }[] = [
   { key: "best", label: "Best match + price" },
-  { key: "look", label: "Closest look" },
   { key: "price", label: "Lowest price" },
 ];
 
@@ -33,7 +29,6 @@ export function rankMatches(res: MatchesResponse | null, sort: SortKey = "best")
   const value: Record<SortKey, (m: Match) => number> = {
     // A listing that IS the product leads (the headline says "It already exists!" about it).
     best: (m) => (m.score >= EXISTS_SCORE ? 1000 : 0) + matchOf(m) * 0.7 + cheap(m) * 30,
-    look: (m) => (m.visual ?? -1) * 1000 + matchOf(m),
     price: (m) => (m.price == null ? -1e9 : -m.price),
   };
   return [...pool].sort((a, b) => value[sort](b) - value[sort](a) || matchOf(b) - matchOf(a));
@@ -64,12 +59,11 @@ function dedupe(matches: Match[]): Match[] {
 /** Store filter chips, the best match as a hero, the rest in a 2-column grid. Skeletons while searching. */
 /** The sort, as one dropdown pill (next to "N sites searched"). */
 export function SortSelect({ value, onChange, res }: { value: SortKey; onChange: (k: SortKey) => void; res: MatchesResponse | null }) {
-  const hasLook = !!res?.matches.some((m) => m.visual != null);
   return (
     <label className="sort-pill">
       <span className="sr-only">Sort matches</span>
       <select value={value} onChange={(e) => onChange(e.target.value as SortKey)}>
-        {SORTS.filter((x) => x.key !== "look" || hasLook).map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}
+        {SORTS.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}
       </select>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
     </label>
