@@ -87,6 +87,24 @@ export const CreateCampaignBody = z.object({
 });
 export type CreateCampaignBody = z.infer<typeof CreateCampaignBody>;
 
+/** One of this browser's agent purchases, with (simulated) tracking. */
+export interface OrderDTO {
+  id: string;
+  wishId: string;
+  title: string;
+  url: string;
+  source: string;
+  image: string | null;
+  amountCents: number;
+  createdAt: number;
+  carrier: string;
+  trackingNumber: string;
+  /** 0 ordered, 1 shipped, 2 out for delivery, 3 delivered. */
+  stage: 0 | 1 | 2 | 3;
+  /** When each stage happened (or will). */
+  stageAt: [number, number, number, number];
+}
+
 /** A past wish floating in the wish world (searched, and nothing like it existed). */
 export interface WorldItem {
   id: string;

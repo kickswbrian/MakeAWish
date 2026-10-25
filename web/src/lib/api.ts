@@ -1,5 +1,5 @@
 import type {
-  Campaign, CartesiaTokenResponse, ConfigResponse, MatchesResponse, PledgeResponse, Product, WishDTO, WorldItem,
+  Campaign, CartesiaTokenResponse, ConfigResponse, MatchesResponse, OrderDTO, PledgeResponse, Product, WishDTO, WorldItem,
 } from "@wishit/shared";
 
 async function req<T>(method: string, path: string, body?: unknown, headers?: Record<string, string>): Promise<T> {
@@ -32,8 +32,9 @@ export const api = {
   world: (voter: string, include?: string) => req<WorldItem[]>("GET", `/api/world?voter=${encodeURIComponent(voter)}${include ? `&include=${encodeURIComponent(include)}` : ""}`),
   voteWish: (id: string, voter: string, value: -1 | 0 | 1) =>
     req<{ score: number; up: number; down: number; myVote: -1 | 0 | 1 }>("POST", `/api/wish/${id}/vote`, { voter, value }),
-  agentBuy: (wishId: string, url: string) =>
-    req<{ ok: boolean; outcome: string; orderId?: string; amountCents?: number; checks: { name: string; ok: boolean; detail: string }[] }>("POST", `/api/wish/${wishId}/agent-buy`, { url }),
+  orders: (buyer: string) => req<OrderDTO[]>("GET", `/api/orders?buyer=${encodeURIComponent(buyer)}`),
+  agentBuy: (wishId: string, url: string, buyer?: string) =>
+    req<{ ok: boolean; outcome: string; orderId?: string; amountCents?: number; checks: { name: string; ok: boolean; detail: string }[] }>("POST", `/api/wish/${wishId}/agent-buy`, { url, buyer }),
   vote: (id: string, voter: string, up: boolean) => req<Campaign>("POST", `/api/campaigns/${id}/vote`, { voter, up }),
   campaigns: (sort?: "held" | "votes") => req<Campaign[]>("GET", `/api/campaigns${sort ? `?sort=${sort}` : ""}`),
   pledge: (id: string, email: string) => req<PledgeResponse>("POST", `/api/campaigns/${id}/pledges`, { email }),
