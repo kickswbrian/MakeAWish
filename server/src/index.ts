@@ -281,6 +281,16 @@ app.post("/api/campaigns", limits.createCampaign, (req, res) => {
 // ---------- Wish world ----------
 
 const voterParam = (v: unknown) => (typeof v === "string" && /^[A-Za-z0-9-]{8,64}$/.test(v) ? v : null);
+/** A wish's thumbnail as an image (the Wish World links these instead of inlining them). Versioned URLs, so cached for good. */
+app.get("/api/wish/:id/thumb", (req, res) => {
+  const thumb = getWish(req.params.id)?.thumb;
+  const m = thumb ? /^data:(image\/[a-z+]+);base64,(.+)$/.exec(thumb) : null;
+  if (!m) return res.status(404).end();
+  res.setHeader("Content-Type", m[1]);
+  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  res.end(Buffer.from(m[2], "base64"));
+});
+
 app.get("/api/world", limits.read, (req, res) => {
   const include = typeof req.query.include === "string" ? req.query.include : null;
   res.json(listWorld(voterParam(req.query.voter), include));

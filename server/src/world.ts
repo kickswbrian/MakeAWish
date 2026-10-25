@@ -1,5 +1,6 @@
-import { EXISTS_SCORE, isEmpty, parseProduct, type WorldItem } from "@wishit/shared";
+import { EXISTS_SCORE, type WorldItem } from "@wishit/shared";
 import { db } from "./db.ts";
+import { hash } from "./util.ts";
 
 /**
  * The wish world: past wishes that were searched and turned out not to exist yet, as floating bubbles
@@ -14,45 +15,81 @@ db.exec(`CREATE TABLE IF NOT EXISTS wish_votes (
   PRIMARY KEY (wish_id, voter)
 )`);
 
+db.exec("CREATE INDEX IF NOT EXISTS wish_votes_voter ON wish_votes(voter)");
+db.exec("CREATE INDEX IF NOT EXISTS campaigns_wish ON campaigns(wish_id)");
+
 interface Row {
-  id: string; product_json: string | null; thumb: string | null; created_at: number;
-  best: number | null; up: number; down: number; mine: number | null; campaign_id: string | null;
+  id: string; product_json: string | null; thumb_tail: string | null; created_at: number;
+  best: number | null; up: number; down: number; campaign_id: string | null;
 }
 
 const WORLD_SIZE = 120;
 
+/**
+ * The list is the same for everyone but your own votes, and building it reads every wish: keep it for
+ * a few seconds (votes clear it), and add each voter's own votes on top.
+ */
+const CACHE_MS = 20_000;
+const cache = new Map<string, { at: number; items: WorldItem[] }>();
+export const clearWorldCache = () => cache.clear();
+
 export function listWorld(voter: string | null, include: string | null): WorldItem[] {
+  const key = include ?? "";
+  let hit = cache.get(key);
+  if (!hit || Date.now() - hit.at > CACHE_MS) {
+    hit = { at: Date.now(), items: buildWorld(include) };
+    cache.set(key, hit);
+    if (cache.size > 50) cache.delete(cache.keys().next().value!);
+  }
+  const mine = new Map(
+    voter ? (db.prepare("SELECT wish_id, value FROM wish_votes WHERE voter = ?").all(voter) as { wish_id: string; value: number }[]).map((v) => [v.wish_id, v.value]) : [],
+  );
+  return hit.items.map((it) => {
+    const v = mine.get(it.id);
+    return { ...it, myVote: v === 1 ? 1 : v === -1 ? -1 : 0 };
+  });
+}
+
+function buildWorld(include: string | null): WorldItem[] {
   // Searched wishes whose best store listing wasn't "this is it", newest first, plus the asking
   // shopper's own wish even if its search hasn't finished yet.
   const rows = db.prepare(`
-    SELECT w.id, w.product_json, w.thumb, w.created_at,
+    SELECT w.id, w.product_json, CASE WHEN w.thumb IS NULL THEN NULL ELSE length(w.thumb) || substr(w.thumb, length(w.thumb) / 2, 24) END AS thumb_tail, w.created_at,
       (SELECT MAX(score) FROM matches m WHERE m.wish_id = w.id) AS best,
       (SELECT COUNT(*) FROM wish_votes v WHERE v.wish_id = w.id AND v.value > 0) AS up,
       (SELECT COUNT(*) FROM wish_votes v WHERE v.wish_id = w.id AND v.value < 0) AS down,
-      (SELECT value FROM wish_votes v WHERE v.wish_id = w.id AND v.voter = ?) AS mine,
       (SELECT id FROM campaigns c WHERE c.wish_id = w.id ORDER BY c.created_at DESC LIMIT 1) AS campaign_id
     FROM wishes w
     WHERE w.product_json IS NOT NULL AND (w.status = 'locked' OR w.id = ?) AND (w.thumb IS NOT NULL OR w.id = ?)
     ORDER BY w.created_at DESC
     LIMIT 400
-  `).all(voter ?? "", include ?? "", include ?? "") as Row[];
+  `).all(include ?? "", include ?? "") as Row[];
   const items: WorldItem[] = [];
   for (const r of rows) {
     if (r.id !== include && r.best != null && r.best >= EXISTS_SCORE) continue;
-    const product = r.product_json ? parseProduct(JSON.parse(r.product_json)) : null;
-    if (!product || isEmpty(product)) continue;
+    // Only the few fields the bubbles show: no full validation of every product on every request.
+    let product: { title?: unknown; description?: unknown; category?: unknown; targetPriceUsd?: unknown; rootId?: unknown; parts?: Record<string, { material?: { color?: unknown } }> };
+    try {
+      product = JSON.parse(r.product_json ?? "null") ?? {};
+    } catch {
+      continue;
+    }
+    const parts = product.parts && typeof product.parts === "object" ? product.parts : {};
+    if (!Object.keys(parts).length || typeof product.title !== "string") continue;
+    const color = typeof product.rootId === "string" ? parts[product.rootId]?.material?.color : undefined;
     items.push({
       id: r.id,
       title: product.title,
-      description: product.description ?? null,
-      category: product.category ?? null,
-      priceUsd: product.targetPriceUsd ?? null,
-      thumb: r.thumb,
-      color: product.parts[product.rootId]?.material.color ?? null,
+      description: typeof product.description === "string" ? product.description : null,
+      category: typeof product.category === "string" ? product.category : null,
+      priceUsd: typeof product.targetPriceUsd === "number" ? product.targetPriceUsd : null,
+      // A cacheable image link (versioned by the picture's own bytes), not the picture inlined.
+      thumb: r.thumb_tail ? `/api/wish/${r.id}/thumb?v=${hash(r.thumb_tail).slice(0, 10)}` : null,
+      color: typeof color === "string" ? color : null,
       score: r.up - r.down,
       up: r.up,
       down: r.down,
-      myVote: r.mine === 1 ? 1 : r.mine === -1 ? -1 : 0,
+      myVote: 0,
       campaignId: r.campaign_id,
       createdAt: r.created_at,
     });
@@ -75,6 +112,7 @@ export function voteWish(wishId: string, voter: string, value: -1 | 0 | 1): { sc
     db.prepare("INSERT INTO wish_votes (wish_id, voter, value, created_at) VALUES (?, ?, ?, ?) ON CONFLICT(wish_id, voter) DO UPDATE SET value = excluded.value")
       .run(wishId, voter, value, Date.now());
   }
+  clearWorldCache();
   const t = db.prepare("SELECT SUM(value > 0) AS up, SUM(value < 0) AS down FROM wish_votes WHERE wish_id = ?").get(wishId) as { up: number | null; down: number | null };
   const up = t.up ?? 0, down = t.down ?? 0;
   return { score: up - down, up, down, myVote: value };
