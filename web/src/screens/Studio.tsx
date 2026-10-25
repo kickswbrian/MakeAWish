@@ -26,7 +26,7 @@ import { BackIcon, CategoryIcon, ChevronDown, HeartIcon, KeyboardIcon, MicIcon, 
 import { LaunchSheet, MatchGrid, summarize } from "../ui/Results.tsx";
 import { CampaignPanel, Celebration } from "../ui/Campaign.tsx";
 import Bubble3D from "../three/Bubble3D.tsx";
-import { IntroRing, IntroWords, useIntroPhase } from "../ui/v2/IntroV2.tsx";
+import { IntroRing, IntroWords, useFramesSettled, useIntroPhase } from "../ui/v2/IntroV2.tsx";
 import { useUiVariant } from "../ui/v2/useUiVariant.ts";
 import { IdlePrompt, useIdle } from "../ui/v2/IdlePrompt.tsx";
 
@@ -678,9 +678,14 @@ export default function Studio() {
   const hasProduct = !isEmpty(product);
   const root = product.parts[product.rootId];
   const showcasing = mode === "voice" && !hasProduct && !busy && !voice.interim && !voice.captions.length && voice.state !== "thinking";
+  // Hold the showroom still while UI variation 2's intro plays: each new piece uploads its textures
+  // to the GPU on first draw, and that freezes the animation for a moment.
+  const introPlaying = useRef(false);
   useEffect(() => {
     if (!showcasing) return;
-    const t = setInterval(() => setShowIdx((i) => i + 1), 4800);
+    const t = setInterval(() => {
+      if (!introPlaying.current) setShowIdx((i) => i + 1);
+    }, 4800);
     return () => clearInterval(t);
   }, [showcasing]);
   const showcase = useMemo(() => {
@@ -732,7 +737,9 @@ export default function Studio() {
   // ---------- UI variation 2 (press 2; 1 goes back) ----------
   const { variant, introKey } = useUiVariant();
   const v2 = variant === "2";
-  const [phase, skipIntro] = useIntroPhase(introKey, v2);
+  const settled = useFramesSettled();
+  const [phase, skipIntro] = useIntroPhase(introKey, v2, settled);
+  introPlaying.current = v2 && phase !== "done";
   // The wish screen is just the bubble until there is a product; then the usual editor takes over.
   const v2Landing = v2 && mode === "voice" && !hasProduct;
   const [burstKey, setBurstKey] = useState(0);

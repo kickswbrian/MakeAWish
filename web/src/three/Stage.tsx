@@ -314,42 +314,61 @@ function AnchorTracker({ registry, anchor }: { registry: PartRegistry; anchor?: 
 }
 
 /**
- * Compile every material preset's shader once textures are in, off-screen, so the first product
- * (and the first preset swap) doesn't hitch while the GPU builds programs.
+ * Compile every material preset's shader off-screen, so the first product (and the first preset
+ * swap) doesn't hitch while the GPU builds programs. On Windows (ANGLE/Direct3D) each program takes
+ * a long time to build and the canvas stalls meanwhile: compiling all of them at load ran the page
+ * at ~1 fps for its first ~10 s. So it waits until the page has settled, then compiles a few at a
+ * time with frames in between.
  */
+// After UI variation 2's intro (it waits for smooth frames, then runs ~5 s).
+export const WARMUP_DELAY_MS = 9000;
+const WARM_BATCH = 3;
 const warmMaterials: THREE.Material[] = [];
+let warmStarted = false;
+const nextFrame = () => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 60)));
 function ShaderWarmup() {
   const { gl, scene, camera } = useThree();
   useEffect(() => {
+    if (warmStarted) return; // once per page: the compiled programs are shared
     let cancelled = false;
-    void preloadMaterials().then(async () => {
-      if (cancelled) return;
-      const group = new THREE.Group();
-      const geo = new THREE.SphereGeometry(0.01, 8, 6);
-      const mats = MATERIAL_PRESETS.flatMap((preset) => [
-        createMaterial({ preset, color: "#888888" }),
-        createMaterial({ preset, color: "#888888", emissive: "#ffaa55", emissiveIntensity: 1 }),
-      ]);
-      for (const m of mats) {
-        const mesh = new THREE.Mesh(geo, m);
-        mesh.castShadow = mesh.receiveShadow = true;
-        mesh.position.set(0, -50, 0);
-        mesh.frustumCulled = false;
-        group.add(mesh);
-      }
-      if (gl.getContext().isContextLost()) return;
-      scene.add(group);
-      try {
-        await gl.compileAsync(scene, camera);
-      } catch {
-        /* warm-up is best effort */
-      }
-      scene.remove(group);
-      // Keep the materials alive: disposing them would release the compiled programs again.
-      warmMaterials.push(...mats);
-    });
+    const start = window.setTimeout(() => {
+      warmStarted = true;
+      void preloadMaterials().then(async () => {
+        const geo = new THREE.SphereGeometry(0.01, 8, 6);
+        const mats = MATERIAL_PRESETS.flatMap((preset) => [
+          createMaterial({ preset, color: "#888888" }),
+          createMaterial({ preset, color: "#888888", emissive: "#ffaa55", emissiveIntensity: 1 }),
+        ]);
+        // Keep the materials alive: disposing them would release the compiled programs again.
+        warmMaterials.push(...mats);
+        for (let i = 0; i < mats.length && !cancelled; i += WARM_BATCH) {
+          if (gl.getContext().isContextLost()) return;
+          const group = new THREE.Group();
+          for (const m of mats.slice(i, i + WARM_BATCH)) {
+            const mesh = new THREE.Mesh(geo, m);
+            mesh.castShadow = mesh.receiveShadow = true;
+            mesh.position.set(0, -50, 0);
+            mesh.frustumCulled = false;
+            group.add(mesh);
+          }
+          scene.add(group);
+          try {
+            await gl.compileAsync(scene, camera);
+            // Upload the batch's textures too: a first upload (with mipmaps) stalls a frame for ~0.5 s.
+            for (const m of mats.slice(i, i + WARM_BATCH)) {
+              for (const v of Object.values(m)) if (v instanceof THREE.Texture && v.image) gl.initTexture(v);
+            }
+          } catch {
+            /* warm-up is best effort */
+          }
+          scene.remove(group);
+          await nextFrame();
+        }
+      });
+    }, WARMUP_DELAY_MS);
     return () => {
       cancelled = true;
+      window.clearTimeout(start);
     };
   }, [gl, scene, camera]);
   return null;
@@ -432,7 +451,10 @@ function StageCanvas({
   // The studio preloads every texture set; view-only stages (the phone pledge page) fetch just what they show.
   const warm = preload ?? interactive;
   useEffect(() => {
-    if (warm) void preloadMaterials();
+    // After the first screen is up (see ShaderWarmup): 13 MB of textures at load slows the first frames.
+    if (!warm) return;
+    const t = window.setTimeout(() => void preloadMaterials(), WARMUP_DELAY_MS);
+    return () => window.clearTimeout(t);
   }, [warm]);
   // Adaptive quality: drop resolution, then ambient occlusion, if the GPU can't hold the frame rate.
   const [dpr, setDpr] = useState(Math.min(2, window.devicePixelRatio || 1));
