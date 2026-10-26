@@ -15,6 +15,13 @@ export type IntroPhase = "wait" | "words" | "swipe" | "ring" | "bubble" | "done"
 
 const SWIPE_AT = 2800;
 const TIMELINE: [IntroPhase, number][] = [["words", 0], ["swipe", SWIPE_AT], ["ring", 3350], ["bubble", 4550], ["done", 5850]];
+/** Little stars drifting through the inside of "Wish it." once it's filled: [y, size, seconds, delay]. */
+const STARS: [number, number, number, number][] = [
+  [30, 10, 3.4, 0], [62, 7, 2.9, 0.5], [82, 9, 3.8, 1.1], [44, 6, 2.6, 1.6],
+  [70, 11, 3.2, 2.2], [26, 7, 3.6, 2.7], [55, 8, 2.8, 3.1], [88, 6, 3.3, 0.8],
+  [38, 8, 3.0, 1.9], [66, 6, 3.5, 0.3], [50, 12, 4.0, 2.5], [78, 7, 2.7, 1.4],
+];
+const STAR_PATH = "M0 -1C.12 -.12 .12 -.12 1 0C.12 .12 .12 .12 0 1C-.12 .12 -.12 .12 -1 0C-.12 -.12 -.12 -.12 0 -1Z";
 const reduced = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 /** True once frames come at a steady rate (30 in a row under 34 ms), or after `maxMs` regardless. */
@@ -111,12 +118,25 @@ export function IntroWords({ phase, onSkip }: { phase: IntroPhase; onSkip: () =>
                 <stop offset=".5" stopColor="#EA8CA6" />
                 <stop offset="1" stopColor="#6FA894" />
               </linearGradient>
+              <clipPath id="v2wishc">
+                <text x="210" y="88" textAnchor="middle">Wish it.</text>
+              </clipPath>
               <mask id="v2wishm" maskUnits="userSpaceOnUse" x="0" y="-20" width="420" height="144">
                 <rect className="v2-w2-wipe" x="0" y="-20" width="420" height="144" fill="#fff" />
               </mask>
             </defs>
-            <text className="v2-w2-fill" x="210" y="88" textAnchor="middle" mask="url(#v2wishm)">Wish it.</text>
             <text className="v2-w2-line" x="210" y="88" textAnchor="middle">Wish it.</text>
+            <text className="v2-w2-fill" x="210" y="88" textAnchor="middle" mask="url(#v2wishm)">Wish it.</text>
+            <g className="v2-stars" clipPath="url(#v2wishc)" aria-hidden="true">
+              {STARS.map(([y, size, dur, delay], i) => (
+                <path
+                  key={i}
+                  className="v2-star"
+                  d={STAR_PATH}
+                  style={{ ["--y" as string]: `${y}px`, ["--s" as string]: size, animationDuration: `${dur}s, ${dur / 2}s`, animationDelay: `${2.5 + delay}s, ${2.5 + delay}s` }}
+                />
+              ))}
+            </g>
           </svg>
         </div>
       )}
