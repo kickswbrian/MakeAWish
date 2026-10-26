@@ -50,7 +50,7 @@ function ViewOffset({ framing }: { framing: Framing }) {
  * Camera: orbit with damping, zoom-to-part on selection, back to the full view on deselect.
  * A small minimum box keeps tiny parts (a screw) from filling the whole screen.
  */
-function CameraRig({ framing, focusId, registry, interactive, focusKey }: { framing: Framing; focusId: string | null; registry: PartRegistry; interactive: boolean; focusKey: number }) {
+function CameraRig({ framing, focusId, registry, interactive, focusKey, zoom = 1 }: { framing: Framing; focusId: string | null; registry: PartRegistry; interactive: boolean; focusKey: number; zoom?: number }) {
   const controls = useRef<CameraControls>(null);
   const d = FRAMES[framing].d;
   const seen = useRef(-1);
@@ -76,6 +76,13 @@ function CameraRig({ framing, focusId, registry, interactive, focusKey }: { fram
     }
   });
 
+  // Lens zoom on top of the fitted framing. Set on the camera itself: with the controls disabled (a
+  // view-only stage) they don't run, so their zoomTo would never apply.
+  const camera = useThree((st) => st.camera) as THREE.PerspectiveCamera;
+  useEffect(() => {
+    camera.zoom = zoom;
+    camera.updateProjectionMatrix();
+  }, [camera, zoom]);
   // Frame the whole product whenever its fitted size changes (and nothing is selected).
   useFrame(() => {
     const c = controls.current;
@@ -317,19 +324,19 @@ function AnchorTracker({ registry, anchor }: { registry: PartRegistry; anchor?: 
  * Compile every material preset's shader off-screen, so the first product (and the first preset
  * swap) doesn't hitch while the GPU builds programs. On Windows (ANGLE/Direct3D) each program takes
  * a long time to build and the canvas stalls meanwhile: compiling all of them at load ran the page
- * at ~1 fps for its first ~10 s. So it waits until the page has settled, then compiles a few at a
- * time with frames in between.
+ * at ~1 fps for its first ~10 s. So it waits until the page says it's free (`deferWarmup` off: frames
+ * are steady and any intro is over), then a moment more, then compiles a few at a time with frames in
+ * between.
  */
-// After UI variation 2's intro (it waits for smooth frames, then runs ~5 s).
-export const WARMUP_DELAY_MS = 9000;
+export const WARMUP_DELAY_MS = 2000;
 const WARM_BATCH = 3;
 const warmMaterials: THREE.Material[] = [];
 let warmStarted = false;
 const nextFrame = () => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 60)));
-function ShaderWarmup() {
+function ShaderWarmup({ defer }: { defer: boolean }) {
   const { gl, scene, camera } = useThree();
   useEffect(() => {
-    if (warmStarted) return; // once per page: the compiled programs are shared
+    if (warmStarted || defer) return; // once per page: the compiled programs are shared
     let cancelled = false;
     const start = window.setTimeout(() => {
       warmStarted = true;
@@ -370,7 +377,7 @@ function ShaderWarmup() {
       cancelled = true;
       window.clearTimeout(start);
     };
-  }, [gl, scene, camera]);
+  }, [gl, scene, camera, defer]);
   return null;
 }
 
@@ -411,6 +418,10 @@ export interface StageProps {
   onShown?: (productId: string) => void;
   /** Stop rendering while the canvas is hidden (UI variation 2's intro plays over it). */
   paused?: boolean;
+  /** Hold off the texture preload and shader warm-up (the page is still busy loading or animating in). */
+  deferWarmup?: boolean;
+  /** Frame the product closer (>1) or farther (<1) than the default fit. */
+  zoom?: number;
 }
 
 /**
@@ -446,7 +457,7 @@ export default function Stage(props: StageProps) {
 function StageCanvas({
   product, framing = "bubble", interactive = true, preload, transparent = false, pedestal = true, effects = true, animate = true,
   celebrateKey = 0, selectedId = null, registry: reg, gizmo = false, focusKey = 0, anchor = null, explode = 0, onHit, onHover, onMiss, onTransform, onGl, onShown,
-  paused = false, onRestore,
+  paused = false, deferWarmup = false, zoom = 1, onRestore,
 }: StageProps & { onRestore: () => void }) {
   const registry = useMemo(() => reg ?? new PartRegistry(), [reg]);
   const hasProduct = !!product.parts[product.rootId];
@@ -454,10 +465,10 @@ function StageCanvas({
   const warm = preload ?? interactive;
   useEffect(() => {
     // After the first screen is up (see ShaderWarmup): 13 MB of textures at load slows the first frames.
-    if (!warm) return;
+    if (!warm || deferWarmup) return;
     const t = window.setTimeout(() => void preloadMaterials(), WARMUP_DELAY_MS);
     return () => window.clearTimeout(t);
-  }, [warm]);
+  }, [warm, deferWarmup]);
   // Adaptive quality: drop resolution, then ambient occlusion, if the GPU can't hold the frame rate.
   const [dpr, setDpr] = useState(Math.min(2, window.devicePixelRatio || 1));
   const [lowPower, setLowPower] = useState(false);
@@ -495,9 +506,9 @@ function StageCanvas({
           setLowPower(true);
         }}
       />
-      {warm && <ShaderWarmup />}
+      {warm && <ShaderWarmup defer={deferWarmup} />}
       <ViewOffset framing={framing} />
-      <CameraRig framing={framing} focusId={selectedId} registry={registry} interactive={interactive} focusKey={focusKey} />
+      <CameraRig framing={framing} focusId={selectedId} registry={registry} interactive={interactive} focusKey={focusKey} zoom={zoom} />
       <AnchorTracker registry={registry} anchor={anchor} />
       {!transparent && <Backdrop />}
       <Lighting />

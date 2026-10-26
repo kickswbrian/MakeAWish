@@ -144,27 +144,40 @@ export function IntroWords({ phase, onSkip }: { phase: IntroPhase; onSkip: () =>
   );
 }
 
+/** Depth of the loop: copies of the ring stacked along Z (px), so edge-on it reads as a thick band. */
+const RING_LAYERS = [-8, -5.5, -3, -1, 1, 3, 5.5, 8];
+
 /**
  * The loop: a thick gradient arc whips around, growing until it closes into the full circle, with a thin
- * arc counter-spinning just outside it. Then it turns edge-on like a coin, and the bubble turns in.
+ * arc counter-spinning just outside it. Then it turns edge-on like a coin (showing its thickness, like a
+ * donut) and the bubble turns in.
  */
 export function IntroRing({ phase }: { phase: IntroPhase }) {
   if (phase !== "ring" && phase !== "bubble") return null;
   return (
-    <svg className={`v2-ring ${phase === "bubble" ? "out" : ""}`} viewBox="0 0 100 100" aria-hidden="true">
-      <defs>
-        <linearGradient id="v2ringg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#E9C46A" />
-          <stop offset=".55" stopColor="#F4A8C8" />
-          <stop offset="1" stopColor="#9FBFB2" />
-        </linearGradient>
-      </defs>
-      <g className="v2-ring-counter">
-        <circle className="v2-ring-thin" cx="50" cy="50" r="51.2" pathLength="100" />
-      </g>
-      <g className="v2-ring-spin">
-        <circle className="v2-ring-arc" cx="50" cy="50" r="48.4" pathLength="100" />
-      </g>
-    </svg>
+    <div className={`v2-ring ${phase === "bubble" ? "out" : ""}`} aria-hidden="true">
+      <svg className="v2-ring-defs" width="0" height="0">
+        <defs>
+          <linearGradient id="v2ringg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#E9C46A" />
+            <stop offset=".55" stopColor="#F4A8C8" />
+            <stop offset="1" stopColor="#9FBFB2" />
+          </linearGradient>
+        </defs>
+      </svg>
+      {RING_LAYERS.map((z) => (
+        <svg key={z} className="v2-ring-layer" viewBox="0 0 100 100" style={{ transform: `translateZ(${z}px)` }}>
+          {z === 1 && (
+            <g className="v2-ring-counter">
+              <circle className="v2-ring-thin" cx="50" cy="50" r="51.2" pathLength="100" />
+            </g>
+          )}
+          <g className="v2-ring-spin">
+            {/* Edge layers a touch darker, so the band has some shading when it turns. */}
+            <circle className="v2-ring-arc" cx="50" cy="50" r="48.4" pathLength="100" style={{ opacity: Math.abs(z) > 6 ? 0.75 : 1 }} />
+          </g>
+        </svg>
+      ))}
+    </div>
   );
 }
