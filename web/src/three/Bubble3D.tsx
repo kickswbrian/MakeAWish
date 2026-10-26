@@ -6,7 +6,7 @@ import { orbSignal } from "./signals.ts";
 /**
  * UI variation 2's bubble as a real 3D object, drawn over the product canvas: a glass shell with a
  * soap-film sheen whose rim brightens with the voice. The canvas is a little larger than the bubble so
- * the spring as it pops in isn't clipped.
+ * the rim's glow isn't clipped.
  */
 
 export const BUBBLE3D_OVERSCAN = 1.2;
@@ -50,7 +50,6 @@ const shellFrag = /* glsl */ `
 
 function Scene({ revealed }: { revealed: boolean }) {
   const group = useRef<THREE.Group>(null);
-  const reveal = useRef(0);
   const amp = useRef(0);
 
   const front = useMemo(() => new THREE.ShaderMaterial({
@@ -69,15 +68,11 @@ function Scene({ revealed }: { revealed: boolean }) {
     back.dispose();
   }, [front, back]);
 
-  useFrame((state, rawDt) => {
-    const dt = Math.min(rawDt, 0.05);
+  useFrame((state) => {
     const t = state.clock.elapsedTime;
-    // Reveal: the sphere springs up from nothing when the intro hands over.
-    const goal = revealed ? 1 : 0;
-    reveal.current += (goal - reveal.current) * (1 - Math.exp(-dt * (revealed ? 5 : 8)));
-    const r = reveal.current;
-    const springy = r < 0.001 ? 0.0001 : 1 + Math.sin(r * Math.PI) * 0.06 * (1 - r) * 4;
-    group.current?.scale.setScalar(Math.max(0.0001, r * springy));
+    // Shown at full size the moment the intro hands over: the ring's coin turn (CSS) is the reveal.
+    const r = revealed ? 1 : 0;
+    group.current?.scale.setScalar(Math.max(0.0001, r));
 
     const target = orbSignal.state === "listening" || orbSignal.state === "speaking" ? Math.min(1, orbSignal.level * 2) : 0;
     amp.current += (target - amp.current) * (target > amp.current ? 0.4 : 0.1);
