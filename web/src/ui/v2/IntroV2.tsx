@@ -2,20 +2,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * The cinematic opening of UI variation 2:
- *   words  "Want it?" swipes in big from the right, then "Wish it." appears letter by letter in color
- *   swipe  the phrase blows up and sweeps off to the left
+ *   words  "Want it?" slides in from the right, then "Wish it." traces itself in outline and fills in color
+ *   swipe  the phrase sweeps off to the left (same size throughout)
  *   ring   a circle draws itself where the bubble will be (rendered by the studio's orb slot)
- *   bubble the circle becomes the 3D bubble, with clouds and sparkles spinning in
+ *   bubble the circle becomes the 3D bubble
  *   done   the wish screen fades in
- * Click or press any key to skip ahead. It holds on a blank screen ("wait") until the page renders
- * smoothly: while the GPU builds the first shaders, nothing (not even CSS animation) draws at a steady rate.
+ * Click or press any key to skip ahead. With `hold` (press 3) it stays on the title until a click or a
+ * key, then plays the rest. It starts on a blank screen ("wait") until the page renders smoothly:
+ * while the GPU builds the first shaders, nothing (not even CSS animation) draws at a steady rate.
  */
 export type IntroPhase = "wait" | "words" | "swipe" | "ring" | "bubble" | "done";
 
-const TIMELINE: [IntroPhase, number][] = [["words", 0], ["swipe", 2500], ["ring", 3050], ["bubble", 4250], ["done", 5550]];
-// "Wish it." in brand colors, one per letter (gold to pink to sage), so each letter can appear on its own.
-const WISH = [..."Wish it."];
-const WISH_COLORS = ["#D9A640", "#E39A6E", "#EA8CA6", "#E386B0", "#C99AB5", "#A2AFA6", "#7FAA98", "#6FA894"];
+const SWIPE_AT = 2800;
+const TIMELINE: [IntroPhase, number][] = [["words", 0], ["swipe", SWIPE_AT], ["ring", 3350], ["bubble", 4550], ["done", 5850]];
 const reduced = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 /** True once frames come at a steady rate (30 in a row under 34 ms), or after `maxMs` regardless. */
@@ -38,12 +37,22 @@ export function useFramesSettled(maxMs = 6000): boolean {
   return ok;
 }
 
-export function useIntroPhase(playKey: number, enabled: boolean, ready = true): [IntroPhase, () => void] {
+export function useIntroPhase(playKey: number, enabled: boolean, ready = true, hold = false): [IntroPhase, () => void] {
   const [phase, setPhase] = useState<IntroPhase>(enabled && playKey > 0 && !reduced() ? "wait" : "done");
   const timers = useRef<number[]>([]);
-  useEffect(() => {
+  // Holding on the title (press 3) until the presenter clicks or presses a key.
+  const holding = useRef(false);
+  const clear = () => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
+  };
+  /** Schedule the rest of the timeline as if `from` ms had already passed. */
+  const play = (from: number) => {
+    for (const [p, at] of TIMELINE) if (at > from) timers.current.push(window.setTimeout(() => setPhase(p), at - from));
+  };
+  useEffect(() => {
+    clear();
+    holding.current = false;
     if (!enabled || playKey === 0 || reduced()) {
       setPhase("done");
       return;
@@ -53,14 +62,23 @@ export function useIntroPhase(playKey: number, enabled: boolean, ready = true): 
       return;
     }
     setPhase("words");
-    for (const [p, at] of TIMELINE.slice(1)) timers.current.push(window.setTimeout(() => setPhase(p), at));
-    return () => timers.current.forEach(clearTimeout);
-  }, [playKey, enabled, ready]);
+    if (hold) holding.current = true;
+    else play(0);
+    return clear;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playKey, enabled, ready, hold]);
   const skip = useCallback(() => {
-    timers.current.forEach(clearTimeout);
-    timers.current = [];
+    clear();
+    if (holding.current) {
+      // Held title: go on with the swipe, ring and bubble as normal.
+      holding.current = false;
+      setPhase("swipe");
+      play(SWIPE_AT);
+      return;
+    }
     setPhase((p) => (p === "wait" || p === "words" || p === "swipe" || p === "ring" ? "bubble" : "done"));
     timers.current.push(window.setTimeout(() => setPhase("done"), 900));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return [phase, skip];
 }
@@ -70,8 +88,8 @@ export function IntroWords({ phase, onSkip }: { phase: IntroPhase; onSkip: () =>
   useEffect(() => {
     if (!playing) return;
     const k = (e: KeyboardEvent) => {
-      // "1"/"2" switch variants (2 replays the intro); modifiers and form fields aren't a skip.
-      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || e.key === "1" || e.key === "2") return;
+      // "1"/"2"/"3" switch variants (2 and 3 replay the intro); modifiers and form fields aren't a skip.
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || e.key === "1" || e.key === "2" || e.key === "3") return;
       const t = e.target;
       if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement || (t instanceof HTMLElement && t.isContentEditable)) return;
       onSkip();
@@ -85,11 +103,21 @@ export function IntroWords({ phase, onSkip }: { phase: IntroPhase; onSkip: () =>
       {phase !== "wait" && (
         <div className="v2-words">
           <span className="v2-w1">Want&nbsp;it?</span>
-          <span className="v2-w2" aria-label="Wish it.">
-            {WISH.map((ch, i) => (
-              <span key={i} className="v2-l" style={{ color: WISH_COLORS[i], ["--i" as string]: i }} aria-hidden="true">{ch === " " ? " " : ch}</span>
-            ))}
-          </span>
+          {/* Traced in outline, then the color wipes in behind it. */}
+          <svg className="v2-w2" viewBox="0 0 420 104" role="img" aria-label="Wish it.">
+            <defs>
+              <linearGradient id="v2wishg" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stopColor="#D9A640" />
+                <stop offset=".5" stopColor="#EA8CA6" />
+                <stop offset="1" stopColor="#6FA894" />
+              </linearGradient>
+              <mask id="v2wishm" maskUnits="userSpaceOnUse" x="0" y="-20" width="420" height="144">
+                <rect className="v2-w2-wipe" x="0" y="-20" width="420" height="144" fill="#fff" />
+              </mask>
+            </defs>
+            <text className="v2-w2-fill" x="210" y="88" textAnchor="middle" mask="url(#v2wishm)">Wish it.</text>
+            <text className="v2-w2-line" x="210" y="88" textAnchor="middle">Wish it.</text>
+          </svg>
         </div>
       )}
     </div>
