@@ -101,14 +101,16 @@ function Scene({ revealed }: { revealed: boolean }) {
 export interface Bubble3DProps {
   /** Show the sphere (springs in when this turns true). */
   revealed: boolean;
+  /** Stop rendering (nothing to show yet). */
+  paused?: boolean;
 }
 
-export default function Bubble3D({ revealed }: Bubble3DProps) {
+export default function Bubble3D({ revealed, paused = false }: Bubble3DProps) {
   // Perspective camera at distance 9 framing the sphere (radius 1) at 1 / OVERSCAN of the canvas.
   const fov = (2 * Math.atan(BUBBLE3D_OVERSCAN / 9) * 180) / Math.PI;
   return (
     <div className="bubble3d" aria-hidden="true">
-      <Canvas dpr={[1, 1.5]} gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }} camera={{ fov, position: [0, 0, 9], near: 0.1, far: 50 }} style={{ pointerEvents: "none" }}>
+      <Canvas frameloop={paused ? "never" : "always"} dpr={[1, 1.5]} gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }} camera={{ fov, position: [0, 0, 9], near: 0.1, far: 50 }} style={{ pointerEvents: "none" }}>
         <Scene revealed={revealed} />
       </Canvas>
     </div>
