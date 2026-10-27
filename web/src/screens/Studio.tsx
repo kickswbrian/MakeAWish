@@ -25,6 +25,10 @@ import { Waveform } from "../ui/Waveform.tsx";
 import { BackIcon, CategoryIcon, ChevronDown, HeartIcon, KeyboardIcon, MicIcon, MuteIcon, Sparkle } from "../ui/Icons.tsx";
 import { LaunchSheet, MatchGrid, summarize } from "../ui/Results.tsx";
 import { CampaignPanel, Celebration } from "../ui/Campaign.tsx";
+import Bubble3D from "../three/Bubble3D.tsx";
+import { IntroRing, IntroWords, useFramesSettled, useIntroPhase } from "../ui/v2/IntroV2.tsx";
+import { useUiVariant } from "../ui/v2/useUiVariant.ts";
+import { IdlePrompt, useIdle } from "../ui/v2/IdlePrompt.tsx";
 
 type Mode = "voice" | "results" | "campaign";
 
@@ -115,6 +119,54 @@ function ProductSize({ product, registry }: { product: Product; registry: PartRe
     return () => clearTimeout(t);
   }, [product, registry]);
   return <div className="product-size">{text || "\u00a0"}</div>;
+}
+
+/** The product's name, with a pencil to rename it (UI variation 2). Enter saves, Esc cancels. */
+function EditableTitle({ title, busy }: { title: string; busy: boolean }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(title);
+  const shown = title === "Untitled wish" && busy ? "Conjuring…" : title;
+  const save = () => {
+    const t = draft.trim();
+    if (t && t !== title) useProduct.getState().meta({ title: t.slice(0, 80) });
+    setEditing(false);
+  };
+  if (editing) {
+    return (
+      <input
+        className="title-product title-edit"
+        autoFocus
+        value={draft}
+        aria-label="Name your wish"
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") save();
+          if (e.key === "Escape") setEditing(false);
+          e.stopPropagation();
+        }}
+      />
+    );
+  }
+  return (
+    <h1 className="title-product title-editable">
+      <span>{shown}</span>
+      <button
+        className="title-pencil"
+        aria-label="Rename your wish"
+        title="Rename"
+        onClick={() => {
+          setDraft(title);
+          setEditing(true);
+        }}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z" />
+          <path d="M13.5 6.5l4 4" />
+        </svg>
+      </button>
+    </h1>
+  );
 }
 
 /** Export the product (as built, at real size in meters) as a binary glTF and download it. */
@@ -679,9 +731,14 @@ export default function Studio() {
   const hasProduct = !isEmpty(product);
   const root = product.parts[product.rootId];
   const showcasing = mode === "voice" && !hasProduct && !busy && !voice.interim && !voice.captions.length && voice.state !== "thinking";
+  // Hold the showroom still while UI variation 2's intro plays: each new piece uploads its textures
+  // to the GPU on first draw, and that freezes the animation for a moment.
+  const introPlaying = useRef(false);
   useEffect(() => {
     if (!showcasing) return;
-    const t = setInterval(() => setShowIdx((i) => i + 1), 4800);
+    const t = setInterval(() => {
+      if (!introPlaying.current) setShowIdx((i) => i + 1);
+    }, 4800);
     return () => clearInterval(t);
   }, [showcasing]);
   const showcase = useMemo(() => {
@@ -731,15 +788,86 @@ export default function Studio() {
   const editing = mode === "voice" && !!selPart;
   const typeboxOpen = typing || voice.mode === "text";
 
+  // ---------- UI variation 2 (press 2; 1 goes back) ----------
+  const { variant, introKey } = useUiVariant();
+  const v2 = variant !== "1";
+  const settled = useFramesSettled();
+  const [phase, skipIntro] = useIntroPhase(introKey, v2, settled, variant === "3");
+  introPlaying.current = v2 && phase !== "done";
+  // While the words and the ring play, nothing 3D is visible: stop both canvases so the intro gets the
+  // whole GPU. (They do render during "wait", so their shaders are built before the bubble appears.)
+  const introHidden = v2 && (phase === "words" || phase === "swipe" || phase === "ring");
+  // The wish screen is just the bubble until there is a product; then the usual editor takes over.
+  const v2Landing = v2 && mode === "voice" && !hasProduct;
+  useEffect(() => {
+    // The genie edit card floats outside the app: close it so it doesn't hang over the intro.
+    if (v2 && phase === "words") select(null);
+  }, [v2, phase, select]);
+  const lastCaption = voice.captions[voice.captions.length - 1];
+  const idle = useIdle(
+    `${voice.interim}|${lastCaption?.id ?? ""}|${voice.state}|${voice.active}|${busy}|${typing}|${text}`,
+    v2Landing && phase === "done" && !busy && !voice.interim && (voice.state === "idle" || voice.state === "listening"),
+    // Right away until something's been said; after that, once the last caption has had a moment.
+    lastCaption ? 8000 : 0,
+  );
+  // Nothing on screen to type into: start typing anywhere and the box opens with that letter, centered
+  // on the mouse (bottom center when there's no mouse).
+  // Type-anywhere works on the wish screen and next to a product (not while a part's edit card is open).
+  const v2Typing = v2 && mode === "voice" && !selPart;
+  const pointer = useRef<{ x: number; y: number } | null>(null);
+  const [typeAt, setTypeAt] = useState<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    if (!v2Typing) return;
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") pointer.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener("pointermove", onMove);
+    return () => window.removeEventListener("pointermove", onMove);
+  }, [v2Typing]);
+  useEffect(() => {
+    if (!v2Typing || phase !== "done" || typing || voice.mode === "text") return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || /[123 ]/.test(e.key)) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+      e.preventDefault();
+      const p = pointer.current;
+      if (p) {
+        // Keep the whole box on screen.
+        const half = Math.min(560, window.innerWidth - 32) / 2;
+        setTypeAt({ x: Math.min(Math.max(p.x, half + 16), window.innerWidth - half - 16), y: Math.min(Math.max(p.y, 44), window.innerHeight - 44) });
+      } else setTypeAt(null);
+      setText(e.key);
+      setTyping(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [v2Typing, phase, typing, voice.mode]);
+  // The mic stays off while typing, until the wish is sent (or the box is closed).
+  const mutedForTyping = useRef(false);
+  useEffect(() => {
+    if (!v2) return;
+    const vc = voiceRef.current!;
+    if (typing && vc.active && !vc.muted) {
+      vc.toggleMute();
+      mutedForTyping.current = true;
+    } else if (!typing && mutedForTyping.current) {
+      mutedForTyping.current = false;
+      if (vc.muted) vc.toggleMute();
+    }
+  }, [v2, typing]);
+
+  // "typing" (main #17) budgets room for the in-flow type box; v2's box floats at the cursor, so not there.
   return (
-    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${mode === "voice" && typeboxOpen ? "typing" : ""} ${stagePending ? "stage-pending" : ""}`}>
+    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${mode === "voice" && typeboxOpen && !v2 ? "typing" : ""} ${stagePending ? "stage-pending" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""} ${v2 && mode === "voice" && hasProduct ? "v2-product" : ""}`}>
+      {v2 && <IntroWords phase={phase} onSkip={skipIntro} />}
       <Glows />
       {showConfetti && <Celebration image={snapshot} line={campaign ? `Funded · ${campaign.captured || campaign.held} of ${campaign.targetBackers}` : undefined} onDone={() => setShowConfetti(false)} />}
       {debug && perf && <div className="perf">{perf}</div>}
       {mode === "voice" && <HoverTip name={hoverId && hoverId !== selection?.partId ? product.parts[hoverId]?.name ?? null : null} />}
 
       <div className="orb-slot">
-        <BubbleSparks />
+        {v2 && <IntroRing phase={phase} />}
+        {!v2 && <BubbleSparks />}
         <Bubble
           state={voice.state}
           robot={!hasProduct}
@@ -783,8 +911,18 @@ export default function Studio() {
             onTransform={(id, tr) => applyLocal([{ op: "update", id, changes: { transform: tr } }])}
             onGl={onGl}
             onShown={setShownId}
+            paused={introHidden}
+            deferWarmup={!settled || (v2 && phase !== "done")}
+            // The v2 wish screen: the showroom piece bigger in its bubble, and without the ambient
+            // occlusion and bloom passes, which fill the canvas in white (the glass bubble is the backdrop).
+            zoom={v2Landing ? 1.3 : 1}
+            effects={!v2Landing}
           />
         </Bubble>
+        {v2 && <Bubble3D revealed={phase === "bubble" || phase === "done"} paused={introHidden} />}
+        {v2Landing && phase === "done" && (
+          <button className="v2-tap" onClick={talk} aria-label={voice.active ? "Stop talking to the genie" : "Talk to the genie"} />
+        )}
         {mode === "voice" && hasProduct && (
           <div className="edit-bar" role="toolbar" aria-label="Edit">
             <button className="ebtn" disabled={!canUndo || busy} onClick={() => undo()} aria-label="Undo">↶</button>
@@ -837,7 +975,11 @@ export default function Studio() {
           </header>
           {hasProduct ? (
             <>
-              <h1 className="title-product center">{product.title === "Untitled wish" && busy ? "Conjuring…" : product.title}</h1>
+              {v2 ? (
+                <EditableTitle key={product.id} title={product.title} busy={busy} />
+              ) : (
+                <h1 className="title-product center">{product.title === "Untitled wish" && busy ? "Conjuring…" : product.title}</h1>
+              )}
               <ProductSize product={product} registry={registry} />
             </>
           ) : (
@@ -854,7 +996,7 @@ export default function Studio() {
                   </button>
                 ))}
               </div>
-            ) : hasProduct && !busy && !editing && !voice.captions.length && !voice.interim ? (
+            ) : hasProduct && !v2 && !busy && !editing && !voice.captions.length && !voice.interim ? (
               <div className="speech-chips">
                 <span className="try-label">Try saying</span>
                 {suggestionsFor(product).map((t, i) => (
@@ -872,23 +1014,82 @@ export default function Studio() {
               </div>
             )}
           </div>
-          {hasProduct && !editing && (
+          {v2Landing && phase === "done" && (
+            <div className="v2-captions">
+              {idle ? <IdlePrompt listening={voice.active} /> : <SpeechLine captions={voice.captions} interim={voice.interim} />}
+              {status.some((s) => s.cls === "bad") && (
+                <div className="note-row">
+                  {status.filter((s) => s.cls === "bad").map((s) => <span key={s.text} className="note bad">{s.text}</span>)}
+                </div>
+              )}
+            </div>
+          )}
+          {hasProduct && !editing && !v2 && (
             <button className="pill dock-pill" onClick={() => void lock()}>
               <Sparkle size={18} color="#182825" /> See matches
             </button>
           )}
-          {typeboxOpen && (
+          {hasProduct && v2 && (
+            <div className="v2-actions">
+              {!editing && (
+                <button className="pill v2-see" onClick={() => void lock()}>
+                  <span>See matches</span>
+                  <svg className="v2-see-arrow" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M5 12h14" />
+                    <path d="M13 6l6 6-6 6" />
+                  </svg>
+                </button>
+              )}
+              {/* Mic on/off. Off by default for someone who started by typing (the mic never started). */}
+              <button
+                className={`v2-mic ${voice.active && !voice.muted ? "on" : ""}`}
+                aria-pressed={voice.active && !voice.muted}
+                aria-label={voice.active && !voice.muted ? "Turn the mic off" : "Turn the mic on"}
+                title={voice.active && !voice.muted ? "Mic on" : "Mic off"}
+                onClick={() => (voice.active ? voice.toggleMute() : void voice.start())}
+              >
+                <MuteIcon size={22} muted={!(voice.active && !voice.muted)} />
+              </button>
+            </div>
+          )}
+          {(typeboxOpen || (v2Landing && (voice.micStatus === "denied" || voice.micStatus === "failed"))) && (
             <form
-              className="typebox"
+              className={`typebox ${v2 ? "v2-typebox" : ""}`}
+              style={{
+                ...(v2Typing && typing && typeAt ? { position: "fixed", left: typeAt.x, top: typeAt.y, bottom: "auto", transform: "none", translate: "-50% -50%", zIndex: 40 } : {}),
+                // v2: a short pill that widens as the wish gets longer.
+                ...(v2Typing && typing && typeAt ? { width: `min(calc(${text ? text.length + 2 : 15}ch + 76px), 620px, calc(100vw - 32px))` } : {}),
+                ...(v2Landing && !typeAt ? { width: `min(calc(${text ? text.length + 2 : 15}ch + 76px), 620px, calc(100vw - 32px))` } : {}),
+              }}
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!text.trim()) return;
                 voice.submit(text.trim());
                 setText("");
+                // v2: sent, so the box goes away and the mic comes back.
+                if (v2) setTyping(false);
               }}
             >
-              <input autoFocus aria-label="Type your wish" placeholder={selPart ? `Change the ${selPart.name.toLowerCase()}…` : hasProduct ? "Change anything…" : "Type your wish…"} value={text} onChange={(e) => setText(e.target.value)} />
-              <button className="pill" type="submit">Send</button>
+              <input
+                autoFocus
+                onKeyDown={(e) => {
+                  if (v2 && e.key === "Escape") {
+                    setText("");
+                    setTyping(false);
+                  }
+                }}
+                aria-label="Type your wish" placeholder={selPart ? `Change the ${selPart.name.toLowerCase()}…` : hasProduct ? "Change anything…" : "Type your wish…"} value={text} onChange={(e) => setText(e.target.value)} />
+              {v2 ? (
+                // Enter sends; the return arrow says so.
+                <button className="pill send-icon" type="submit" aria-label="Send (Enter)" title="Send (Enter)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M19 5v6a3 3 0 0 1-3 3H6" />
+                    <path d="M10 10l-4 4 4 4" />
+                  </svg>
+                </button>
+              ) : (
+                <button className="pill" type="submit">Send</button>
+              )}
             </form>
           )}
           <div className="dock">

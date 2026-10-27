@@ -1,0 +1,183 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+
+/**
+ * The cinematic opening of UI variation 2:
+ *   words  "Want it?" slides in from the right, then "Wish it." traces itself in outline and fills in color
+ *   swipe  the phrase sweeps off to the left (same size throughout)
+ *   ring   a loop whips around and closes where the bubble will be, then turns edge-on like a coin
+ *   bubble it turns the rest of the way round as the 3D bubble
+ *   done   the wish screen fades in
+ * Click or press any key to skip ahead. With `hold` (press 3) it stays on the title until a click or a
+ * key, then plays the rest. It starts on a blank screen ("wait") until the page renders smoothly:
+ * while the GPU builds the first shaders, nothing (not even CSS animation) draws at a steady rate.
+ */
+export type IntroPhase = "wait" | "words" | "swipe" | "ring" | "bubble" | "done";
+
+const SWIPE_AT = 2800;
+const TIMELINE: [IntroPhase, number][] = [["words", 0], ["swipe", SWIPE_AT], ["ring", 3350], ["bubble", 4550], ["done", 5850]];
+/** Little stars drifting through the inside of "Wish it." once it's filled: [y, size, seconds, delay]. */
+const STARS: [number, number, number, number][] = [
+  [30, 10, 3.4, 0], [62, 7, 2.9, 0.5], [82, 9, 3.8, 1.1], [44, 6, 2.6, 1.6],
+  [70, 11, 3.2, 2.2], [26, 7, 3.6, 2.7], [55, 8, 2.8, 3.1], [88, 6, 3.3, 0.8],
+  [38, 8, 3.0, 1.9], [66, 6, 3.5, 0.3], [50, 12, 4.0, 2.5], [78, 7, 2.7, 1.4],
+];
+const STAR_PATH = "M0 -1C.12 -.12 .12 -.12 1 0C.12 .12 .12 .12 0 1C-.12 .12 -.12 .12 -1 0C-.12 -.12 -.12 -.12 0 -1Z";
+const reduced = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+/** True once frames come at a steady rate (30 in a row under 34 ms), or after `maxMs` regardless. */
+export function useFramesSettled(maxMs = 6000): boolean {
+  const [ok, setOk] = useState(false);
+  useEffect(() => {
+    let raf = 0;
+    let last = performance.now();
+    let good = 0;
+    const t0 = last;
+    const tick = (now: number) => {
+      good = now - last < 34 ? good + 1 : 0;
+      last = now;
+      if (good >= 30 || now - t0 > maxMs) setOk(true);
+      else raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [maxMs]);
+  return ok;
+}
+
+export function useIntroPhase(playKey: number, enabled: boolean, ready = true, hold = false): [IntroPhase, () => void] {
+  const [phase, setPhase] = useState<IntroPhase>(enabled && playKey > 0 && !reduced() ? "wait" : "done");
+  const timers = useRef<number[]>([]);
+  // Holding on the title (press 3) until the presenter clicks or presses a key.
+  const holding = useRef(false);
+  const clear = () => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+  };
+  /** Schedule the rest of the timeline as if `from` ms had already passed. */
+  const play = (from: number) => {
+    for (const [p, at] of TIMELINE) if (at > from) timers.current.push(window.setTimeout(() => setPhase(p), at - from));
+  };
+  useEffect(() => {
+    clear();
+    holding.current = false;
+    if (!enabled || playKey === 0 || reduced()) {
+      setPhase("done");
+      return;
+    }
+    if (!ready) {
+      setPhase("wait");
+      return;
+    }
+    setPhase("words");
+    if (hold) holding.current = true;
+    else play(0);
+    return clear;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playKey, enabled, ready, hold]);
+  const skip = useCallback(() => {
+    clear();
+    if (holding.current) {
+      // Held title: go on with the swipe, ring and bubble as normal.
+      holding.current = false;
+      setPhase("swipe");
+      play(SWIPE_AT);
+      return;
+    }
+    setPhase((p) => (p === "wait" || p === "words" || p === "swipe" || p === "ring" ? "bubble" : "done"));
+    timers.current.push(window.setTimeout(() => setPhase("done"), 900));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return [phase, skip];
+}
+
+export function IntroWords({ phase, onSkip }: { phase: IntroPhase; onSkip: () => void }) {
+  const playing = phase !== "done";
+  useEffect(() => {
+    if (!playing) return;
+    const k = (e: KeyboardEvent) => {
+      // "1"/"2"/"3" switch variants (2 and 3 replay the intro); modifiers and form fields aren't a skip.
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || e.key === "1" || e.key === "2" || e.key === "3") return;
+      const t = e.target;
+      if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement || (t instanceof HTMLElement && t.isContentEditable)) return;
+      onSkip();
+    };
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [onSkip, playing]);
+  if (phase !== "wait" && phase !== "words" && phase !== "swipe") return null;
+  return (
+    <div className={`v2-intro ${phase === "swipe" ? "swipe" : ""}`} onClick={onSkip} aria-label="Want it? Wish it." role="presentation">
+      {phase !== "wait" && (
+        <div className="v2-words">
+          <span className="v2-w1">Want&nbsp;it?</span>
+          {/* Traced in outline, then the color wipes in behind it. */}
+          <svg className="v2-w2" viewBox="0 0 420 104" role="img" aria-label="Wish it.">
+            <defs>
+              <linearGradient id="v2wishg" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stopColor="#D9A640" />
+                <stop offset=".5" stopColor="#EA8CA6" />
+                <stop offset="1" stopColor="#6FA894" />
+              </linearGradient>
+              <clipPath id="v2wishc">
+                <text x="210" y="88" textAnchor="middle">Wish it.</text>
+              </clipPath>
+              <mask id="v2wishm" maskUnits="userSpaceOnUse" x="0" y="-20" width="420" height="144">
+                <rect className="v2-w2-wipe" x="0" y="-20" width="420" height="144" fill="#fff" />
+              </mask>
+            </defs>
+            <text className="v2-w2-line" x="210" y="88" textAnchor="middle">Wish it.</text>
+            <text className="v2-w2-fill" x="210" y="88" textAnchor="middle" mask="url(#v2wishm)">Wish it.</text>
+            <g className="v2-stars" clipPath="url(#v2wishc)" aria-hidden="true">
+              {STARS.map(([y, size, dur, delay], i) => (
+                <path
+                  key={i}
+                  className="v2-star"
+                  d={STAR_PATH}
+                  style={{ ["--y" as string]: `${y}px`, ["--s" as string]: size, animationDuration: `${dur}s, ${dur / 2}s`, animationDelay: `${2.5 + delay}s, ${2.5 + delay}s` }}
+                />
+              ))}
+            </g>
+          </svg>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Depth of the loop: copies of the ring stacked along Z (px), so edge-on it reads as a thick band. */
+const RING_LAYERS = [-8, -5.5, -3, -1, 1, 3, 5.5, 8];
+
+/**
+ * The loop: a thick gradient arc whips around, growing until it closes into the full circle, with a thin
+ * arc counter-spinning just outside it. Then it turns edge-on like a coin (showing its thickness, like a
+ * donut) and the bubble turns in.
+ */
+export function IntroRing({ phase }: { phase: IntroPhase }) {
+  if (phase !== "ring" && phase !== "bubble") return null;
+  return (
+    <div className={`v2-ring ${phase === "bubble" ? "out" : ""}`} aria-hidden="true">
+      <svg className="v2-ring-defs" width="0" height="0">
+        <defs>
+          <linearGradient id="v2ringg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#E9C46A" />
+            <stop offset=".55" stopColor="#F4A8C8" />
+            <stop offset="1" stopColor="#9FBFB2" />
+          </linearGradient>
+        </defs>
+      </svg>
+      {RING_LAYERS.map((z) => (
+        <svg key={z} className="v2-ring-layer" viewBox="0 0 100 100" style={{ transform: `translateZ(${z}px)` }}>
+          {z === 1 && (
+            <g className="v2-ring-counter">
+              <circle className="v2-ring-thin" cx="50" cy="50" r="51.2" pathLength="100" />
+            </g>
+          )}
+          <g className="v2-ring-spin">
+            {/* Edge layers a touch darker, so the band has some shading when it turns. */}
+            <circle className="v2-ring-arc" cx="50" cy="50" r="48.4" pathLength="100" style={{ opacity: Math.abs(z) > 6 ? 0.75 : 1 }} />
+          </g>
+        </svg>
+      ))}
+    </div>
+  );
+}
