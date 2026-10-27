@@ -48,6 +48,7 @@ export const env = {
   budget: {
     llmTurns: n("DAILY_LLM_TURNS", 1500),
     apifySearches: n("DAILY_APIFY_SEARCHES", 60),
+    visualScores: n("DAILY_VISUAL_SCORES", 120),
     cartesiaTokens: n("DAILY_CARTESIA_TOKENS", 600),
   },
 };

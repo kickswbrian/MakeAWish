@@ -91,6 +91,7 @@ export const limits = {
   ],
   editProduct: limiter("edit-product", MIN, 60, "Too many edits. Slow down a little."),
   /** Apify store search. */
+  vote: limiter("vote", 10 * MIN, 60, "Too many votes. Try again in a few minutes."),
   search: limiter("search", 10 * MIN, 6, "Too many store searches. Try again in a few minutes."),
   createCampaign: limiter("create-campaign", 10 * MIN, 5, "Too many wishes launched. Try again in a few minutes."),
   pledge: limiter("pledge", 10 * MIN, 5, "Too many pledge attempts. Try again in a few minutes."),

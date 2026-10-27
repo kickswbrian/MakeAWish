@@ -15,6 +15,8 @@ export interface Match {
   price: number | null;
   image: string | null;
   score: number;
+  /** How much the listing's photo looks like the shopper's render (0-100), once Claude has compared them. */
+  visual?: number | null;
   missing: string[];
 }
 
@@ -69,6 +71,8 @@ export interface Campaign {
   status: CampaignStatus;
   maker: Maker | null;
   pledges: PublicPledge[];
+  /** Community upvotes: one per browser, anyone can add theirs. */
+  votes: number;
   paymentMode: "stripe" | "mock";
 }
 
@@ -79,6 +83,9 @@ export const CreateCampaignBody = z.object({
   deadlineAt: z.number().int(),
 });
 export type CreateCampaignBody = z.infer<typeof CreateCampaignBody>;
+
+/** An upvote (or taking it back). `voter` is a random id the browser keeps. */
+export const VoteBody = z.object({ voter: z.string().regex(/^[A-Za-z0-9-]{8,64}$/), up: z.boolean() });
 
 export const PledgeBody = z.object({ email: z.string().email().max(200) });
 

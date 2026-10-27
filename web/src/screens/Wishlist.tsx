@@ -5,6 +5,7 @@ import { api } from "../lib/api.ts";
 import { useRoom, useSocketEvent } from "../lib/socket.ts";
 import { loadWishlist, pref, setPref } from "../lib/wishlist.ts";
 import { Glows } from "../ui/Chrome.tsx";
+import { Upvote } from "../ui/Upvote.tsx";
 import { BagIcon, CategoryIcon, HeartIcon, PlusIcon, QrIcon, Sparkle } from "../ui/Icons.tsx";
 
 type Row = { wish: WishDTO; campaign: Campaign | null };
@@ -19,7 +20,8 @@ const label = (r: Row) => {
 };
 const backers = (c: Campaign) => (c.status === "funded" || c.status === "capturing" ? Math.max(c.captured + c.held, c.captured) : c.held);
 const pct = (c: Campaign) => Math.min(100, (backers(c) / Math.max(1, c.targetBackers)) * 100);
-const fmt = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
+/** The community board: most upvoted first, then most committed, then newest (same as the server). */
+const byVotes = (x: Campaign, y: Campaign) => y.votes - x.votes || y.held + y.captured - (x.held + x.captured) || y.createdAt - x.createdAt;
 
 function Badge({ r }: { r: Row }) {
   const l = label(r);
@@ -39,7 +41,7 @@ function Thumb({ thumb, category, color, size = 68 }: { thumb: string | null; ca
   );
 }
 
-/** Screen 3: my wishes, plus the "Most wished" leaderboard. */
+/** Screen 3: my wishes, plus the "Most wished" board, ranked by community upvotes. */
 export default function Wishlist() {
   const [tab, setTab] = useState<"mine" | "top">(pref("wishlistTab", "mine"));
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -59,7 +61,7 @@ export default function Wishlist() {
       );
       setRows(loaded.filter((r): r is Row => !!r));
     })();
-    void api.campaigns("held").then(setBoard).catch(() => setBoard([]));
+    void api.campaigns("votes").then(setBoard).catch(() => setBoard([]));
   }, []);
 
   useRoom("board");
@@ -68,7 +70,7 @@ export default function Wishlist() {
     setBoard((b) => {
       if (!b) return b;
       const next = b.some((x) => x.id === campaign.id) ? b.map((x) => (x.id === campaign.id ? campaign : x)) : [campaign, ...b];
-      return next.sort((x, y) => y.held + y.captured - (x.held + x.captured));
+      return next.sort(byVotes);
     });
   });
 
@@ -120,6 +122,7 @@ export default function Wishlist() {
         {tab === "top" && (
           <>
             {board && board.length === 0 && <div className="empty-magic">No live wishes yet. Be the first to launch one.</div>}
+            {board && board.length > 0 && <p className="board-hint">Upvote the wishes you want to exist. The most wanted rise to the top.</p>}
             {board?.map((c, i) => (
               <div key={c.id} className="wcard tight" style={{ animationDelay: `${0.05 + i * 0.08}s`, background: cardBg(i) }}>
                 <Link to={`/campaign/${c.id}`} className="wcard-link" aria-label={`Open ${c.name}`} />
@@ -129,7 +132,7 @@ export default function Wishlist() {
                   <span className="wname" style={{ fontSize: 17 }}>{c.name}</span>
                   <div className="track"><div className="fill" style={{ width: `${pct(c)}%` }} /></div>
                 </div>
-                <span style={{ flex: "none", fontSize: 15, fontWeight: 700 }}>{fmt(backers(c))}</span>
+                <Upvote c={c} onChange={(n) => setBoard((b) => b?.map((x) => (x.id === n.id ? n : x)).sort(byVotes) ?? b)} />
               </div>
             ))}
           </>

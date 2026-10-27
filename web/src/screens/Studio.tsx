@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useStore } from "zustand";
 import * as THREE from "three";
@@ -23,7 +23,7 @@ import { GenieBubble } from "../ui/GenieBubble.tsx";
 import { PartsList } from "../ui/PartsList.tsx";
 import { Waveform } from "../ui/Waveform.tsx";
 import { BackIcon, CategoryIcon, ChevronDown, HeartIcon, KeyboardIcon, MicIcon, MuteIcon, Sparkle } from "../ui/Icons.tsx";
-import { LaunchSheet, MatchGrid, summarize } from "../ui/Results.tsx";
+import { LaunchSheet, MatchGrid, rankMatches, summarize } from "../ui/Results.tsx";
 import { CampaignPanel, Celebration } from "../ui/Campaign.tsx";
 import Bubble3D from "../three/Bubble3D.tsx";
 import { IntroRing, IntroWords, useFramesSettled, useIntroPhase } from "../ui/v2/IntroV2.tsx";
@@ -714,6 +714,8 @@ export default function Studio() {
   }, [debug]);
 
   const result = matches && !matches.pending ? summarize(matches) : null;
+  const shownMatches = useMemo(() => rankMatches(matches), [matches]);
+  const found = !matches || (matches.pending && !matches.matches.length) ? "Searching…" : `${shownMatches.length} ${shownMatches.length === 1 ? "match" : "matches"} found`;
   const toggleSave = () => {
     if (!wishId) return;
     if (saved) unsaveWish(wishId);
@@ -850,6 +852,40 @@ export default function Studio() {
     }
   }, [v2, typing]);
 
+  // ---------- Page transition: the bubble flies between the wish and its matches ----------
+  // FLIP: after the layout switches, the bubble starts where it was on the last screen and springs
+  // to its new place and size, while the new screen's content slides in around it.
+  const orbSlot = useRef<HTMLDivElement>(null);
+  const orbFlip = useRef<HTMLDivElement>(null);
+  const lastOrb = useRef<{ slot: string; rect: DOMRect } | null>(null);
+  const [pageKey, setPageKey] = useState(0);
+  useLayoutEffect(() => {
+    const slotEl = orbSlot.current, el = orbFlip.current;
+    if (!slotEl || !el) return;
+    const prev = lastOrb.current;
+    if (prev && prev.slot !== slot) {
+      setPageKey((k) => k + 1);
+      if (!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+        el.getAnimations().forEach((a) => a.cancel());
+        // The slot jumps straight to its new place (no CSS slide, no settle-in); the inner layer flies.
+        slotEl.style.transition = "none";
+        slotEl.style.animation = "none";
+        const now = el.getBoundingClientRect();
+        const k = now.width / (el.offsetWidth || 1); // the slot's own scale (launch sheet, campaign)
+        if (now.width > 0 && prev.rect.width > 0) {
+          const dx = (prev.rect.left + prev.rect.width / 2 - (now.left + now.width / 2)) / k;
+          const dy = (prev.rect.top + prev.rect.height / 2 - (now.top + now.height / 2)) / k;
+          el.animate(
+            [{ transform: `translate(${dx}px, ${dy}px) scale(${prev.rect.width / now.width})` }, { transform: "none" }],
+            { duration: 760, easing: "cubic-bezier(.34, 1.18, .64, 1)" },
+          );
+        }
+        requestAnimationFrame(() => requestAnimationFrame(() => { slotEl.style.transition = ""; }));
+      }
+    }
+    lastOrb.current = { slot, rect: el.getBoundingClientRect() };
+  });
+
   return (
     <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${stagePending ? "stage-pending" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""} ${v2 && mode === "voice" && hasProduct ? "v2-product" : ""}`}>
       {v2 && <IntroWords phase={phase} onSkip={skipIntro} />}
@@ -858,7 +894,9 @@ export default function Studio() {
       {debug && perf && <div className="perf">{perf}</div>}
       {mode === "voice" && <HoverTip name={hoverId && hoverId !== selection?.partId ? product.parts[hoverId]?.name ?? null : null} />}
 
-      <div className="orb-slot">
+      {pageKey > 0 && <div key={pageKey} className={`page-sweep to-${slot}`} aria-hidden="true" />}
+      <div className="orb-slot" ref={orbSlot}>
+        <div className="orb-flip" ref={orbFlip}>
         {v2 && <IntroRing phase={phase} />}
         {!v2 && <BubbleSparks />}
         <Bubble
@@ -941,6 +979,7 @@ export default function Studio() {
           </div>
         )}
         {mode === "voice" && hasProduct && hint && !selPart && !busy && <div className="tap-hint">Tap any part to edit it</div>}
+        </div>
       </div>
 
       {mode === "voice" && (
@@ -1108,7 +1147,7 @@ export default function Studio() {
             <Heart on={saved} onClick={toggleSave} />
           </header>
           <div className="res-head">
-            <h1 className="title-l">Matches</h1>
+            <h1 className="title-l" aria-live="polite">{found}</h1>
             <button className="mywish" onClick={() => setLaunchOpen(true)} aria-label={`Your wish: ${product.title}`}>
               <span className="mb" style={{ width: 42, height: 42, overflow: "hidden" }}>
                 {thumb ? <img src={thumb} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <CategoryIcon category={product.category ?? "generic"} color={root?.material.color} size={26} />}
@@ -1121,6 +1160,11 @@ export default function Studio() {
             {matches && !matches.pending && matches.searched < matches.total && <span className="note warn">Searched {matches.searched} of {matches.total} stores</span>}
             {status.filter((s) => s.cls === "warn").map((s) => <span key={s.text} className="note warn">{s.text}</span>)}
           </p>
+          <div className="res-wish">
+            <span className="res-wish-k">Your wish</span>
+            <b>{product.title}</b>
+            <button className="chip sm" onClick={() => setMode("voice")}>Keep editing</button>
+          </div>
           <MatchGrid res={matches} category={product.category ?? "generic"} color={root?.material.color} />
           <div className="bottom-fade" />
           {result && (

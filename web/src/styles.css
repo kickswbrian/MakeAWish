@@ -110,7 +110,7 @@ p { margin: 0; }
   font-weight: 500; font-size: 16px; line-height: 1; color: var(--ink); text-decoration: none;
   transition: background .25s, transform .3s var(--spring);
 }
-.chip.on, .chip[aria-selected="true"] { background: var(--glass-on); box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 0 0 1px rgba(255,255,255,.6), 0 8px 20px rgba(197,216,207,.4); }
+.chip.on, .chip[aria-selected="true"], .chip[aria-checked="true"] { background: var(--glass-on); box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 0 0 1px rgba(255,255,255,.6), 0 8px 20px rgba(197,216,207,.4); }
 .chip.float { box-shadow: var(--glass-shadow); animation: bob 5s ease-in-out infinite; }
 .chip.sm { height: 36px; padding: 0 14px; font-size: 14px; }
 .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -20px; padding: 4px 20px 8px; }
@@ -146,7 +146,6 @@ p { margin: 0; }
   position: absolute; left: 50%; top: 168px; width: var(--bubble); height: var(--bubble); z-index: 2;
   transform: translateX(-50%); transition: top .6s var(--spring), transform .6s var(--spring), opacity .4s ease;
 }
-.mode-results .orb-slot { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(-60px) scale(.3); }
 .mode-detail .orb-slot { top: 92px; z-index: 31; transform: translateX(-50%) scale(.84); }
 .mode-campaign .orb-slot { top: 80px; transform: translateX(-50%) scale(.82); }
 .bubble-inline { position: relative; width: var(--bubble); height: var(--bubble); margin: 8px auto 28px; }
@@ -418,7 +417,7 @@ p { margin: 0; }
 .wcard .qr { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; flex: none; border-radius: 50%; background: linear-gradient(135deg, rgba(255,255,255,.8), rgba(255,255,255,.4)); box-shadow: inset 0 1px 0 #FFFFFF, inset 0 0 0 1px rgba(255,255,255,.85), 0 6px 16px rgba(197,216,207,.3); }
 .wcard-link { position: absolute; inset: 0; border-radius: 28px; z-index: 0; }
 .wcard > *:not(.wcard-link) { position: relative; z-index: 1; }
-.wcard > *:not(.wcard-link):not(.qr) { pointer-events: none; }
+.wcard > *:not(.wcard-link):not(.qr):not(.upvote) { pointer-events: none; }
 .rank { position: relative; width: 28px; flex: none; text-align: center; font-size: 28px; line-height: 1; font-weight: 700; letter-spacing: -0.03em; }
 .rank .spk { left: 20px; top: -14px; width: 16px; height: 16px; }
 .next-wish { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 64px; border-radius: 28px; border: 2px dashed rgba(159,191,178,.7); color: var(--ink); text-decoration: none; font-weight: 600; font-size: 17px; }
@@ -855,3 +854,78 @@ p { margin: 0; }
 .v2-mic { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; color: var(--ink-55); background: rgba(255, 255, 255, .8); box-shadow: var(--glass-shadow); transition: background .15s ease, color .15s ease; }
 .v2-mic:hover { color: var(--ink); }
 .v2-mic.on { background: var(--ink); color: var(--cream); }
+/* ---------- Community upvotes ---------- */
+.upvote {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 100px;
+  font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink);
+  background: linear-gradient(135deg, rgba(255,255,255,.9), rgba(255,255,255,.55)); box-shadow: var(--glass-shadow);
+  transition: background .2s ease, color .2s ease, transform .15s ease;
+}
+.upvote:hover { transform: translateY(-1px); }
+.upvote:active { transform: scale(.95); }
+.upvote.on { background: linear-gradient(135deg, #F2D88A, #E9C46A); color: var(--ink); box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 8px 20px rgba(233,196,106,.35); }
+.upvote.big { height: 44px; padding: 0 16px; font-size: 16px; }
+.upvote small { font-size: 13px; font-weight: 600; color: var(--ink-70); }
+.upvote.on small { color: var(--ink); }
+.uv-pop { animation: uvPop .45s var(--spring); }
+@keyframes uvPop { 0% { transform: translateY(0) scale(1); } 40% { transform: translateY(-4px) scale(1.35); } 100% { transform: none; } }
+.board-hint { margin: 0 4px 4px; font-size: 13.5px; color: var(--ink-55); }
+.pledge-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+/* ---------- Matches: the wish beside "N matches found" (phone) or big on the left (desktop) ---------- */
+.app.mode-results { --rb: 104px; }
+.mode-results .orb-slot { --bubble: var(--rb); top: 82px; left: calc(20px + var(--rb) / 2); transform: translateX(-50%); z-index: 6; }
+.mode-results .res-head { min-height: var(--rb); padding-left: calc(var(--rb) + 16px); margin-top: 8px; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; }
+.mode-results .res-head h1 { font-size: 30px; line-height: 36px; }
+.mode-results .mywish .mb { display: none; }
+.res-wish { display: none; }
+.orb-flip { position: absolute; inset: 0; transform-origin: 50% 50%; }
+.chips .chip-group { display: flex; gap: 8px; flex: none; }
+.chips .chip-group + .chip-group { padding-left: 10px; margin-left: 2px; border-left: 1px solid rgba(24, 40, 37, .1); }
+.mlook { margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--ink-55); text-transform: none; letter-spacing: 0; }
+
+@media (min-width: 900px) {
+  .app.mode-results {
+    --col: min(42vw, 580px); --rb: min(calc(var(--col) - 40px), calc(100dvh - 260px), 520px);
+    max-width: 1280px; padding-left: calc(var(--col) + 56px); padding-right: 40px;
+  }
+  .mode-results .orb-slot { left: calc(20px + var(--col) / 2); top: calc(50% - 30px); transform: translate(-50%, -50%); }
+  .mode-results .res-head { min-height: 0; padding-left: 0; margin-top: 18px; }
+  .mode-results .res-head h1 { font-size: 44px; line-height: 52px; }
+  .mode-results .mywish { display: none; }
+  .res-wish {
+    position: absolute; left: calc(20px + var(--col) / 2); top: calc(50% - 30px + var(--rb) / 2 + 26px); transform: translateX(-50%);
+    width: calc(var(--col) - 20px); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; z-index: 6;
+  }
+  .res-wish-k { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-55); }
+  .res-wish b { font-size: 22px; line-height: 28px; letter-spacing: -0.02em; }
+  .res-wish .chip { margin-top: 6px; }
+  .mode-results .bottom-cta { left: calc(var(--col) + 56px); right: 40px; }
+  .mode-results .mgrid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+}
+
+/* ---------- Page transition between the wish and its matches ---------- */
+/* The bubble's flight is a FLIP in Studio; around it the new screen slides in and a pastel wash sweeps by. */
+.mode-results .res-head, .mode-results .res-sub, .mode-results .chips, .mode-results .scroll, .mode-results .res-wish, .mode-results .bottom-cta {
+  animation: resIn .6s cubic-bezier(.2, .8, .2, 1) backwards;
+}
+.mode-results .res-sub { animation-delay: .06s; }
+.mode-results .chips { animation-delay: .12s; }
+.mode-results .scroll { animation-delay: .18s; }
+.mode-results .bottom-cta { animation-delay: .3s; }
+.mode-results .res-wish { animation: resWishIn .6s cubic-bezier(.2, .8, .2, 1) .35s backwards; }
+@keyframes resIn { from { opacity: 0; transform: translateX(32px); } }
+@keyframes resWishIn { from { opacity: 0; translate: 0 12px; } }
+.mode-voice.has-product .hdr, .mode-voice.has-product .title-product, .mode-voice.has-product .product-size,
+.mode-voice.has-product .wavebox, .mode-voice.has-product .speech { animation: voiceIn .5s cubic-bezier(.2, .8, .2, 1) backwards; }
+.mode-voice.has-product .title-product { animation-delay: .05s; }
+.mode-voice.has-product .wavebox { animation-delay: .1s; }
+.mode-voice.has-product .speech { animation-delay: .15s; }
+@keyframes voiceIn { from { opacity: 0; transform: translateX(-24px); } }
+.page-sweep {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(100deg, transparent 20%, rgba(249, 198, 220, .45) 38%, rgba(242, 216, 138, .45) 50%, rgba(197, 216, 207, .45) 62%, transparent 80%);
+  background-size: 300% 100%; animation: pageSweep .9s cubic-bezier(.4, 0, .2, 1) both;
+}
+.page-sweep.to-voice { animation-direction: reverse; }
+@keyframes pageSweep { from { background-position: 100% 0; opacity: 1; } 85% { opacity: 1; } to { background-position: 0 0; opacity: 0; } }
