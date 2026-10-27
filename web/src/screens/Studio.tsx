@@ -858,13 +858,11 @@ export default function Studio() {
   const orbSlot = useRef<HTMLDivElement>(null);
   const orbFlip = useRef<HTMLDivElement>(null);
   const lastOrb = useRef<{ slot: string; rect: DOMRect } | null>(null);
-  const [pageKey, setPageKey] = useState(0);
   useLayoutEffect(() => {
     const slotEl = orbSlot.current, el = orbFlip.current;
     if (!slotEl || !el) return;
     const prev = lastOrb.current;
     if (prev && prev.slot !== slot) {
-      setPageKey((k) => k + 1);
       if (!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
         el.getAnimations().forEach((a) => a.cancel());
         // The slot jumps straight to its new place (no CSS slide, no settle-in); the inner layer flies.
@@ -894,7 +892,6 @@ export default function Studio() {
       {debug && perf && <div className="perf">{perf}</div>}
       {mode === "voice" && <HoverTip name={hoverId && hoverId !== selection?.partId ? product.parts[hoverId]?.name ?? null : null} />}
 
-      {pageKey > 0 && <div key={pageKey} className={`page-sweep to-${slot}`} aria-hidden="true" />}
       <div className="orb-slot" ref={orbSlot}>
         <div className="orb-flip" ref={orbFlip}>
         {v2 && <IntroRing phase={phase} />}

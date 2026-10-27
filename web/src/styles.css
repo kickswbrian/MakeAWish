@@ -867,8 +867,6 @@ p { margin: 0; }
 .upvote.big { height: 44px; padding: 0 16px; font-size: 16px; }
 .upvote small { font-size: 13px; font-weight: 600; color: var(--ink-70); }
 .upvote.on small { color: var(--ink); }
-.uv-pop { animation: uvPop .45s var(--spring); }
-@keyframes uvPop { 0% { transform: translateY(0) scale(1); } 40% { transform: translateY(-4px) scale(1.35); } 100% { transform: none; } }
 .board-hint { margin: 0 4px 4px; font-size: 13.5px; color: var(--ink-55); }
 .pledge-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 
@@ -905,7 +903,7 @@ p { margin: 0; }
 }
 
 /* ---------- Page transition between the wish and its matches ---------- */
-/* The bubble's flight is a FLIP in Studio; around it the new screen slides in and a pastel wash sweeps by. */
+/* The bubble's flight is a FLIP in Studio; around it the new screen slides in. */
 .mode-results .res-head, .mode-results .res-sub, .mode-results .chips, .mode-results .scroll, .mode-results .res-wish, .mode-results .bottom-cta {
   animation: resIn .6s cubic-bezier(.2, .8, .2, 1) backwards;
 }
@@ -922,10 +920,3 @@ p { margin: 0; }
 .mode-voice.has-product .wavebox { animation-delay: .1s; }
 .mode-voice.has-product .speech { animation-delay: .15s; }
 @keyframes voiceIn { from { opacity: 0; transform: translateX(-24px); } }
-.page-sweep {
-  position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  background: linear-gradient(100deg, transparent 20%, rgba(249, 198, 220, .45) 38%, rgba(242, 216, 138, .45) 50%, rgba(197, 216, 207, .45) 62%, transparent 80%);
-  background-size: 300% 100%; animation: pageSweep .9s cubic-bezier(.4, 0, .2, 1) both;
-}
-.page-sweep.to-voice { animation-direction: reverse; }
-@keyframes pageSweep { from { background-position: 100% 0; opacity: 1; } 85% { opacity: 1; } to { background-position: 0 0; opacity: 0; } }
