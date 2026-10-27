@@ -33,7 +33,8 @@ export function rankMatches(res: MatchesResponse | null, sort: SortKey = "best")
   const lo = Math.min(...prices), hi = Math.max(...prices);
   const cheap = (m: Match) => (m.price == null ? 0.5 : hi > lo ? (hi - m.price) / (hi - lo) : 1);
   const value: Record<SortKey, (m: Match) => number> = {
-    best: (m) => matchOf(m) * 0.7 + cheap(m) * 30,
+    // A listing that IS the product leads (the headline says "It already exists!" about it).
+    best: (m) => (m.score >= EXISTS_SCORE ? 1000 : 0) + matchOf(m) * 0.7 + cheap(m) * 30,
     look: (m) => (m.visual ?? -1) * 1000 + matchOf(m),
     price: (m) => (m.price == null ? -1e9 : -m.price),
   };
