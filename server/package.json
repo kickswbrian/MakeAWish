@@ -8,6 +8,7 @@
     "start": "tsx --env-file-if-exists=../.env src/index.ts",
     "brain:test": "tsx --env-file-if-exists=../.env scripts/brain-test.ts",
     "flow:test": "tsx --env-file-if-exists=../.env scripts/flow-test.ts",
+    "match:lab": "tsx --env-file-if-exists=../.env scripts/match-lab.ts",
     "demo:reset": "tsx --env-file-if-exists=../.env scripts/demo-reset.ts",
     "test": "tsx --test src/*.test.ts",
     "tap:demo": "tsx scripts/tap-demo.ts"

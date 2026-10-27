@@ -1,0 +1,186 @@
+{
+  "credit": "\"Pleated Skirt\" by Ali \u015eahan Yal\u00e7\u0131n (https://sketchfab.com/3d-models/pleated-skirt-1be1cb560a934bd5a4ef6051b90197dd), CC-BY-4.0",
+  "height": 0.42,
+  "budget": 60000,
+  "rules": [
+    {
+      "name": "waistband",
+      "when": "'FABRIC_2_FRONT' in src"
+    },
+    {
+      "name": "hem_band",
+      "when": "'Copy_1' in src"
+    },
+    {
+      "name": "body",
+      "when": "True"
+    }
+  ],
+  "zones": {
+    "waistband": {
+      "kind": "ring",
+      "center": [
+        0,
+        0.394,
+        0.02
+      ],
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "radius": 0.5,
+      "samples": 48,
+      "label": "waistband (center line; W points down into the skirt)",
+      "part": "waistband"
+    },
+    "hem": {
+      "kind": "ring",
+      "center": [
+        0,
+        0.022,
+        0
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "radius": 0.6,
+      "samples": 96,
+      "label": "hem",
+      "part": "hem_band"
+    },
+    "front_center": {
+      "from": [
+        0,
+        0.3,
+        0.5
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.08,
+        0.06
+      ],
+      "bend": 0.2,
+      "label": "center front below the waistband"
+    },
+    "back_center": {
+      "from": [
+        0,
+        0.3,
+        -0.5
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.08,
+        0.06
+      ],
+      "bend": 0.2,
+      "label": "center back below the waistband"
+    },
+    "waistband_label": {
+      "from": [
+        0,
+        0.39,
+        0.02
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.04,
+        0.02
+      ],
+      "label": "inside back waistband",
+      "part": "waistband"
+    },
+    "side_seam_left": {
+      "kind": "line",
+      "from": [
+        -0.5,
+        0.36,
+        0.02
+      ],
+      "to": [
+        -0.5,
+        0.04,
+        0.0
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "samples": 14,
+      "label": "left side seam"
+    },
+    "side_seam_right": {
+      "kind": "line",
+      "from": [
+        0.5,
+        0.36,
+        0.02
+      ],
+      "to": [
+        0.5,
+        0.04,
+        0.0
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "samples": 14,
+      "label": "right side seam"
+    },
+    "side_zip": {
+      "kind": "line",
+      "from": [
+        -0.5,
+        0.24,
+        0.02
+      ],
+      "to": [
+        -0.5,
+        0.365,
+        0.02
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "samples": 8,
+      "label": "left side zip opening (bottom stop first, top at the last point)"
+    },
+    "waistband_top": {
+      "kind": "ring",
+      "center": [
+        0,
+        0.414,
+        0.02
+      ],
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "radius": 0.5,
+      "samples": 48,
+      "label": "waistband top edge",
+      "part": "waistband"
+    }
+  }
+}

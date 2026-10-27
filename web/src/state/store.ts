@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { temporal } from "zundo";
-import { applyPatches, emptyProduct, setMeta, type Patch, type Product, type ProductMeta } from "@wishit/shared";
+import { applyPatches, emptyProduct, setMeta, type FashionState, type Patch, type Product, type ProductMeta } from "@wishit/shared";
 import type { PartHit } from "../three/parts/ProductView.tsx";
 
 /**
@@ -16,6 +16,8 @@ interface ProductState {
   /** Apply patches. Recorded as an undo step unless a turn is streaming (see beginTurn). */
   apply: (patches: Patch[]) => void;
   meta: (m: ProductMeta) => void;
+  /** A fashion product's controls / slot materials (sent alongside the patches that re-cut it). */
+  fashion: (f: FashionState) => void;
   /** Replace the whole product (load, reset, new design). Clears history when `fresh`. */
   load: (p: Product, fresh?: boolean) => void;
 }
@@ -34,6 +36,7 @@ export const useProduct = create<ProductState>()(
           return { product: r.product, rev: s.rev + 1, edits: s.edits + 1 };
         }),
       meta: (m) => set((s) => ({ product: setMeta(s.product, m), rev: s.rev + 1, edits: s.edits + 1 })),
+      fashion: (f) => set((s) => ({ product: { ...s.product, fashion: f }, rev: s.rev + 1, edits: s.edits + 1 })),
       load: (p) => set((s) => ({ product: p, rev: s.rev + 1 })),
     }),
     {

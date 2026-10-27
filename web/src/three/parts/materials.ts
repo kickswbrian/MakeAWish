@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import type { MaterialPreset, PartMaterial } from "@wishit/shared";
+import { FOLD_KEY, foldCompile } from "./fold.ts";
 
 /**
  * Textured material presets (CC0 scans from Poly Haven / ambientCG plus procedural maps, see
@@ -25,7 +26,9 @@ const MAX_ANISOTROPY = 8;
 
 type TexSet =
   | "nylon" | "leather" | "canvas" | "metal_brushed" | "plastic_matte" | "rubber" | "wood" | "cotton" | "knit"
-  | "satin" | "denim" | "suede" | "concrete" | "marble" | "cork" | "smooth";
+  | "satin" | "denim" | "suede" | "concrete" | "marble" | "cork" | "smooth"
+  | "jersey" | "rib_knit" | "cable_knit" | "fleece" | "sherpa" | "linen" | "wool_suiting" | "tweed" | "corduroy"
+  | "velvet" | "denim_light" | "leather_pebbled" | "patent" | "mesh_fabric" | "lace" | "gingham" | "quilted" | "horn";
 
 interface Textures {
   set: TexSet;
@@ -34,6 +37,8 @@ interface Textures {
   albedo?: boolean;
   normal?: boolean;
   orm?: boolean;
+  /** alpha.jpg: open cells cut out with alphaTest (see PresetDef.cutout). */
+  alpha?: boolean;
   /** Use the orm R channel as ambient occlusion. */
   ao?: number;
   /** Also drive clearcoat roughness from the orm G channel. */
@@ -48,6 +53,8 @@ interface PresetDef {
   roughness: number;
   metalness: number;
   normalScale?: number;
+  /** How strongly a base mesh's baked folds and seams show through this preset (1 = as baked). */
+  foldStrength?: number;
   specularIntensity?: number;
   ior?: number;
   /** Fabric sheen: sheenColor = mix(color, white, lift) * amount. */
@@ -60,6 +67,21 @@ interface PresetDef {
   anisotropy?: { strength: number; rotation: number; axial?: boolean };
   /** Thin-walled glass (see GLASS_TRANSMISSION). thickness in local units, before the silhouette boost. */
   glass?: { thickness: number; attenuationDistance: number };
+  /** Faceted gemstone (see GEM_TRANSMISSION); dispersion = spread of the per-channel IOR. */
+  gem?: { dispersion: number };
+  /** Thin-film interference (nacre): thickness range in nm, driven by the orm G channel. */
+  iridescence?: { amount: number; ior: number; thickness: [number, number] };
+  /**
+   * Openwork (lace, mesh): the alpha map is alpha-blended, so fine threads fade to a haze with
+   * distance instead of breaking up into speckles the way a hard cutout does; texels below this
+   * alpha are discarded (also in the shadow map). Drawn double sided, back faces dimmed.
+   */
+  cutout?: number;
+  /**
+   * Yarn-dyed pattern (gingham): albedo R = dye coverage, G = weave shading. The part color is the
+   * fully dyed tone, undyed yarn is this neutral white, so the checks stay white whatever the color.
+   */
+  dye?: number;
   envMapIntensity?: number;
   /** Contrast exponent on the environment reflection (polished metals), 0 = off. */
   envContrast?: number;
@@ -143,6 +165,7 @@ const PRESETS: Record<MaterialPreset, PresetDef> = {
     label: "Knit", swatch: "#9CAF88",
     tex: { set: "knit", tile: [0.45, 0.45], albedo: true, normal: true, orm: true, ao: 1 },
     roughness: 0.95, metalness: 0, normalScale: 1.6, specularIntensity: 0.3,
+    foldStrength: 0.35,
     sheen: { amount: 0.8, roughness: 0.6, lift: 0.45 },
   },
   satin: {
@@ -180,6 +203,136 @@ const PRESETS: Record<MaterialPreset, PresetDef> = {
     tex: { set: "cork", tile: [0.2, 0.2], albedo: true, normal: true, orm: true, ao: 0.7 },
     roughness: 0.85, metalness: 0, normalScale: 1.0, specularIntensity: 0.5,
   },
+  // ---------- Fashion ----------
+  jersey: {
+    label: "Jersey", swatch: "#F4F4F2",
+    tex: { set: "jersey", tile: [0.35, 0.33], albedo: true, normal: true, orm: true, ao: 0.8 },
+    roughness: 0.88, metalness: 0, normalScale: 1.1, specularIntensity: 0.4,
+    sheen: { amount: 0.7, roughness: 0.6, lift: 0.4 },
+  },
+  rib_knit: {
+    label: "Rib knit", swatch: "#D9C6A5",
+    tex: { set: "rib_knit", tile: [0.09, 0.09], albedo: true, normal: true, orm: true, ao: 1 },
+    roughness: 0.92, metalness: 0, normalScale: 1.8, specularIntensity: 0.3,
+    foldStrength: 0.3,
+    sheen: { amount: 0.8, roughness: 0.6, lift: 0.45 },
+  },
+  cable_knit: {
+    label: "Cable knit", swatch: "#F4EBD0",
+    tex: { set: "cable_knit", tile: [0.22, 0.22], albedo: true, normal: true, orm: true, ao: 1 },
+    roughness: 0.96, metalness: 0, normalScale: 1.3, specularIntensity: 0.25,
+    foldStrength: 0.3,
+    sheen: { amount: 0.9, roughness: 0.6, lift: 0.45 },
+  },
+  fleece: {
+    label: "Fleece", swatch: "#9CAF88",
+    tex: { set: "fleece", tile: [0.27, 0.27], albedo: true, normal: true, orm: true, ao: 1 },
+    roughness: 0.97, metalness: 0, normalScale: 1.2, specularIntensity: 0.25,
+    foldStrength: 0.5,
+    sheen: { amount: 1, roughness: 0.7, lift: 0.5 },
+  },
+  sherpa: {
+    label: "Sherpa", swatch: "#F1EEE6",
+    tex: { set: "sherpa", tile: [0.3, 0.3], albedo: true, normal: true, orm: true, ao: 1 },
+    roughness: 0.98, metalness: 0, normalScale: 1.3, specularIntensity: 0.2,
+    foldStrength: 0.4,
+    sheen: { amount: 1, roughness: 0.8, lift: 0.55 },
+  },
+  linen: {
+    label: "Linen", swatch: "#E8E2D4",
+    tex: { set: "linen", tile: [0.27, 0.27], albedo: true, normal: true, orm: true, ao: 1 },
+    roughness: 0.9, metalness: 0, normalScale: 1.4, specularIntensity: 0.4,
+    sheen: { amount: 0.5, roughness: 0.75, lift: 0.4 },
+  },
+  wool_suiting: {
+    label: "Wool suiting", swatch: "#3A3D42",
+    tex: { set: "wool_suiting", tile: [0.064, 0.064], albedo: true, normal: true, orm: true, ao: 0.8 },
+    roughness: 0.85, metalness: 0, normalScale: 1.0, specularIntensity: 0.4,
+    sheen: { amount: 0.6, roughness: 0.6, lift: 0.35 },
+  },
+  tweed: {
+    label: "Tweed", swatch: "#C8A27A",
+    tex: { set: "tweed", tile: [0.315, 0.39], albedo: true, normal: true, orm: true, ao: 1 },
+    roughness: 0.95, metalness: 0, normalScale: 1.3, specularIntensity: 0.3,
+    sheen: { amount: 0.7, roughness: 0.7, lift: 0.4 },
+  },
+  corduroy: {
+    label: "Corduroy", swatch: "#B7472A",
+    tex: { set: "corduroy", tile: [0.42, 0.42], albedo: true, normal: true, orm: true, ao: 1 },
+    roughness: 0.9, metalness: 0, normalScale: 1.4, specularIntensity: 0.35,
+    sheen: { amount: 0.9, roughness: 0.5, lift: 0.4 },
+  },
+  velvet: {
+    label: "Velvet", swatch: "#7A1F2B",
+    tex: { set: "velvet", tile: [0.28, 0.27], albedo: true, normal: true, orm: true, ao: 0.6 },
+    roughness: 0.9, metalness: 0, normalScale: 0.3, specularIntensity: 0.25,
+    sheen: { amount: 1.6, roughness: 0.35, lift: 0.6 },
+  },
+  denim_light: {
+    label: "Light wash denim", swatch: "#8FB0D4",
+    tex: { set: "denim_light", tile: [0.12, 0.12], albedo: true, normal: true, orm: true, ao: 1 },
+    roughness: 0.9, metalness: 0, normalScale: 1.3, specularIntensity: 0.4,
+    sheen: { amount: 0.6, roughness: 0.7, lift: 0.5 },
+  },
+  leather_pebbled: {
+    label: "Pebbled leather", swatch: "#1A1A1D",
+    tex: { set: "leather_pebbled", tile: [0.3, 0.3], albedo: true, normal: true, orm: true, ao: 1 },
+    roughness: 0.6, metalness: 0, normalScale: 1.6, specularIntensity: 0.7,
+    clearcoat: { amount: 0.15, roughness: 0.35 },
+  },
+  patent_leather: {
+    label: "Patent leather", swatch: "#1A1A1D",
+    tex: { set: "patent", tile: [0.3, 0.3], normal: true, orm: true, coatRough: true },
+    roughness: 0.2, metalness: 0, normalScale: 0.45,
+    clearcoat: { amount: 1, roughness: 0.03 },
+  },
+  mesh_fabric: {
+    label: "Mesh", swatch: "#1A1A1D",
+    tex: { set: "mesh_fabric", tile: [0.024, 0.02375], albedo: true, normal: true, orm: true, ao: 1, alpha: true },
+    roughness: 0.7, metalness: 0, normalScale: 1.2, specularIntensity: 0.5,
+    sheen: { amount: 0.6, roughness: 0.5, lift: 0.3 },
+    cutout: 0.12,
+  },
+  lace: {
+    label: "Lace", swatch: "#F6F1E1",
+    tex: { set: "lace", tile: [0.07, 0.07], albedo: true, normal: true, orm: true, ao: 1, alpha: true },
+    roughness: 0.85, metalness: 0, normalScale: 1.2, specularIntensity: 0.4,
+    sheen: { amount: 0.8, roughness: 0.5, lift: 0.5 },
+    cutout: 0.12,
+  },
+  gingham: {
+    label: "Gingham", swatch: "#F28DB2",
+    tex: { set: "gingham", tile: [0.17, 0.178], albedo: true, normal: true, orm: true, ao: 1 },
+    roughness: 0.88, metalness: 0, normalScale: 1.2, specularIntensity: 0.4,
+    sheen: { amount: 0.5, roughness: 0.7, lift: 0.4 },
+    dye: 0.8,
+  },
+  quilted: {
+    label: "Quilted", swatch: "#1A1A1D",
+    tex: { set: "quilted", tile: [0.12, 0.14], albedo: true, normal: true, orm: true, ao: 1 },
+    roughness: 0.55, metalness: 0, normalScale: 1.5, specularIntensity: 0.6,
+    sheen: { amount: 0.8, roughness: 0.4, lift: 0.35 },
+  },
+  pearl: {
+    label: "Pearl", swatch: "#F6F1E1",
+    tex: { set: "smooth", tile: [0.02, 0.02], orm: true, coatRough: true },
+    roughness: 0.32, metalness: 0, specularIntensity: 0.6,
+    clearcoat: { amount: 1, roughness: 0.07 },
+    iridescence: { amount: 1, ior: 1.55, thickness: [320, 680] },
+  },
+  gem: {
+    label: "Gem", swatch: "#E8F4FF",
+    tex: { set: "smooth", tile: [0.05, 0.05], orm: true },
+    roughness: 0.02, metalness: 0, ior: 2.42,
+    gem: { dispersion: 0.044 },
+    envMapIntensity: 1.6,
+  },
+  horn: {
+    label: "Horn", swatch: "#5C3A21",
+    tex: { set: "horn", tile: [0.06, 0.06], albedo: true, normal: true, orm: true, coatRough: true },
+    roughness: 0.35, metalness: 0, normalScale: 1, specularIntensity: 0.8,
+    clearcoat: { amount: 0.8, roughness: 0.08 },
+  },
 };
 
 /** Labels and swatch colors for UI chips. */
@@ -189,12 +342,12 @@ export const PRESET_INFO: Record<MaterialPreset, { label: string; swatch: string
 
 // ---------- Textures ----------
 
-type MapKind = "albedo" | "normal" | "orm";
+type MapKind = "albedo" | "normal" | "orm" | "alpha";
 
 /** One decoded image per file, shared across presets (clones share the GPU upload). */
 const sources = new Map<string, Promise<THREE.Texture | null>>();
 /** Per-preset texture objects (own repeat), resolved once loaded. */
-interface PresetMaps { albedo: THREE.Texture | null; normal: THREE.Texture | null; orm: THREE.Texture | null }
+interface PresetMaps { albedo: THREE.Texture | null; normal: THREE.Texture | null; orm: THREE.Texture | null; alpha: THREE.Texture | null }
 const presetMaps = new Map<MaterialPreset, PresetMaps>();
 const presetLoads = new Map<MaterialPreset, Promise<void>>();
 const loader = new THREE.TextureLoader();
@@ -228,7 +381,7 @@ function loadPreset(preset: MaterialPreset): Promise<void> {
     p = Promise.resolve();
   } else {
     const want = (k: MapKind) => (tex[k] ? loadSource(tex.set, k) : Promise.resolve(null));
-    p = Promise.all([want("albedo"), want("normal"), want("orm")]).then(([a, n, o]) => {
+    p = Promise.all([want("albedo"), want("normal"), want("orm"), want("alpha")]).then(([a, n, o, al]) => {
       const own = (t: THREE.Texture | null) => {
         if (!t) return null;
         const c = t.clone();
@@ -236,7 +389,7 @@ function loadPreset(preset: MaterialPreset): Promise<void> {
         c.needsUpdate = true;
         return c;
       };
-      presetMaps.set(preset, { albedo: own(a), normal: own(n), orm: own(o) });
+      presetMaps.set(preset, { albedo: own(a), normal: own(n), orm: own(o), alpha: own(al) });
       for (const ref of live) {
         const mat = ref.deref();
         if (!mat) live.delete(ref);
@@ -269,7 +422,7 @@ const live = new Set<WeakRef<THREE.MeshPhysicalMaterial>>();
 /** Studio reflections (HDRI + softboxes), set by StudioEnvironment once rendered. */
 let studioEnv: THREE.Texture | null = null;
 // Mirror-like finishes only: on rougher or bright ones (brushed, ceramic, glass) the panels blow out flat faces.
-const STUDIO_PRESETS = new Set<MaterialPreset>(["metal_polished", "plastic_gloss"]);
+const STUDIO_PRESETS = new Set<MaterialPreset>(["metal_polished", "plastic_gloss", "gem", "pearl", "patent_leather"]);
 /** Must match the scene environment in StudioEnv.tsx. */
 export const STUDIO_ENV_ROTATION = Math.PI * 0.35;
 export const STUDIO_ENV_INTENSITY = 0.62;
@@ -390,6 +543,56 @@ const envContrast = (k: number) => /* glsl */ `
 	#endif
 	#include <lights_fragment_end>`;
 
+/**
+ * Faceted gemstones without the transmission pass. A brilliant-cut stone returns almost all light
+ * through its crown (total internal reflection off the pavilion), so what it shows is a mosaic of
+ * sharp studio reflections, not the blurred backdrop: sampling the transmission buffer made small
+ * stones milky. Each facet refracts the view ray in, bounces it off a mirrored "pavilion" facet and
+ * out again, per color channel with a slightly different IOR (fire), then a contrast curve keeps the
+ * softboxes sparkling and the room dark. The part color tints the stone by its hue only.
+ */
+const gemFragment = (dispersion: number) => /* glsl */ `
+	#if defined( USE_ENVMAP ) && defined( ENVMAP_TYPE_CUBE_UV )
+	{
+		// View space (vWorldPosition only exists with transmission); env lookups go back to world.
+		vec3 gv = normalize( vViewPosition );
+		vec3 gn = normal;
+		vec3 pav = normalize( reflect( gn, gv ) - 0.35 * gv );
+		vec3 gemLight;
+		for ( int i = 0; i < 3; i ++ ) {
+			float eta = material.ior * ( 1.0 + ( float( i ) - 1.0 ) * ${dispersion.toFixed(4)} );
+			vec3 dIn = refract( - gv, gn, 1.0 / eta );
+			vec3 dBack = reflect( dIn, pav );
+			vec3 dOut = refract( dBack, - gn, eta );
+			if ( dot( dOut, dOut ) < 0.01 ) dOut = reflect( dBack, gn );
+			vec3 c = textureCubeUV( envMap, envMapRotation * inverseTransformDirection( dOut, viewMatrix ), 0.0 ).rgb * envMapIntensity;
+			float l = dot( c, vec3( 0.2126, 0.7152, 0.0722 ) );
+			gemLight[ i ] = c[ i ] * clamp( pow( max( l, 1e-4 ) / 0.7, 1.4 ), 0.04, 3.0 );
+		}
+		vec3 hue = material.diffuseColor / max( max3( material.diffuseColor ), 1e-3 );
+		// Pale colors are "clear" stones; saturated ones keep their hue, darker ones go deeper.
+		float depth = mix( 0.35, 1.0, smoothstep( 0.02, 0.5, max3( material.diffuseColor ) ) );
+		totalDiffuse = gemLight * hue * depth * ( 1.0 - EnvironmentBRDF( gn, gv, material.specularColor, material.specularF90, material.roughness ) );
+	}
+	#endif
+`;
+
+/**
+ * Yarn-dyed patterns: albedo R = dye coverage, G = weave shading. Undyed yarn stays a neutral white,
+ * so pink gingham keeps white squares instead of pale-pink ones.
+ */
+/** Openwork: what shows through the holes is the inside of the part, mostly in shadow. */
+const BACKFACE_DIM = /* glsl */ `
+	if ( ! gl_FrontFacing ) outgoingLight *= 0.55;
+	#include <opaque_fragment>`;
+
+const dyeFragment = (paper: number) => /* glsl */ `
+	#ifdef USE_MAP
+		vec4 dyeTexel = texture2D( map, vMapUv );
+		diffuseColor.rgb = mix( vec3( ${paper.toFixed(3)} ), diffuseColor.rgb, dyeTexel.r ) * dyeTexel.g;
+	#endif
+`;
+
 interface ShaderMod {
   compile: (shader: THREE.WebGLProgramParametersWithUniforms) => void;
   key: () => string;
@@ -402,8 +605,11 @@ function shaderMod(def: PresetDef): ShaderMod | null {
   const glass = !!def.glass;
   const brush = !!def.anisotropy?.axial;
   const contrast = def.envContrast ?? 0;
-  if (!glass && !brush && !contrast) return null;
-  const id = `wishit-${glass ? "glass" : ""}-${brush ? "brush" : ""}-${contrast}`;
+  const gem = def.gem?.dispersion;
+  const dye = def.dye;
+  const open = !!def.cutout;
+  if (!glass && !brush && !contrast && gem === undefined && dye === undefined && !open) return null;
+  const id = `wishit-${glass ? "glass" : ""}-${brush ? "brush" : ""}-${contrast}-${gem ?? ""}-${dye ?? ""}-${open ? "open" : ""}`;
   let mod = shaderMods.get(id);
   if (!mod) {
     mod = {
@@ -412,6 +618,9 @@ function shaderMod(def: PresetDef): ShaderMod | null {
         let vs = shader.vertexShader;
         let fs = shader.fragmentShader;
         if (glass) fs = fs.replace("#include <transmission_fragment>", GLASS_TRANSMISSION);
+        if (gem !== undefined) fs = fs.replace("#include <transmission_fragment>", gemFragment(gem));
+        if (dye !== undefined) fs = fs.replace("#include <map_fragment>", dyeFragment(dye));
+        if (open) fs = fs.replace("#include <opaque_fragment>", BACKFACE_DIM);
         if (brush) {
           vs = vs
             .replace("#include <common>", "#include <common>\nvarying vec3 vBrushAxis;")
@@ -450,6 +659,8 @@ function sync(mat: THREE.MeshPhysicalMaterial) {
   mat.aoMapIntensity = tex?.ao ?? 1;
   mat.clearcoatRoughnessMap = orm && tex?.coatRough && def.clearcoat ? orm : null;
   mat.normalScale.setScalar(def.normalScale ?? 1);
+  mat.alphaMap = maps?.alpha ?? null;
+  mat.alphaTest = mat.alphaMap ? def.cutout ?? 0.12 : 0;
 
   const rough = m.roughness ?? def.roughness;
   mat.roughness = orm ? Math.min(rough / ROUGH_MAP_MEAN, 1 / ROUGH_MAP_MEAN) : rough;
@@ -476,6 +687,11 @@ function sync(mat: THREE.MeshPhysicalMaterial) {
   mat.dispersion = 0;
   if (!def.glass) mat.attenuationColor.set(1, 1, 1);
 
+  mat.iridescence = def.iridescence?.amount ?? 0;
+  mat.iridescenceIOR = def.iridescence?.ior ?? 1.3;
+  mat.iridescenceThicknessRange = def.iridescence?.thickness ?? [100, 400];
+  mat.iridescenceThicknessMap = def.iridescence && orm ? orm : null;
+
   // Shiny finishes reflect the studio softboxes; everything else (and the pedestal) the plain HDRI.
   const studio = studioEnv && STUDIO_PRESETS.has(m.preset) ? studioEnv : null;
   if (mat.envMap !== studio) {
@@ -484,7 +700,18 @@ function sync(mat: THREE.MeshPhysicalMaterial) {
   }
   // scene.environmentIntensity only applies to the scene's map, so carry it over here.
   mat.envMapIntensity = (def.envMapIntensity ?? 1) * (studio ? STUDIO_ENV_INTENSITY : 1);
-  const mod = shaderMod(def);
+  const presetMod = shaderMod(def);
+  // Prepared base meshes layer their baked folds and seams over the preset (see fold.ts).
+  const fold = mat.userData.fold as THREE.Texture | undefined;
+  const mod: ShaderMod | null = fold
+    ? {
+        key: () => `${presetMod?.key() ?? ""}-${FOLD_KEY}`,
+        compile: (shader) => {
+          presetMod?.compile(shader);
+          foldCompile(shader, fold, def.foldStrength ?? 1);
+        },
+      }
+    : presetMod;
   mat.onBeforeCompile = mod?.compile ?? noCompile;
   mat.customProgramCacheKey = mod?.key ?? baseKey;
 
@@ -493,14 +720,14 @@ function sync(mat: THREE.MeshPhysicalMaterial) {
 
   const opacity = m.opacity ?? 1;
   mat.opacity = opacity;
-  mat.transparent = opacity < 1;
+  mat.transparent = opacity < 1 || !!mat.alphaMap;
   mat.depthWrite = opacity >= 0.6;
 
   data.derivedFrom = undefined;
   updateDerived(mat);
 
   // Only recompile when something that changes the shader changed.
-  const variant = [mod?.key() ?? "", !!mat.map, !!mat.normalMap, !!mat.roughnessMap, !!mat.aoMap, !!mat.clearcoatRoughnessMap, mat.transparent].join();
+  const variant = [mod?.key() ?? "", !!mat.map, !!mat.normalMap, !!mat.roughnessMap, !!mat.aoMap, !!mat.clearcoatRoughnessMap, !!mat.alphaMap, !!mat.iridescenceThicknessMap, mat.transparent].join();
   if (variant !== data.variant) {
     data.variant = variant;
     mat.needsUpdate = true;
@@ -515,8 +742,9 @@ export function applyMaterial(mat: THREE.MeshPhysicalMaterial, m: PartMaterial):
   data.spec = { ...m, preset };
   mat.userData.preset = preset;
   mat.color.set(m.color);
-  // Glass draws its back walls into the transmission buffer, so they show through the front.
-  mat.side = PRESETS[preset].glass ? THREE.DoubleSide : THREE.FrontSide;
+  // Glass draws its back walls into the transmission buffer, so they show through the front; lace
+  // and mesh show their inside through the open cells.
+  mat.side = PRESETS[preset].glass || PRESETS[preset].cutout ? THREE.DoubleSide : THREE.FrontSide;
   if (mat.onBeforeRender !== onBeforeRender) {
     mat.onBeforeRender = onBeforeRender;
     const ref = new WeakRef(mat);
@@ -525,6 +753,15 @@ export function applyMaterial(mat: THREE.MeshPhysicalMaterial, m: PartMaterial):
   }
   sync(mat);
   void loadPreset(preset);
+}
+
+/** Give a mesh part's material its model's baked fold normal map (null to remove). */
+export function setFoldMap(mat: THREE.MeshPhysicalMaterial, tex: THREE.Texture | null): void {
+  if ((mat.userData.fold ?? null) === tex) return;
+  mat.userData.fold = tex ?? undefined;
+  const data = state.get(mat);
+  if (data) data.variant = undefined;
+  sync(mat);
 }
 
 /** A new material instance for a part (textures shared). The renderer animates its color. */

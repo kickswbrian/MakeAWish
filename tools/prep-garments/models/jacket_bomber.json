@@ -1,0 +1,378 @@
+{
+ "credit": "\"Bomber Jacket\" by Lazaro Acosta (https://sketchfab.com/3d-models/bomber-jacket-59829c09c6724c67a3e4b805f2ff2e1c), CC-BY-4.0",
+ "height": 0.64,
+ "drop": [
+  "shirt_mat",
+  "zipper_final_mat"
+ ],
+ "budget": 20000,
+ "fold": "jacket_final_mat",
+ "fold_size": 2048,
+ "fold_quality": 82,
+ "rules": [
+  {
+   "name": "cuff_r",
+   "when": "pcx > 0.43"
+  },
+  {
+   "name": "cuff_l",
+   "when": "pcx < -0.43"
+  },
+  {
+   "name": "sleeve_r",
+   "when": "pcx > 0.25"
+  },
+  {
+   "name": "sleeve_l",
+   "when": "pcx < -0.25"
+  },
+  {
+   "name": "zipper",
+   "when": "ptris > 200 and ph > 0.45 and pw < 0.05"
+  },
+  {
+   "name": "collar",
+   "when": "y > 0.558"
+  },
+  {
+   "name": "hem_band",
+   "when": "y < (((0.072 - 0.3 * z) if x > 0 else min(0.11, 0.099 - 0.3 * z)) if abs(x) > 0.15 and -0.08 < z < 0.07 else ((0.053 + max(0, -0.12 - x) * 0.225 if x < 0 else 0.048 + max(0, x - 0.06) * 0.15) if z > 0.07 and abs(x) < 0.175 else 0.042 + [0.068, 0.066, 0.066, 0.0655, 0.065, 0.065, 0.064, 0.063, 0.062, 0.062, 0.062, 0.06, 0.054, 0.048, 0.044, 0.039, 0.036, 0.029, 0.02, 0.019, 0.018, 0.017, 0.016, 0.015, 0.012, 0.008, 0.006, 0.001, 0, 0, 0.003, 0.005, 0.011, 0.016, 0.02, 0.023, 0.026, 0.034, 0.037, 0.045, 0.052, 0.058, 0.063, 0.064, 0.065, 0.067, 0.067, 0.068][math.floor((math.atan2(x, z) + math.pi) / (2 * math.pi) * 48) % 48]))"
+  },
+  {
+   "name": "body",
+   "when": "True"
+  }
+ ],
+ "zones": {
+  "zip_bottom": {
+   "kind": "line",
+   "from": [
+    0.0605,
+    0.006,
+    0.4
+   ],
+   "to": [
+    0.0545,
+    0.036,
+    0.4
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "samples": 4,
+   "label": "zipper bottom (parked slider)",
+   "part": "zipper"
+  },
+  "placket": {
+   "kind": "line",
+   "from": [
+    0.044,
+    0.12,
+    0.4
+   ],
+   "to": [
+    0.0285,
+    0.5,
+    0.4
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "samples": 18,
+   "label": "right front zipper edge",
+   "part": "zipper"
+  },
+  "placket_left": {
+   "kind": "line",
+   "from": [
+    -0.053,
+    0.12,
+    0.4
+   ],
+   "to": [
+    -0.0375,
+    0.5,
+    0.4
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "samples": 18,
+   "label": "left front zipper edge",
+   "part": "zipper"
+  },
+  "chest_right": {
+   "from": [
+    0.07,
+    0.435,
+    0.4
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.05,
+    0.08
+   ],
+   "bend": 0.2,
+   "label": "right chest zip pocket",
+   "part": "body"
+  },
+  "chest_left": {
+   "from": [
+    -0.09,
+    0.43,
+    0.4
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.08,
+    0.08
+   ],
+   "bend": 0.2,
+   "label": "left chest",
+   "part": "body"
+  },
+  "hip_left": {
+   "from": [
+    -0.134,
+    0.205,
+    0.4
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.08,
+    0.15
+   ],
+   "bend": 0.2,
+   "label": "left hand pocket",
+   "part": "body"
+  },
+  "hip_right": {
+   "from": [
+    0.134,
+    0.205,
+    0.4
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.08,
+    0.15
+   ],
+   "bend": 0.2,
+   "label": "right hand pocket",
+   "part": "body"
+  },
+  "back_center": {
+   "from": [
+    0.0,
+    0.25,
+    -0.4
+   ],
+   "dir": [
+    0,
+    0,
+    1
+   ],
+   "room": [
+    0.24,
+    0.18
+   ],
+   "bend": 0.25,
+   "label": "center back",
+   "part": "body"
+  },
+  "back_yoke": {
+   "kind": "line",
+   "from": [
+    0.14,
+    0.47,
+    -0.4
+   ],
+   "to": [
+    -0.14,
+    0.47,
+    -0.4
+   ],
+   "dir": [
+    0,
+    0,
+    1
+   ],
+   "samples": 14,
+   "label": "back yoke",
+   "part": "body"
+  },
+  "neck_label": {
+   "from": [
+    0,
+    0.53,
+    0.0
+   ],
+   "dir": [
+    0,
+    0,
+    -1
+   ],
+   "room": [
+    0.05,
+    0.03
+   ],
+   "label": "inside back neck",
+   "part": "body"
+  },
+  "collar": {
+   "kind": "line",
+   "from": [
+    0.07,
+    0.6,
+    -0.4
+   ],
+   "to": [
+    -0.07,
+    0.6,
+    -0.4
+   ],
+   "dir": [
+    0,
+    0,
+    1
+   ],
+   "samples": 12,
+   "label": "back collar",
+   "part": "collar"
+  },
+  "sleeve_left": {
+   "from": [
+    -0.45899999999999996,
+    0.5634,
+    -0.03
+   ],
+   "dir": [
+    0.745,
+    -0.667,
+    0
+   ],
+   "room": [
+    0.08,
+    0.1
+   ],
+   "bend": 0.06,
+   "label": "left upper sleeve",
+   "part": "sleeve_l"
+  },
+  "cuff_left": {
+   "kind": "ring",
+   "center": [
+    -0.455,
+    0.215,
+    0.037
+   ],
+   "axis": [
+    0.667,
+    0.745,
+    0
+   ],
+   "radius": 0.15,
+   "samples": 24,
+   "label": "left cuff seam",
+   "part": "sleeve_l"
+  },
+  "sleeve_right": {
+   "from": [
+    0.45899999999999996,
+    0.5634,
+    -0.03
+   ],
+   "dir": [
+    -0.745,
+    -0.667,
+    0
+   ],
+   "room": [
+    0.08,
+    0.1
+   ],
+   "bend": 0.06,
+   "label": "right upper sleeve (pen pocket)",
+   "part": "sleeve_r"
+  },
+  "cuff_right": {
+   "kind": "ring",
+   "center": [
+    0.455,
+    0.215,
+    0.037
+   ],
+   "axis": [
+    -0.667,
+    0.745,
+    0
+   ],
+   "radius": 0.15,
+   "samples": 24,
+   "label": "right cuff seam",
+   "part": "sleeve_r"
+  },
+  "shoulder_left": {
+   "kind": "line",
+   "from": [
+    -0.09,
+    0.8,
+    -0.03
+   ],
+   "to": [
+    -0.2,
+    0.8,
+    -0.03
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "samples": 10,
+   "label": "left shoulder"
+  },
+  "shoulder_right": {
+   "kind": "line",
+   "from": [
+    0.09,
+    0.8,
+    -0.03
+   ],
+   "to": [
+    0.2,
+    0.8,
+    -0.03
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "samples": 10,
+   "label": "right shoulder"
+  }
+ }
+}

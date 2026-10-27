@@ -9,6 +9,18 @@ const STORE_DOT: Record<string, string> = { amazon: "#F2A541", etsy: "#E86A33", 
 const money = (p: number | null) => (p == null ? null : `$${p % 1 ? p.toFixed(2) : p.toLocaleString("en-US")}`);
 const tier = (score: number) => (score >= EXISTS_SCORE ? "hi" : score >= CLOSE_SCORE ? "mid" : "lo");
 
+/** "★ 4.6 · 2.3k": only for listings with a real track record. */
+function Stars({ m }: { m: Match }) {
+  if (!m.rating) return null;
+  const n = m.reviews ?? 0;
+  const count = n >= 1000 ? `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1).replace(/\.0$/, "")}k` : n ? String(n) : "";
+  return (
+    <span className="mstars" aria-label={`Rated ${m.rating} out of 5${n ? ` from ${n.toLocaleString("en-US")} reviews` : ""}`}>
+      <b aria-hidden="true">★</b>{m.rating.toFixed(1)}{count && <small> · {count}</small>}
+    </span>
+  );
+}
+
 /** "No cedar wood" reads better than a bare noun phrase. */
 const lacks = (m: string) => (/^(no|not|doesn|lacks|missing)\b/i.test(m) ? m : `No ${m}`);
 
@@ -37,7 +49,8 @@ export function MatchCard({ m, category, color, i, shared }: { m: Match; categor
           {price && <span className="mprice">{price}</span>}
         </div>
         <span className="mtitle" title={m.title}>{m.title}</span>
-        {gap && <span className="mlack" title={m.missing.map(lacks).join(", ")}>{lacks(gap)}</span>}
+        <Stars m={m} />
+        {m.why ? <span className="mwhy">{m.why}</span> : gap && <span className="mlack" title={m.missing.map(lacks).join(", ")}>{lacks(gap)}</span>}
       </div>
     </a>
   );
@@ -55,9 +68,10 @@ function TopMatch({ m, category, color }: { m: Match; category: string; color?: 
         <span className="mkicker">{exists ? <><Sparkle size={13} color="#8A6A12" /> It exists</> : "Closest match"}<span className={`mscore inline ${tier(m.score)}`}>{m.score}%</span></span>
         <span className="mtitle big" title={m.title}>{m.title}</span>
         <div className="mrow">
-          <span className="mstore"><i style={{ background: STORE_DOT[m.source] ?? "#9AA8A3" }} />{STORE_SHORT[m.source] ?? store}</span>
+          <span className="mstore"><i style={{ background: STORE_DOT[m.source] ?? "#9AA8A3" }} />{STORE_SHORT[m.source] ?? store}<Stars m={m} /></span>
           {price && <span className="mprice big">{price}</span>}
         </div>
+        {m.why && <span className="mwhy big">{m.why}</span>}
         {m.missing.length > 0 && (
           <div className="mlacks">{m.missing.slice(0, 3).map((x) => <span key={x} className="mlack">{lacks(x)}</span>)}</div>
         )}
