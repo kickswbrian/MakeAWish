@@ -121,6 +121,54 @@ function ProductSize({ product, registry }: { product: Product; registry: PartRe
   return <div className="product-size">{text || "\u00a0"}</div>;
 }
 
+/** The product's name, with a pencil to rename it (UI variation 2). Enter saves, Esc cancels. */
+function EditableTitle({ title, busy }: { title: string; busy: boolean }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(title);
+  const shown = title === "Untitled wish" && busy ? "Conjuring…" : title;
+  const save = () => {
+    const t = draft.trim();
+    if (t && t !== title) useProduct.getState().meta({ title: t.slice(0, 80) });
+    setEditing(false);
+  };
+  if (editing) {
+    return (
+      <input
+        className="title-product title-edit"
+        autoFocus
+        value={draft}
+        aria-label="Name your wish"
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") save();
+          if (e.key === "Escape") setEditing(false);
+          e.stopPropagation();
+        }}
+      />
+    );
+  }
+  return (
+    <h1 className="title-product title-editable">
+      <span>{shown}</span>
+      <button
+        className="title-pencil"
+        aria-label="Rename your wish"
+        title="Rename"
+        onClick={() => {
+          setDraft(title);
+          setEditing(true);
+        }}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z" />
+          <path d="M13.5 6.5l4 4" />
+        </svg>
+      </button>
+    </h1>
+  );
+}
+
 /** Export the product (as built, at real size in meters) as a binary glTF and download it. */
 async function downloadGlb(registry: PartRegistry, title: string) {
   const root = registry.root;
@@ -758,18 +806,20 @@ export default function Studio() {
   );
   // Nothing on screen to type into: start typing anywhere and the box opens with that letter, centered
   // on the mouse (bottom center when there's no mouse).
+  // Type-anywhere works on the wish screen and next to a product (not while a part's edit card is open).
+  const v2Typing = v2 && mode === "voice" && !selPart;
   const pointer = useRef<{ x: number; y: number } | null>(null);
   const [typeAt, setTypeAt] = useState<{ x: number; y: number } | null>(null);
   useEffect(() => {
-    if (!v2Landing) return;
+    if (!v2Typing) return;
     const onMove = (e: PointerEvent) => {
       if (e.pointerType === "mouse") pointer.current = { x: e.clientX, y: e.clientY };
     };
     window.addEventListener("pointermove", onMove);
     return () => window.removeEventListener("pointermove", onMove);
-  }, [v2Landing]);
+  }, [v2Typing]);
   useEffect(() => {
-    if (!v2Landing || phase !== "done" || typing || voice.mode === "text") return;
+    if (!v2Typing || phase !== "done" || typing || voice.mode === "text") return;
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || /[123 ]/.test(e.key)) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
@@ -785,7 +835,7 @@ export default function Studio() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [v2Landing, phase, typing, voice.mode]);
+  }, [v2Typing, phase, typing, voice.mode]);
   // The mic stays off while typing, until the wish is sent (or the box is closed).
   const mutedForTyping = useRef(false);
   useEffect(() => {
@@ -801,7 +851,7 @@ export default function Studio() {
   }, [v2, typing]);
 
   return (
-    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${stagePending ? "stage-pending" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""}`}>
+    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${stagePending ? "stage-pending" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""} ${v2 && mode === "voice" && hasProduct ? "v2-product" : ""}`}>
       {v2 && <IntroWords phase={phase} onSkip={skipIntro} />}
       <Glows />
       {showConfetti && <Celebration image={snapshot} line={campaign ? `Funded · ${campaign.captured || campaign.held} of ${campaign.targetBackers}` : undefined} onDone={() => setShowConfetti(false)} />}
@@ -918,7 +968,11 @@ export default function Studio() {
           </header>
           {hasProduct ? (
             <>
-              <h1 className="title-product center">{product.title === "Untitled wish" && busy ? "Conjuring…" : product.title}</h1>
+              {v2 ? (
+                <EditableTitle key={product.id} title={product.title} busy={busy} />
+              ) : (
+                <h1 className="title-product center">{product.title === "Untitled wish" && busy ? "Conjuring…" : product.title}</h1>
+              )}
               <ProductSize product={product} registry={registry} />
             </>
           ) : (
@@ -935,7 +989,7 @@ export default function Studio() {
                   </button>
                 ))}
               </div>
-            ) : hasProduct && !busy && !editing && !voice.captions.length && !voice.interim ? (
+            ) : hasProduct && !v2 && !busy && !editing && !voice.captions.length && !voice.interim ? (
               <div className="speech-chips">
                 <span className="try-label">Try saying</span>
                 {suggestionsFor(product).map((t, i) => (
@@ -963,18 +1017,42 @@ export default function Studio() {
               )}
             </div>
           )}
-          {hasProduct && !editing && (
+          {hasProduct && !editing && !v2 && (
             <button className="pill dock-pill" onClick={() => void lock()}>
               <Sparkle size={18} color="#182825" /> See matches
             </button>
+          )}
+          {hasProduct && v2 && (
+            <div className="v2-actions">
+              {!editing && (
+                <button className="pill v2-see" onClick={() => void lock()}>
+                  <span>See matches</span>
+                  <svg className="v2-see-arrow" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M5 12h14" />
+                    <path d="M13 6l6 6-6 6" />
+                  </svg>
+                </button>
+              )}
+              {/* Mic on/off. Off by default for someone who started by typing (the mic never started). */}
+              <button
+                className={`v2-mic ${voice.active && !voice.muted ? "on" : ""}`}
+                aria-pressed={voice.active && !voice.muted}
+                aria-label={voice.active && !voice.muted ? "Turn the mic off" : "Turn the mic on"}
+                title={voice.active && !voice.muted ? "Mic on" : "Mic off"}
+                onClick={() => (voice.active ? voice.toggleMute() : void voice.start())}
+              >
+                <MuteIcon size={22} muted={!(voice.active && !voice.muted)} />
+              </button>
+            </div>
           )}
           {(typing || voice.mode === "text" || (v2Landing && (voice.micStatus === "denied" || voice.micStatus === "failed"))) && (
             <form
               className={`typebox ${v2 ? "v2-typebox" : ""}`}
               style={{
-                ...(v2Landing && typing && typeAt ? { position: "fixed", left: typeAt.x, top: typeAt.y, bottom: "auto", transform: "none", translate: "-50% -50%" } : {}),
-                // v2 wish screen: a short pill that widens as the wish gets longer.
-                ...(v2Landing ? { width: `min(calc(${text ? text.length + 2 : 15}ch + 76px), 620px, calc(100vw - 32px))` } : {}),
+                ...(v2Typing && typing && typeAt ? { position: "fixed", left: typeAt.x, top: typeAt.y, bottom: "auto", transform: "none", translate: "-50% -50%", zIndex: 40 } : {}),
+                // v2: a short pill that widens as the wish gets longer.
+                ...(v2Typing && typing && typeAt ? { width: `min(calc(${text ? text.length + 2 : 15}ch + 76px), 620px, calc(100vw - 32px))` } : {}),
+                ...(v2Landing && !typeAt ? { width: `min(calc(${text ? text.length + 2 : 15}ch + 76px), 620px, calc(100vw - 32px))` } : {}),
               }}
               onSubmit={(e) => {
                 e.preventDefault();
