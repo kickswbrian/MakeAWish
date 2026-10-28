@@ -1,0 +1,142 @@
+{
+  "credit": "\"Dark Blue Irregular Pleated Loose Midi Skirt\" by Style3D CG (https://sketchfab.com/3d-models/dark-blue-irregular-pleated-loose-midi-skirt-d0ff0d786dd747b68ec68a39371f1072), CC-BY-4.0",
+  "height": 0.92,
+  "budget": 62000,
+  "rules": [
+    {
+      "name": "waistband",
+      "when": "src.startswith('Object_9|') or src.startswith('Object_11|')"
+    },
+    {
+      "name": "_drop",
+      "when": "nx * x + nz * (z + 0.02) < -0.05"
+    },
+    {
+      "name": "lining",
+      "when": "src.startswith('Object_2|') or src.startswith('Object_8|')"
+    },
+    {
+      "name": "body",
+      "when": "True"
+    }
+  ],
+  "zones": {
+    "waistband": {
+      "kind": "ring",
+      "center": [
+        0,
+        0.9,
+        0
+      ],
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "radius": 0.5,
+      "samples": 48,
+      "label": "elastic waistband (center line; W points down into the skirt)",
+      "part": "waistband"
+    },
+    "front_center": {
+      "from": [
+        0,
+        0.76,
+        0.5
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.08,
+        0.06
+      ],
+      "bend": 0.2,
+      "label": "center front below the waistband"
+    },
+    "back_center": {
+      "from": [
+        0,
+        0.76,
+        -0.5
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.08,
+        0.06
+      ],
+      "bend": 0.2,
+      "label": "center back below the waistband"
+    },
+    "waistband_label": {
+      "from": [
+        0,
+        0.895,
+        0
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.04,
+        0.02
+      ],
+      "label": "inside back waistband",
+      "part": "waistband"
+    },
+    "side_seam_left": {
+      "kind": "line",
+      "from": [
+        -0.6,
+        0.86,
+        0
+      ],
+      "to": [
+        -0.6,
+        0.08,
+        0
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "samples": 20,
+      "label": "left side seam"
+    },
+    "side_seam_right": {
+      "kind": "line",
+      "from": [
+        0.6,
+        0.86,
+        0
+      ],
+      "to": [
+        0.6,
+        0.08,
+        0
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "samples": 20,
+      "label": "right side seam"
+    }
+  },
+  "rotate": [
+    0,
+    -90,
+    0
+  ],
+  "fold": "uniform_1001"
+}

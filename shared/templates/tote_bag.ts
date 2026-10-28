@@ -143,6 +143,9 @@ const parts: Part[] = [
   kit("key_ring", "Key D-ring", "tote_body", "d_ring", BRASS, [hw(KEY_Y) - 0.0002, KEY_Y, 0], mount([1, -Math.tan((SLANT * Math.PI) / 180), 0], [0, 1, 0])),
 ];
 
+/** Geometry the fashion version of this tote (shared/fashion/templates/tote.ts) puts its zones on. */
+export const TOTE_GEOMETRY = { H, D, WALL, HB, HT, YB, YT, FRONT, SKIN, TRIM_H, BASE_H, HX, SLANT, hw, handlePath };
+
 export const toteBag: Template | null = {
   id: "tote_bag",
   name: "Structured canvas tote",

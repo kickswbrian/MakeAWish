@@ -577,6 +577,15 @@ export function stitchLine(a: THREE.Vector3, b: THREE.Vector3, n: THREE.Vector3,
 
 export type Params = Record<string, number>;
 
+/** The line a path kit follows, in the part's frame, with optional per-point surface normals. */
+export interface KitPath {
+  points: [number, number, number][];
+  normals?: [number, number, number][];
+}
+
+/** A kit builder: params resolved from the catalog (enums as option indices), plus the path for path kits. */
+export type Builder = (p: Params, path?: KitPath) => Piece[];
+
 /** Stable key for caching (params rounded to 0.1 mm). */
 export function paramKey(p: Params): string {
   return Object.keys(p)

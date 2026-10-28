@@ -1,0 +1,495 @@
+{
+  "credit": "\"pants\" by MalahovaVladislava (https://sketchfab.com/3d-models/pants-7500ac8741ec421e873eb73373b6f5c6), CC-BY-4.0",
+  "height": 1.02,
+  "budget": 32000,
+  "fold": "Material",
+  "rules": [
+    {
+      "name": "_drop",
+      "when": "pu > 0.93 and pv > 0.94 and pw < 0.03 and ph < 0.03"
+    },
+    {
+      "name": "waistband",
+      "when": "pcy > 0.95 and ph < 0.08"
+    },
+    {
+      "name": "straps_l",
+      "when": "abs(pcy - 0.2) < 0.02 and ph < 0.2 and 400 < ptris < 800 and pcx < 0"
+    },
+    {
+      "name": "straps_r",
+      "when": "abs(pcy - 0.2) < 0.02 and ph < 0.2 and 400 < ptris < 800"
+    },
+    {
+      "name": "pockets_l",
+      "when": "ptris < 1300 and 0.5 < pcy < 0.95 and pcx < 0"
+    },
+    {
+      "name": "pockets_r",
+      "when": "ptris < 1300 and 0.5 < pcy < 0.95"
+    },
+    {
+      "name": "leg_l",
+      "when": "x < 0"
+    },
+    {
+      "name": "leg_r",
+      "when": "True"
+    }
+  ],
+  "zones": {
+    "waistband": {
+      "kind": "ring",
+      "center": [
+        0,
+        0.975,
+        0
+      ],
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "radius": 0.3,
+      "samples": 48,
+      "label": "waistband",
+      "part": "waistband"
+    },
+    "waistband_top": {
+      "kind": "ring",
+      "center": [
+        0,
+        1.0,
+        0
+      ],
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "radius": 0.3,
+      "samples": 48,
+      "label": "waistband top edge",
+      "part": "waistband"
+    },
+    "belt_loops": {
+      "kind": "ring",
+      "center": [
+        0,
+        0.975,
+        0
+      ],
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "radius": 0.3,
+      "samples": 48,
+      "label": "belt loop line",
+      "part": "waistband"
+    },
+    "button_waist": {
+      "near": [
+        -0.018,
+        0.96,
+        0.118
+      ],
+      "room": [
+        0.025,
+        0.025
+      ],
+      "label": "waistband button",
+      "part": "waistband"
+    },
+    "flap_button_left": {
+      "near": [
+        -0.197,
+        0.645,
+        -0.001
+      ],
+      "room": [
+        0.02,
+        0.02
+      ],
+      "label": "left cargo flap button",
+      "part": "pockets_l"
+    },
+    "flap_button_right": {
+      "near": [
+        0.205,
+        0.642,
+        -0.003
+      ],
+      "room": [
+        0.02,
+        0.02
+      ],
+      "label": "right cargo flap button",
+      "part": "pockets_r"
+    },
+    "flap_button_back_left": {
+      "near": [
+        -0.125,
+        0.874,
+        -0.087
+      ],
+      "room": [
+        0.02,
+        0.02
+      ],
+      "label": "left back flap button",
+      "part": "pockets_l"
+    },
+    "flap_button_back_right": {
+      "near": [
+        0.12,
+        0.867,
+        -0.104
+      ],
+      "room": [
+        0.02,
+        0.02
+      ],
+      "label": "right back flap button",
+      "part": "pockets_r"
+    },
+    "fly": {
+      "kind": "line",
+      "from": [
+        0.02,
+        0.94,
+        0.4
+      ],
+      "to": [
+        0.02,
+        0.78,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "samples": 10,
+      "label": "front fly"
+    },
+    "pocket_front_left": {
+      "from": [
+        -0.14,
+        0.88,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.09,
+        0.1
+      ],
+      "bend": 0.14,
+      "label": "left front pocket"
+    },
+    "pocket_front_right": {
+      "from": [
+        0.15,
+        0.88,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.09,
+        0.1
+      ],
+      "bend": 0.14,
+      "label": "right front pocket"
+    },
+    "pocket_back_left": {
+      "from": [
+        -0.12,
+        0.8,
+        -0.4
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.11,
+        0.14
+      ],
+      "bend": 0.15,
+      "label": "left back pocket"
+    },
+    "pocket_back_right": {
+      "from": [
+        0.115,
+        0.8,
+        -0.4
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.11,
+        0.14
+      ],
+      "bend": 0.15,
+      "label": "right back pocket"
+    },
+    "back_patch": {
+      "from": [
+        -0.07,
+        0.975,
+        -0.4
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.07,
+        0.04
+      ],
+      "bend": 0.3,
+      "label": "back waistband patch",
+      "part": "waistband"
+    },
+    "thigh_left": {
+      "from": [
+        -0.4,
+        0.56,
+        0.0
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "room": [
+        0.15,
+        0.24
+      ],
+      "bend": 0.12,
+      "label": "left thigh cargo pocket"
+    },
+    "thigh_right": {
+      "from": [
+        0.4,
+        0.56,
+        0.0
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "room": [
+        0.15,
+        0.24
+      ],
+      "bend": 0.12,
+      "label": "right thigh cargo pocket"
+    },
+    "knee_left": {
+      "from": [
+        -0.095,
+        0.36,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.1,
+        0.1
+      ],
+      "bend": 0.1,
+      "label": "left knee",
+      "part": "leg_l"
+    },
+    "knee_right": {
+      "from": [
+        0.1,
+        0.36,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.1,
+        0.1
+      ],
+      "bend": 0.1,
+      "label": "right knee",
+      "part": "leg_r"
+    },
+    "outseam_left": {
+      "kind": "line",
+      "from": [
+        -0.4,
+        0.93,
+        -0.07
+      ],
+      "to": [
+        -0.4,
+        0.26,
+        -0.07
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "samples": 24,
+      "label": "left outseam",
+      "part": "leg_l"
+    },
+    "outseam_right": {
+      "kind": "line",
+      "from": [
+        0.4,
+        0.26,
+        -0.07
+      ],
+      "to": [
+        0.4,
+        0.93,
+        -0.07
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "samples": 24,
+      "label": "right outseam",
+      "part": "leg_r"
+    },
+    "inseam_left": {
+      "kind": "line",
+      "from": [
+        0,
+        0.68,
+        -0.01
+      ],
+      "to": [
+        0,
+        0.26,
+        -0.01
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "samples": 16,
+      "label": "left inseam",
+      "part": "leg_l"
+    },
+    "inseam_right": {
+      "kind": "line",
+      "from": [
+        0,
+        0.26,
+        -0.01
+      ],
+      "to": [
+        0,
+        0.68,
+        -0.01
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "samples": 16,
+      "label": "right inseam",
+      "part": "leg_r"
+    },
+    "hem_left": {
+      "kind": "ring",
+      "center": [
+        -0.09,
+        0.06,
+        0.0
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "radius": 0.1,
+      "samples": 36,
+      "label": "left hem",
+      "part": "leg_l"
+    },
+    "hem_right": {
+      "kind": "ring",
+      "center": [
+        0.1,
+        0.06,
+        0.0
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "radius": 0.1,
+      "samples": 36,
+      "label": "right hem",
+      "part": "leg_r"
+    },
+    "strap_left": {
+      "kind": "ring",
+      "center": [
+        -0.08,
+        0.2,
+        -0.02
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "radius": 0.11,
+      "samples": 32,
+      "label": "left ankle strap",
+      "part": "straps_l"
+    },
+    "strap_right": {
+      "kind": "ring",
+      "center": [
+        0.1,
+        0.21,
+        -0.02
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "radius": 0.11,
+      "samples": 32,
+      "label": "right ankle strap",
+      "part": "straps_r"
+    }
+  }
+}

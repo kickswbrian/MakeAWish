@@ -6,17 +6,33 @@ import * as THREE from "three";
 import type { PartMaterial } from "@wishit/shared";
 import { KIT, kitById, type KitEntry } from "@wishit/shared/kit.ts";
 import { buildKit, kitTriangles } from "../three/parts/kit/index.ts";
+import type { KitPath } from "../three/parts/kit/core.ts";
 
 /**
  * Kit test bench at /lab/kit. Every kit part mounted on a neutral wall, each scaled up uniformly
- * to fit its cell. `?id=zipper` shows one part large from a 3/4 view; `?color=#hex` overrides the
- * main color; `?p.length=0.6` style params are passed through as kitParams.
+ * to fit its cell. `?id=zipper` shows one part large from a 3/4 view; `?preset=satin` swaps the finish; `?color=#hex` overrides the
+ * main color; `?p.length=0.6` style params are passed through as kitParams (`?p.style=pearl` for
+ * enum params). Path kits get a demo path: `?path=wave|line|arc|loop|drape` (default wave; loop is a
+ * closed ring around Y like a cuff, drape a necklace curve). `?family=jewelry` filters the grid.
  */
 
 const HDR = "/hdri/studio.hdr";
 
 /** A pleasant demo finish per part (main slot). */
 const LAB_MAT: Record<string, Partial<PartMaterial>> = {
+  patch_pocket: { color: "#2F4F7F" },
+  jeans_back_pocket: { color: "#2F4F7F" },
+  coin_pocket: { color: "#2F4F7F" },
+  slash_pocket: { color: "#2F4F7F" },
+  flap: { color: "#2F4F7F" },
+  cargo_pocket: { color: "#5B5A3C" },
+  kangaroo_pocket: { color: "#5B5A3C" },
+  welt_pocket: { color: "#2E3440" },
+  woven_label: { color: "#1E2A44" },
+  leather_patch: { color: "#A8754A" },
+  embroidery: { color: "#D8344A" },
+  print_graphic: { color: "#F2C230" },
+  hang_tag: { color: "#C9A77A" },
   zipper: { color: "#22324F" },
   zipper_pull: { color: "#8A8D94" },
   buckle_side_release: { color: "#1F2023" },
@@ -54,9 +70,12 @@ const LAB_MAT: Record<string, Partial<PartMaterial>> = {
 /** Parts centered on their origin (free parts): push them out of the wall so they're fully visible. */
 const FREE = new Set(["wheel", "carabiner", "bulb", "wheel_caster", "cord_lock"]);
 
+/** `?preset=velvet` tries a module in another finish; jewelry defaults to gold. */
+const PRESET = new URLSearchParams(window.location.search).get("preset") as PartMaterial["preset"] | null;
+
 function labMaterial(e: KitEntry, color?: string): PartMaterial {
-  const m = LAB_MAT[e.id] ?? {};
-  return { preset: e.material as PartMaterial["preset"], color: color ?? m.color ?? "#9AA0A8", ...(m.emissive ? { emissive: m.emissive } : {}) } as PartMaterial;
+  const m = LAB_MAT[e.id] ?? (e.family === "jewelry" ? { color: "#E3BA5F" } : {});
+  return { preset: PRESET ?? (e.material as PartMaterial["preset"]), color: color ?? m.color ?? "#9AA0A8", ...(m.emissive ? { emissive: m.emissive } : {}) } as PartMaterial;
 }
 
 function useHdr(url: string): boolean | null {
@@ -86,15 +105,50 @@ function Env({ hdr }: { hdr: boolean }) {
   );
 }
 
+type V3 = [number, number, number];
+
+/** Demo paths for path kits, in the part frame (meters, +Z out of the wall). */
+function demoPath(kind: string): KitPath {
+  const n = 40;
+  const pts: V3[] = [], nrm: V3[] = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    if (kind === "line") {
+      pts.push([-0.15 + 0.3 * t, 0, 0]);
+      nrm.push([0, 0, 1]);
+    } else if (kind === "arc") {
+      const a = Math.PI * (1 - t);
+      pts.push([0.12 * Math.cos(a), 0.12 * Math.sin(a) - 0.06, 0]);
+      nrm.push([0, 0, 1]);
+    } else if (kind === "loop") {
+      // A ring around the Y axis (cuff, hem, waistband), normals pointing outward.
+      const a = 2 * Math.PI * t;
+      pts.push([0.07 * Math.sin(a), 0, 0.07 * Math.cos(a)]);
+      nrm.push([Math.sin(a), 0, Math.cos(a)]);
+    } else if (kind === "drape") {
+      // A necklace hanging in a U, front facing +Z.
+      const a = Math.PI * (0.15 + 0.7 * t);
+      pts.push([0.11 * Math.cos(a), -0.16 * Math.sin(a) + 0.08, 0.02 * Math.sin(a)]);
+      nrm.push([0, 0, 1]);
+    } else {
+      pts.push([-0.15 + 0.3 * t, 0.025 * Math.sin(t * Math.PI * 2), 0]);
+      nrm.push([0, 0, 1]);
+    }
+  }
+  if (kind === "loop") pts[pts.length - 1] = [...pts[0]];
+  return { points: pts.map((p) => p.map((v) => Math.round(v * 1e4) / 1e4) as V3), normals: nrm };
+}
+
 interface Placed {
   entry: KitEntry;
   object: THREE.Group;
   tris: number;
 }
 
-function usePart(entry: KitEntry, fit: number, params: Record<string, unknown>, color?: string): Placed {
+function usePart(entry: KitEntry, fit: number, params: Record<string, unknown>, color?: string, pathKind = "wave"): Placed {
   return useMemo(() => {
-    const g = buildKit(entry.id, params, labMaterial(entry, color));
+    const path = entry.path ? demoPath(pathKind) : undefined;
+    const g = buildKit(entry.id, params, labMaterial(entry, color), path);
     const box = new THREE.Box3().setFromObject(g);
     const size = box.getSize(new THREE.Vector3());
     const s = fit / Math.max(size.x, size.y, size.z * 0.6, 1e-4);
@@ -104,8 +158,8 @@ function usePart(entry: KitEntry, fit: number, params: Record<string, unknown>, 
     const pushZ = FREE.has(entry.id) ? -box.min.z : 0;
     g.position.set(-c.x * s, -c.y * s, pushZ * s);
     wrap.add(g);
-    return { entry, object: wrap, tris: kitTriangles(entry.id, params) };
-  }, [entry, fit, params, color]);
+    return { entry, object: wrap, tris: kitTriangles(entry.id, params, path) };
+  }, [entry, fit, params, color, pathKind]);
 }
 
 function Cell({ entry, x, y, fit }: { entry: KitEntry; x: number; y: number; fit: number }) {
@@ -144,14 +198,15 @@ function Wall({ w, h }: { w: number; h: number }) {
   );
 }
 
-function Grid() {
-  const cols = 8;
+function Grid({ family }: { family: string | null }) {
+  const list = family ? KIT.filter((k) => k.family === family) : KIT;
+  const cols = Math.min(8, Math.max(3, Math.ceil(Math.sqrt(list.length * 1.6))));
   const cell = 1.35;
-  const rows = Math.ceil(KIT.length / cols);
+  const rows = Math.ceil(list.length / cols);
   return (
     <group>
       <Wall w={cols * cell + 2} h={rows * cell + 2} />
-      {KIT.map((e, i) => {
+      {list.map((e, i) => {
         const c = i % cols, r = Math.floor(i / cols);
         return <Cell key={e.id} entry={e} x={(c - (cols - 1) / 2) * cell} y={((rows - 1) / 2 - r) * cell + 0.1} fit={0.95} />;
       })}
@@ -159,8 +214,8 @@ function Grid() {
   );
 }
 
-function Single({ entry, params, color, zoom, focus }: { entry: KitEntry; params: Record<string, unknown>; color?: string; zoom: number; focus: [number, number] }) {
-  const part = usePart(entry, 2.2 * zoom, params, color);
+function Single({ entry, params, color, zoom, focus, pathKind }: { entry: KitEntry; params: Record<string, unknown>; color?: string; zoom: number; focus: [number, number]; pathKind?: string }) {
+  const part = usePart(entry, 2.2 * zoom, params, color, pathKind);
   return (
     <group>
       <Wall w={60} h={40} />
@@ -201,7 +256,7 @@ export default function KitLab() {
   const color = q.get("color") ?? undefined;
   const params = useMemo(() => {
     const out: Record<string, unknown> = {};
-    for (const [k, v] of q.entries()) if (k.startsWith("p.")) out[k.slice(2)] = Number(v);
+    for (const [k, v] of q.entries()) if (k.startsWith("p.")) out[k.slice(2)] = v.trim() !== "" && Number.isFinite(Number(v)) ? Number(v) : v;
     return out;
   }, [q]);
   const entry = id ? kitById(id) : undefined;
@@ -210,7 +265,9 @@ export default function KitLab() {
   const focus: [number, number] = [Number(q.get("fx") ?? 0) || 0, Number(q.get("fy") ?? 0) || 0];
   const hdr = useHdr(HDR);
   const single = !!entry;
-  const tris = entry ? kitTriangles(entry.id, params) : 0;
+  const pathKind = q.get("path") ?? "wave";
+  const family = q.get("family");
+  const tris = entry ? kitTriangles(entry.id, params, entry.path ? demoPath(pathKind) : undefined) : 0;
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "#CFCBC4" }}>
@@ -232,7 +289,7 @@ export default function KitLab() {
             <Env hdr={hdr} />
           </Suspense>
         )}
-        {single && entry ? <Single entry={entry} params={params} color={color} zoom={zoom} focus={focus} /> : <Grid />}
+        {single && entry ? <Single entry={entry} params={params} color={color} zoom={zoom} focus={focus} pathKind={pathKind} /> : <Grid family={family} />}
         <OrbitControls target={[0, 0, single ? 0.3 : 0]} enableDamping makeDefault />
         <EffectComposer multisampling={4}>
           <Bloom mipmapBlur intensity={0.45} luminanceThreshold={1.1} luminanceSmoothing={0.15} />

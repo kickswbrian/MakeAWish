@@ -6,7 +6,7 @@
   "main": "index.ts",
   "types": "index.ts",
   "scripts": {
-    "test": "tsx --test product.test.ts"
+    "test": "tsx --test product.test.ts fashion/compile.test.ts fashion/style.test.ts fashion/earrings.test.ts"
   },
   "dependencies": {
     "zod": "^3.25.76"

@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { parseProduct, TEMPLATES, templateProduct, type Product } from "@wishit/shared";
+import { fashionById, outfitProduct, parseProduct, TEMPLATES, templateProduct, type OutfitSpec, type Product } from "@wishit/shared";
 import Stage from "../three/Stage.tsx";
 import { PartRegistry, type PartHit } from "../three/parts/ProductView.tsx";
+import { sendView } from "../three/signals.ts";
 
 /**
  * 3D bench: load a template, a bench result (?src=/bench/lamp.json) or paste product JSON, and
  * inspect it with the real stage (tap parts to see their ids).
+ * Fashion templates: `?t=jacket&c.length=cropped&c.fit=oversized` sets controls, and
+ * `?spec=<url-encoded OutfitSpec JSON>` loads a whole outfit (template, materials, modules).
+ * Screenshots (with `bare`): `still` (no motion), `focus=<part id>` (zoom to it),
+ * `view=front,zoom_in` (camera commands, one every 0.4 s after load).
  */
 export default function Debug() {
   const [params, setParams] = useSearchParams();
@@ -31,16 +36,32 @@ export default function Debug() {
   useEffect(() => {
     if (src) {
       void fetch(src).then((r) => r.json()).then((j) => load(parseProduct(j))).catch(() => setErr(`Could not load ${src}`));
+    } else if (params.get("spec")) {
+      try {
+        load(outfitProduct(JSON.parse(params.get("spec")!) as OutfitSpec, "debug"));
+      } catch {
+        setErr("Bad spec JSON");
+      }
+    } else if (tpl && fashionById(tpl)) {
+      const controls: Record<string, string> = {};
+      for (const [k, v] of params.entries()) if (k.startsWith("c.")) controls[k.slice(2)] = v;
+      load(outfitProduct({ template: tpl, controls }, "debug"));
     } else {
       const t = TEMPLATES.find((x) => x.id === tpl) ?? TEMPLATES[0];
       if (t) load(templateProduct(t));
     }
-  }, [src, tpl]);
+  }, [src, tpl, params]);
+
+  useEffect(() => {
+    const views = params.get("view")?.split(",").filter(Boolean) ?? [];
+    const timers = views.map((v, i) => setTimeout(() => sendView(v as Parameters<typeof sendView>[0]), 1200 + i * 400));
+    return () => timers.forEach(clearTimeout);
+  }, [params, key]);
 
   if (bare) {
     return (
       <div style={{ position: "fixed", inset: 0, background: "radial-gradient(circle at 50% 40%, #FFFFFF, #FFFCF7 55%, #EEF4F1)" }}>
-        {product && <Stage key={key} product={product} framing="debug" transparent registry={registry} effects={!params.has("noeffects")} pedestal={!params.has("nopedestal")} selectedId={hit?.partId ?? null} onHit={setHit} onMiss={() => setHit(null)} />}
+        {product && <Stage key={key} product={product} framing="debug" transparent registry={registry} effects={!params.has("noeffects")} pedestal={!params.has("nopedestal")} animate={!params.has("still")} selectedId={hit?.partId ?? params.get("focus")} onHit={setHit} onMiss={() => setHit(null)} />}
       </div>
     );
   }

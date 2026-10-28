@@ -2,129 +2,176 @@
 
 **Shop for products that don't exist yet, and only pay if they get made.**
 
-Describe a product out loud ("a midi dress that turns into a skirt, with pockets that actually fit my phone"). A genie asks a couple of follow-ups while a 3D model reshapes as you talk. Wish it then checks whether the product already exists, using Apify to search Amazon, Etsy and Google Shopping. If it doesn't, the wish becomes a campaign: backers scan a QR code and place a **card hold**. When enough people commit, every hold is captured and a purchase order goes to a maker. If the deadline passes first, every hold is released and nobody pays.
+Say what you wish you could buy ("a cozy oversized cable knit cardigan", "a desk lamp shaped like a mushroom"). A genie builds it in 3D while you talk, takes edits by voice or by tapping any part, and then checks whether it already exists on Amazon and Google Shopping. If nobody makes it, the wish becomes a campaign: backers scan a QR code and place a **card hold**. When enough people commit, every hold is captured and a purchase order goes to a maker. If the deadline passes first, every hold is released and nobody pays.
 
 Built at Cal Hacks 13.0 for the Visa (Reimagining Shopping), Apify and Cartesia tracks.
 
-## Run it
+![Four wishes in the studio: a cable knit cardigan, gold hoop earrings, baggy jeans and a leather tote](docs/screenshots/hero.jpg)
 
-```bash
-npm install
-cp .env.example .env   # optional: every key has a fallback
-npm run dev            # server :3000, web :5173 (open http://localhost:5173)
-```
+## What it does
 
-Each key you leave empty falls back, so the full flow runs offline:
+**Wish out loud, watch it appear.** The genie builds a real product from parts, with correct dimensions, real hardware and textured materials. A fashion wish puts a matching template on screen in about half a second, and Claude finishes the design in about 2.5 seconds, streaming in each change as it is decided.
 
-| Piece | With keys | Without |
-| --- | --- | --- |
-| Genie (design brain) | Claude Opus 5.5 fast mode (new designs) + Sonnet 5 (edits), streamed patch tool calls | Templates + the instant fast path |
-| Voice | Cartesia Ink 2 STT (turn detection) and Sonic TTS | Browser speech APIs, plus the text box |
-| Does it exist? | `wish-matcher` Apify Actor, cached 24 h | Clearly labelled sample listings |
-| Payments | Stripe **test mode** manual-capture holds | Simulated provider with the same test cards |
+**Aesthetic words actually mean something.** "Coquette", "grunge", "western" and "old money" each map to concrete design choices: fabrics, palette, hardware finish, signature details and things to avoid. Here is the same denim jacket wish in four aesthetics:
 
-Other commands:
+![The same denim jacket wish in coquette, grunge, western and old money styles](docs/screenshots/styles.jpg)
 
-```bash
-npm test                 # shared product/patch/fast-path tests
-npm run typecheck        # shared + server + web
-npm run brain:test       # genie latency bench: new designs + edits, writes web/public/bench/*.json
-npm run demo:reset -- --planter-deadline=120   # demo starting state (needs the server running)
-npm run demo:reset -- --remote=https://your.deploy --planter-deadline=180
-npm run build && npm start   # production: one process serves API + web
-```
+**Not just fashion.** With no matching template, the genie designs from scratch. A planner lays out the part groups, and builder calls stream them in parallel. The first parts appear in about 1.5 seconds and the design is finished in about 6.
 
-Stripe webhooks locally: `stripe listen --forward-to localhost:3000/api/stripe/webhook`, then put the printed `whsec_...` in `STRIPE_WEBHOOK_SECRET`. Without a webhook secret, the pledge page polls Stripe every 3 s, so holds still register.
+![Designs built from scratch: a turtle robot vacuum, a mushroom lamp and a cassette tape speaker](docs/screenshots/from-scratch.jpg)
 
-## Demo script (about 90 seconds)
+**Tap, ask, compare, commit.**
 
-1. **Wish** (tap Talk): "A midi dress that turns into a skirt, with pockets that actually fit my phone." The template appears the instant you stop talking; the genie customizes it and asks a follow-up.
-2. **Instant edits** (no LLM, under a frame): "Make it navy." "A bit longer." "Make the pockets gold." "Undo."
-3. **Tap to edit**: tap the waist zipper. The camera flies to it, a gold outline pulses, and the genie card shows its real size. Tap a swatch, then ask the card: "add a little bow here". It lands exactly where you tapped.
-4. **Show off**: "Take it apart" (exploded view), "show me the back", "put it back together". Press `G` for the gizmo and drag a part.
-5. **Something new**: "A robot vacuum that looks like a turtle". With no template it builds from scratch: first parts in ~1.5 s, finished in ~6 s, parts popping in with sparkles.
-6. **See matches**, then **Wish it into existence**: launch the campaign, scan the QR code with a phone and place a card hold.
+1. **Tap any part to edit it.** The genie card shows the part's real size, swatches and materials, and takes requests like "add a little bow here", placed exactly where you tapped.
+2. **Instant edits.** "Make it navy", "a bit longer", "show me the back" and "undo" apply in under a frame, with no network round trip.
+3. **Check whether it exists.** Wish it searches Amazon and Google Shopping, and Claude scores every listing against your design and says what each one is missing.
+4. **Wish it into existence.** Launch a campaign with card holds. The genie can even back it for you as a [Visa Trusted Agent Protocol](https://developer.visa.com/docs/trusted-agent-protocol/trusted-agent-protocol-specifications) agent.
 
-Add `?debug` to the studio URL to show per-turn latency (speech end → request → first patch → last patch → first audio).
+![The flow: wish, tap to edit, see matches, launch a campaign](docs/screenshots/flow.jpg)
 
-## Screens
+**27 fashion templates**, each with controls (length, fit, leg shape, rise, sleeves, and more), material slots and named zones where detail modules attach, plus 27 hand-built product templates (backpacks, sneakers, lamps, speakers, helmets…):
 
-| Route | What |
-| --- | --- |
-| `/` | The studio. Talk to the orb, watch the product form, lock it in, see matches, launch a campaign with a QR code. One canvas, no page changes. `?debug` shows per-turn latency. |
-| `/c/:id` | Mobile pledge page: email, card, hold. Shows released or captured afterwards, plus the purchase order. |
-| `/campaign/:id` | Laptop campaign view (QR, live demand bar). `?admin` adds a "Force deadline" button. |
-| `/wishlist` | My wishes and the live "Most wished" board, ranked by community upvotes (one per browser, toggleable; also on the campaign and pledge pages). |
-| `/debug` | 3D bench: templates (`?t=backpack`), bench results (`?src=/bench/lamp.json`), live product JSON; `&bare` for full screen. |
-| `/lab/materials`, `/lab/kit` | Material presets and the 31 kit parts under studio light. |
+![Template gallery: jackets, cardigan, blazer, puffer, jeans, cargo pants, skirt, blouse, tank, bags, earrings, necklace, bracelet](docs/screenshots/templates.jpg)
 
-## Architecture
+## How it works
 
 ```
-browser (studio, laptop) ──audio──> Cartesia (Ink 2 STT / Sonic TTS, short-lived token)
-        │  REST + Socket.IO
-        ▼
-Node server (Express + Socket.IO + SQLite) ──> Claude (streamed plan_design / add_parts / apply_patches)
-        │                                  ──> Apify wish-matcher Actor ──> Amazon / Etsy / Google Shopping actors
-        │                                  <─> Stripe test mode (manual capture, webhooks)
-        ▼
-browser (pledge page, phone) ──card──> Stripe Payment Element
+browser (studio) ──audio──> Cartesia (Ink 2 STT with turn detection, Sonic TTS)
+   │  instant: classifier → template → style compiler → parts on screen (no network)
+   │  REST + Socket.IO
+   ▼
+Node server (Express, Socket.IO, SQLite)
+   ├──> Claude: streamed tool calls (plan_design / add_parts / style_outfit / apply_patches)
+   ├──> Apify: Google Shopping + Amazon scrapers in parallel → Claude scores each listing
+   └──> Stripe test mode: manual-capture card holds, webhooks
+   ▼
+browser (phone pledge page) ──card──> Stripe Payment Element    genie checkout ──> Visa TAP (RFC 9421)
 ```
 
-- `shared/`: the contract. A product is a flat map of `Part`s with parent links (`product.ts`: zod schemas, `applyPatches` that validates and never throws); every edit is a `Patch` (`add` / `update` / `remove`). Also the kit catalog (`kit.ts`, 31 parts with attachment points), 20 hand-built templates (`templates/`: bags, shoes, a dress, helmet, headphones, speaker, suitcase, lamp, bottle, mug, planter, watch, sunglasses, kettle, umbrella, office chair, skateboard, teddy bear, phone), and the instant fast path (`intent.ts`: "make it red", "bigger", "leather", "remove this", "make the straps black", "undo", plus camera commands like "show me the back", "zoom in", "take it apart").
-- `server/`: the streaming brain (`brain.ts`). New designs: a planner call writes the root body and 5-8 part groups; each group starts its own builder call the moment it is written, so groups build in parallel. Edits: one call with the tapped part, its neighbors, the tap point, normal and mount rotation; a new part whose position was written in product space instead of its parent's frame is moved back onto its parent (`shared/frames.ts`). Template wishes: the client shows the template instantly and the planner customizes it from a per-part outline. Tool input is streamed (`eager_input_streaming`) and scanned incrementally (`jsonstream.ts`), each patch validated and forwarded as NDJSON the moment it closes. The static system prompt (rules, schema, kit catalog, templates, worked examples) is prompt-cached and pre-warmed at boot. Also the campaign state machine, Apify, Stripe and simulated payments.
-- `web/`: React + react-three-fiber. `three/parts/` renders products: procedural geometry (rounded boxes, smoothed lathes, swept straps, beveled extrusions, CSG cutouts via three-bvh-csg), 31 procedural kit parts, textured `MeshPhysicalMaterial` presets (CC0 Poly Haven / ambientCG, see `web/public/textures/CREDITS.md`), spring pop-in per part with sparkle bursts, and a selection outline. `state/store.ts` holds the product with zundo undo/redo (one step per edit or per genie turn). The studio adds tap-to-select (gold outline, camera zoom to the part), the anchored genie card (colors, materials, size, move, remove, ask), a parts tree, an exploded view, real-world dimensions, `.glb` export for makers, the move/rotate/scale gizmo (`G`), keyboard undo/redo, a speculative turn on Cartesia's early end-of-turn, and `?debug` latency timings.
+- **Products are data, not meshes.** A product is a flat map of typed `Part`s (zod schemas) with parent links. Every change, from the user, the fast path or Claude, is a `Patch` (`add` / `update` / `remove`) validated by one `applyPatches` shared by client and server. Undo/redo comes free: one zundo snapshot per edit or per genie turn.
+- **Instant first, smart second.** A local classifier reads the wish on every keystroke, picks a template and resolves aesthetics. A deterministic style compiler then builds a complete design before Claude is even called. Claude refines it from there, so the screen is never blank.
+- **Streaming Claude, patch by patch.** Opus 5.5 in fast mode designs, Sonnet 5 (thinking off) edits, and Haiku 4.5 is the automatic fallback. Tool input streams with `eager_input_streaming`, a JSON scanner pulls out each patch the moment it closes, and every patch renders on arrival. The 55k-token system prompt (rules, schema, kit catalog, templates, aesthetics, worked examples) is prompt-cached and pre-warmed at boot, so each turn pays full price only for the conversation and the output.
+- **Real garments, parametric control.** The fashion templates sit on CC-BY 3D scans, prepared headlessly in Blender (`tools/prep-garments`):
+  - split into pattern pieces by UV islands and expression rules;
+  - optionally warped and cleaned of baked details;
+  - baked fold normal maps;
+  - meshopt-compressed to about 10–60k triangles.
 
-### Latency (measured, `npm run brain:test` and `?debug`)
+  Smooth deformers (length, sleeves, leg taper, rise, flare, fit) run per vertex in the renderer and on every zone point, so pockets, buttons and stitching stay glued to the garment as it changes shape.
+- **A detail kit.** 97 parametric kit parts, including 61 detail modules: pockets, closures, trims, topstitching, labels, jewelry and bag hardware. Modules attach to named zones (points, lines, rings and curved paths), and the 21 aesthetics in `styles.json` merge with first-style-wins precedence.
+- **Rendering.** React Three Fiber with `MeshPhysicalMaterial`:
+  - 39 material presets over CC0 PBR textures;
+  - fold maps layered over tiling weave normals through shader injection;
+  - procedural geometry (lathes, swept straps, beveled extrusions) and CSG cutouts with three-bvh-csg;
+  - bloom, a reflective pedestal, spring pop-in per part and `.glb` export for makers.
+- **Matching.** The store search starts while the genie is still designing: as soon as Claude writes the product's title and description, before the 3D model is built. Each query runs as its own Apify scraper run, so they run in parallel, at most 5 at once (the plan limit) with a hard cutoff. Claude scores every listing from 0 to 100 against the spec, and results stream into the grid. By the time you tap "See matches", results are usually already there. Searches are keyed by what the product is, not its color, and reused for 30 minutes.
+- **Commitment payments.**
+  - Pledges are Stripe PaymentIntents with `capture_method: "manual"` and count only once the hold is confirmed.
+  - When holds reach the target, one SQLite transaction flips the campaign to `capturing`, so exactly one caller captures (idempotency keys `capture-<pledgeId>`). If the deadline wins, every hold is canceled.
+  - Campaigns are capped at 6 days, inside the 7-day hold window.
+
+### Latency (measured)
 
 | Path | Time |
 | --- | --- |
-| Fast-path edit ("make it red", chips, gizmo, undo, "show me the back") | instant, no network |
-| Compound request ("make it red and add wheels") | the instant half lands immediately; the genie streams the rest |
-| Wish that matches a template | template on screen immediately; Claude (Opus planner, given the template's part outline) streams its customizations from ~1 s, done ~1.5-7 s |
-| Asking again while the genie works | instant edits apply at once; anything else is queued and runs right after |
-| Edit through the genie | first patch ~1-2 s, done ~2.5-3.5 s |
-| Brand-new design | first part ~1.1-1.7 s, complete ~5-6 s (planner + parallel builders) |
+| Fast-path edit ("make it red", "bigger", "show me the back", undo, swatches, gizmo) | instant, no network |
+| Fashion wish | template on screen ~0.5 s; Claude's styled design complete ~2.5–3 s |
+| Edit through the genie | first patch ~1–2 s, done ~2.5–3.5 s |
+| Brand-new design (no template) | first part ~1.1–1.7 s, complete ~5–6 s (planner + parallel builders) |
+| "See matches" | results on screen in under 5 s (the search started during the design) |
 
-New designs use Opus 5.5 in fast mode: it streams ~290 tokens/s vs ~140 for Haiku 4.5 and ~120 for Sonnet 5 (measured), so it is both faster and better for long outputs. Edits use Sonnet 5 with thinking off: edit outputs are short, so its fast first token wins (first patch ~1.9 s vs ~2.4-3.9 s on Opus, whose thinking can't be disabled). Haiku 4.5 is the automatic fallback if a call fails before streaming. Models are set with `DESIGN_MODEL`, `EDIT_MODEL`, `FAST_MODE`, `FALLBACK_MODEL`.
-- `actor/`: the `wish-matcher` Apify Actor. It calls three Store actors in parallel with per-store timeouts, normalizes listings, scores them all in one Claude call, and returns the top matches plus a `_meta` row. The server searches with the genie's short `searchQuery` ("electric kettle tea infuser"), not the product's invented name. After changing `actor/src`, redeploy it (`cd actor && apify push`): the server only sends inputs. See [actor/README.md](actor/README.md).
-- Visual match (`server/src/visual.ts`): once the text-scored matches are on screen, one Claude call compares the wish's render with each listing's photo (downloaded server-side; photos that won't load stay unscored) and the grid re-ranks. The match % blends look (60%) and description (40%); "Best match + price" weighs that 70/30 against price. Capped by `DAILY_VISUAL_SCORES` (default 120).
+Opus 5.5 fast mode streams at about 290 tokens/s, compared with about 140 for Haiku 4.5 and 120 for Sonnet 5, so it is both the fastest and the best choice for long designs. Edits are short, so Sonnet 5's quicker first token wins there. Add `?debug` to the studio URL for per-turn timings: speech end → request → first patch → last patch → first audio.
 
-### Payments: card holds as a commitment primitive
+### Agent checkout: Visa Trusted Agent Protocol
 
-A pledge creates a PaymentIntent with `capture_method: "manual"`. It only counts once Stripe confirms the hold (`amount_capturable_updated`). When held pledges reach the target, a single SQLite transaction flips the campaign from `funding` to `capturing`, so exactly one caller runs the captures (with idempotency keys `capture-<pledgeId>`). If the deadline passes first, every hold is canceled. Campaigns are capped at 6 days to stay inside the 7-day hold window. Webhook handlers are idempotent by PaymentIntent id and status.
+"Genie, back it for me" lets the genie pledge on the shopper's behalf, within a spending limit:
 
-Test cards: `4242 4242 4242 4242` (works), `4000 0000 0000 0002` (declined), `4000 0000 0000 9995` (insufficient funds).
+- **Mandate.** The limit becomes a mandate: a cap, this campaign only, expiring at the deadline.
+- **Signed request.** The genie signs its checkout with RFC 9421 HTTP Message Signatures (Ed25519, `tag="agent-payer-auth"`, covering `@authority`, `@path` and `content-digest`). The body carries a signed `agenticPaymentContainer`.
+- **Merchant checks.** Wish it, as the merchant, checks the tag, required fields, timestamps, nonce replay, the registered key, the body digest, the signature, the container and the mandate, all shown live in a trust log.
+- **Attacks to try.** "Try to fool the merchant" sends an unsigned bot, a replayed request, an amount edited in flight, an expired signature and an over-limit request. Each is refused at the step that catches it, and none places a hold.
 
-### Agent checkout: the genie pays as a Visa Trusted Agent Protocol agent
+The signatures and verification are real TAP. Visa Intelligent Commerce (agentic tokens, Visa's key directory) is open to approved partners only, so the key registry and mandate live in Wish it, and the hold uses a Stripe test card. Code is in `server/src/tap.ts`, `server/src/agent.ts` and `web/src/ui/AgentCheckout.tsx`.
 
-On the campaign view, "Genie, back it for me" lets the genie pledge for the shopper within a spending limit they set. This follows [Visa's Trusted Agent Protocol](https://developer.visa.com/docs/trusted-agent-protocol/trusted-agent-protocol-specifications) (TAP).
+## Run it yourself
 
-**How it works:**
+You need **Node 20+** (22 recommended) and npm. Every API key is optional: anything you leave out falls back, so the whole flow runs offline.
 
-1. The shopper's limit becomes a mandate: a cap, an expiry at the campaign deadline, and this campaign only. It is modelled on Visa Intelligent Commerce payment instructions.
-2. The genie signs its checkout request with RFC 9421 HTTP Message Signatures: Ed25519, `tag="agent-payer-auth"`, covering `@authority`, `@path` and `content-digest`. The body carries an `agenticPaymentContainer` signed with the same key and nonce.
-3. Wish it, as the merchant, verifies the request before placing the hold. In order: trusted-agent tag, required fields, timestamps no more than 8 minutes apart, nonce not replayed, key from the registry, body digest, signature, payment container, and the mandate.
-4. Every check appears live in the trust log. The "Try to fool the merchant" buttons send an unsigned bot, a replayed request, an amount edited in flight, an expired signature, and an over-limit request. Each is refused at the step that catches it (the first four by TAP's checks, the last by the mandate), and none places a hold.
+```bash
+git clone https://github.com/kickswbrian/calhacks13.0.git wish-it && cd wish-it
+npm install
+cp .env.example .env   # add any keys you have (see below)
+npm run dev            # API on :3000, web on :5173
+```
 
-**Files:** `server/src/tap.ts` (protocol), `server/src/agent.ts` (genie and merchant), `web/src/ui/AgentCheckout.tsx` (panel).
+Open **http://localhost:5173**, tap **Talk** (or the keyboard icon), and try "clean girl gold hoop earrings" or "a robot vacuum that looks like a turtle".
 
-**Tests:**
+| Key in `.env` | Get it from | Unlocks | Without it |
+| --- | --- | --- | --- |
+| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) | The genie: Claude designs, edits and listing scores | Templates, the style compiler and instant edits only |
+| `CARTESIA_API_KEY` | [play.cartesia.ai](https://play.cartesia.ai) | Ink 2 speech-to-text and Sonic voice replies | Browser speech APIs and the text box |
+| `APIFY_TOKEN` | [console.apify.com](https://console.apify.com) | Live Amazon and Google Shopping matches | Clearly labelled sample listings |
+| `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` | Stripe dashboard (test mode) | Real card holds | A simulated provider that accepts the same test cards |
 
-- `npm test -w server` runs the protocol tests.
-- `npm run tap:demo -- --base=http://localhost:3000` checks it against a running server.
+Optional settings:
+- **Models:** `DESIGN_MODEL`, `EDIT_MODEL`, `FALLBACK_MODEL`, `FAST_MODE`.
+- **Daily caps on paid calls:** `DAILY_LLM_TURNS`, `DAILY_APIFY_SEARCHES`, `DAILY_CARTESIA_TOKENS`.
+- **Search ahead:** `SEARCH_AHEAD=0` only plans the search during the design and starts it when you tap "See matches".
+- **Matching through the Actor:** `MATCH_VIA_ACTOR=1` with `APIFY_ACTOR=<you>~wish-matcher`. This routes matching through the bundled Actor instead of calling the scrapers directly. Deploy it with `cd actor && apify push`; see [actor/README.md](actor/README.md).
 
-**What is real and what isn't:**
+**Test cards:**
+- `4242 4242 4242 4242` succeeds.
+- `4000 0000 0000 0002` is declined.
+- `4000 0000 0000 9995` fails for insufficient funds.
 
-- Real: the signatures and verification are real TAP.
-- Not real: Visa Intelligent Commerce (agentic tokens, payment instructions, the Visa key directory) is open to approved partners only. So:
-  - the merchant looks the genie's public key up in Wish it's own registry (the same key is served at `GET /api/tap/keys?keyID=`), not in Visa's directory;
-  - the mandate lives in Wish it, and the mandate check is Wish it's own step, not part of TAP.
-- Whose card: the shopper only gives an email. The hold goes on a server-side test card (Stripe's `pm_card_visa`, or 4242 in the simulator). The payment container carries the mandate reference and amount, not a card credential.
-- The holds themselves are Stripe test mode, or the simulated provider.
+**Stripe webhooks locally:** run `stripe listen --forward-to localhost:3000/api/stripe/webhook` and put the printed `whsec_…` in `STRIPE_WEBHOOK_SECRET`. Without it, the pledge page polls Stripe every 3 s instead.
 
-## Deploy
+**Pledging from a phone:** the campaign QR code points at `PUBLIC_URL`. Set it to an HTTPS address phones can reach; the mic also needs HTTPS. For example, a tunnel such as `cloudflared tunnel --url http://localhost:3000` in front of the production server.
 
-`render.yaml` defines one Render web service with a persistent disk for SQLite and models. Set `PUBLIC_URL` to the HTTPS URL (the mic needs HTTPS, and phones need a reachable QR link), add the keys, and register `https://<host>/api/stripe/webhook` in the Stripe dashboard for the four `payment_intent.*` events.
+### Useful commands
 
-The maker is simulated: purchase orders go to a plausible stub maker. The payments are real card holds in Stripe test mode.
+```bash
+npm test                 # shared + server tests (patches, fashion compiler, styles, stream parser, TAP)
+npm run typecheck        # shared + server + web
+npm run brain:test       # genie latency bench; results in web/public/bench/*.json
+npm run demo:reset -- --planter-deadline=120   # demo starting state (server running)
+npm run build && npm start                     # production: one process serves API + web
+```
+
+| Route | What |
+| --- | --- |
+| `/` | The studio: wish, edit, matches, campaign launch. `?debug` shows latency. |
+| `/c/:id` | Mobile pledge page: email, card, hold, then captured or released. |
+| `/campaign/:id` | Laptop campaign view: QR code, live demand bar. `?admin` adds "Force deadline". |
+| `/wishlist` | Your wishes and the live "Most wished" leaderboard. |
+| `/debug?t=<template>&bare` | Render any template full screen, e.g. `?t=jeans_slim`. |
+| `/lab/materials`, `/lab/kit` | Every material preset and kit part under studio light. |
+
+### Adding a garment
+
+Garments are prepared from downloaded models. Raw downloads go in `assets-src/<id>/` (gitignored).
+
+```bash
+blender -b -P tools/prep-garments/prep.py -- <id>   # split, warp, bake fold map, export
+GLTF_TRANSFORM=/path/to/gltf-transform node tools/prep-garments/register.mjs   # compress, register, credit
+```
+
+Each model has a config in `tools/prep-garments/models/<id>.json`: split rules, zones, height and triangle budget. The register step writes `web/public/models`, `shared/meshes.ts` and `ATTRIBUTION.md`. Then add a template in `shared/fashion/templates/garments/` with its controls, material slots and standard modules.
+
+### Deploy
+
+`render.yaml` defines a single Render web service with a persistent disk for SQLite. Create it as a Blueprint from this repo, set `PUBLIC_URL` to its HTTPS address, and add your keys. In production the server refuses to start without an HTTPS `PUBLIC_URL`, an `ADMIN_TOKEN` (Render generates one) and, if Stripe is configured, a webhook secret. Register `https://<host>/api/stripe/webhook` for the `payment_intent.*` events.
+
+## Repo layout
+
+| Path | What |
+| --- | --- |
+| `shared/` | The contract: product schema and patches, kit catalog, templates, fashion classifier, style compiler, deformers, `styles.json` |
+| `server/` | Express + Socket.IO + SQLite: the streaming genie (`brain.ts`), outfit tools, matching, campaigns, Stripe, TAP |
+| `web/` | React + react-three-fiber studio, product renderer (`three/parts/`), pledge and campaign pages |
+| `actor/` | The `wish-matcher` Apify Actor |
+| `tools/prep-garments/` | Headless Blender pipeline for base garments |
+
+## Credits
+
+The base 3D models are CC-BY-4.0 and CC0, credited per model in [ATTRIBUTION.md](ATTRIBUTION.md). Textures are CC0 from Poly Haven and ambientCG ([web/public/textures/CREDITS.md](web/public/textures/CREDITS.md)). The maker is simulated: purchase orders go to a stub maker. Payments are real card holds in Stripe test mode.

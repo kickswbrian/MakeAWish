@@ -1,0 +1,181 @@
+{
+  "credit": "\"Tank Top for Female 2\" by DaaGHrii (https://sketchfab.com/3d-models/tank-top-for-female-2-a6683c6ec6b545a693085c5802b93e85), CC-BY-4.0",
+  "height": 0.6,
+  "rotate": [
+    0,
+    -90,
+    0
+  ],
+  "budget": 24000,
+  "fold": "material_0",
+  "rules": [
+    {
+      "name": "_drop",
+      "when": "ptris < 20"
+    },
+    {
+      "name": "hem_band",
+      "when": "pcy < 0.05 and ph < 0.05"
+    },
+    {
+      "name": "armhole_binding",
+      "when": "ptris < 1600 and pcy > 0.4 and abs(pcx) > 0.1"
+    },
+    {
+      "name": "neck_binding",
+      "when": "ptris < 1600 and pcy > 0.4"
+    },
+    {
+      "name": "body",
+      "when": "True"
+    }
+  ],
+  "zones": {
+    "chest_left": {
+      "from": [
+        -0.09,
+        0.33,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.08,
+        0.07
+      ],
+      "bend": 0.12,
+      "label": "left chest"
+    },
+    "chest_right": {
+      "from": [
+        0.09,
+        0.33,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.08,
+        0.07
+      ],
+      "bend": 0.12,
+      "label": "right chest"
+    },
+    "chest_center": {
+      "from": [
+        0,
+        0.37,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.05,
+        0.04
+      ],
+      "label": "center front below the neckline"
+    },
+    "back_center": {
+      "from": [
+        0,
+        0.25,
+        -0.4
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.2,
+        0.18
+      ],
+      "bend": 0.25,
+      "label": "center back"
+    },
+    "neck_label": {
+      "from": [
+        0,
+        0.395,
+        0
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.04,
+        0.02
+      ],
+      "label": "inside back neck",
+      "part": "body"
+    },
+    "hem": {
+      "kind": "ring",
+      "center": [
+        0,
+        0.03,
+        0
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "radius": 0.5,
+      "samples": 48,
+      "label": "hem",
+      "part": "hem_band"
+    },
+    "side_seam_left": {
+      "kind": "line",
+      "from": [
+        -0.4,
+        0.355,
+        -0.02
+      ],
+      "to": [
+        -0.4,
+        0.04,
+        -0.02
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "samples": 12,
+      "label": "left side seam"
+    },
+    "side_seam_right": {
+      "kind": "line",
+      "from": [
+        0.4,
+        0.355,
+        -0.02
+      ],
+      "to": [
+        0.4,
+        0.04,
+        -0.02
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "samples": 12,
+      "label": "right side seam"
+    }
+  }
+}
