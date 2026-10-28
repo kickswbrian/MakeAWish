@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useStore } from "zustand";
 import * as THREE from "three";
@@ -23,7 +23,7 @@ import { GenieBubble } from "../ui/GenieBubble.tsx";
 import { PartsList } from "../ui/PartsList.tsx";
 import { Waveform } from "../ui/Waveform.tsx";
 import { BackIcon, CategoryIcon, ChevronDown, HeartIcon, KeyboardIcon, MicIcon, MuteIcon, Sparkle } from "../ui/Icons.tsx";
-import { LaunchSheet, MatchGrid, summarize } from "../ui/Results.tsx";
+import { LaunchSheet, MatchGrid, rankMatches, summarize } from "../ui/Results.tsx";
 import { CampaignPanel, Celebration } from "../ui/Campaign.tsx";
 import Bubble3D from "../three/Bubble3D.tsx";
 import { IntroRing, IntroWords, useFramesSettled, useIntroPhase } from "../ui/v2/IntroV2.tsx";
@@ -31,6 +31,8 @@ import { useUiVariant } from "../ui/v2/useUiVariant.ts";
 import { IdlePrompt, useIdle } from "../ui/v2/IdlePrompt.tsx";
 
 type Mode = "voice" | "results" | "campaign";
+/** How long the wish screen takes to clear down to the bubble before it flies to the matches. */
+const LEAVE_MS = 420;
 
 /** The empty orb is a showroom: templates take turns on the pedestal until the first wish. */
 const SHOWCASE = ["sneaker", "headphones", "keyboard", "kettle", "teddy_bear", "bicycle", "planter", "smartwatch", "drone", "office_chair", "backpack", "desk_lamp", "sofa", "smartphone", "umbrella", "speaker", "bike_helmet", "sunglasses", "mug"];
@@ -252,6 +254,15 @@ export default function Studio() {
   const [perf, setPerf] = useState<string>("");
   const [hint, setHint] = useState(true);
   const [exploded, setExploded] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  // Just switched to the matches: their content comes in after the bubble lands (only then: anything
+  // that mounts later, like the grid once the search returns, shows straight away).
+  const [entering, setEntering] = useState(false);
+  useEffect(() => {
+    if (!entering) return;
+    const t = setTimeout(() => setEntering(false), 1600);
+    return () => clearTimeout(t);
+  }, [entering]);
   useEffect(() => {
     viewExploded = exploded;
   }, [exploded]);
@@ -322,6 +333,17 @@ export default function Studio() {
   });
 
   // Persist edits (debounced) with a fresh thumbnail. Loads never trigger a save.
+  // Thumbnails: reading the canvas back waits on the GPU (up to ~0.5 s here), so each one is taken while
+  // the screen is still, and remembered with the product revision it shows.
+  const shotRev = useRef(-1);
+  const shootThumb = useCallback((): string | undefined => {
+    const shot = snapshotThumb(gl.current) ?? undefined;
+    if (shot) {
+      shotRev.current = useProduct.getState().rev;
+      setThumb(shot);
+    }
+    return shot;
+  }, []);
   const savedEdits = useRef(-1);
   useEffect(() => {
     if (!wishId) return;
@@ -334,10 +356,10 @@ export default function Studio() {
       savedEdits.current = edits;
       const p = useProduct.getState().product;
       if (live.current) return; // the server saves at the end of a turn
-      void api.saveProduct(wishId, p, isEmpty(p) ? undefined : snapshotThumb(gl.current) ?? undefined).catch(() => {});
+      void api.saveProduct(wishId, p, isEmpty(p) ? undefined : shootThumb()).catch(() => {});
     }, 1200);
     return () => clearTimeout(t);
-  }, [edits, wishId]);
+  }, [edits, wishId, shootThumb]);
 
   // ---------- Turns ----------
 
@@ -576,7 +598,7 @@ export default function Studio() {
     // Save with a thumbnail once the springs have settled.
     setTimeout(() => {
       const p = useProduct.getState().product;
-      if (!isEmpty(p)) void api.saveProduct(wishId, p, snapshotThumb(gl.current) ?? undefined).catch(() => {});
+      if (!isEmpty(p)) void api.saveProduct(wishId, p, shootThumb()).catch(() => {});
     }, 1400);
     // Then whatever the shopper asked for meanwhile, oldest first (and no locking: they're still going).
     const next = queued.current.shift();
@@ -660,12 +682,23 @@ export default function Studio() {
     voice.setThinking(false);
     select(null);
     modeRef.current = "results";
-    setMode("results");
-    setMatches({ matches: [], searched: 0, total: 2, pending: true, sample: false });
+    // The screen clears down to just the bubble, the bubble flies to its place on the matches screen
+    // (FLIP below) and the results come in after it.
     await assemble();
-    const shot = snapshotThumb(gl.current);
-    if (shot) setThumb(shot);
-    await api.saveProduct(wishId, useProduct.getState().product, shot ?? undefined).catch(() => {});
+    setLeaving(true);
+    await new Promise((r) => setTimeout(r, LEAVE_MS));
+    setMatches({ matches: [], searched: 0, total: 2, pending: true, sample: false });
+    setMode("results");
+    setLeaving(false);
+    setEntering(true);
+    // The thumbnail saved after the last edit usually still shows this product. Only if it doesn't,
+    // take a new one, once the bubble has landed (a readback mid-flight made it jump).
+    let shot: string | undefined;
+    if (shotRev.current !== useProduct.getState().rev) {
+      await new Promise((r) => setTimeout(r, 1500));
+      shot = shootThumb();
+    }
+    await api.saveProduct(wishId, useProduct.getState().product, shot).catch(() => {});
     await api.lock(wishId).catch(() => {});
     // Poll too, in case the socket event raced the room join or the socket dropped: store searches
     // take ~20 s, and a missed event would leave the grid searching forever.
@@ -676,7 +709,7 @@ export default function Studio() {
       else setTimeout(() => void poll(tries - 1), 3000);
     };
     setTimeout(() => void poll(40), 2500);
-  }, [wishId, select]);
+  }, [wishId, select, shootThumb]);
 
   const launch = async (b: { priceCents: number; targetBackers: number; deadlineAt: number }) => {
     if (!wishId) return;
@@ -719,6 +752,8 @@ export default function Studio() {
   }, [debug]);
 
   const result = matches && !matches.pending ? summarize(matches) : null;
+  const shownMatches = useMemo(() => rankMatches(matches), [matches]);
+  const found = !matches || (matches.pending && !matches.matches.length) ? "Searching…" : `${shownMatches.length} ${shownMatches.length === 1 ? "match" : "matches"} found`;
   const toggleSave = () => {
     if (!wishId) return;
     if (saved) unsaveWish(wishId);
@@ -856,16 +891,49 @@ export default function Studio() {
     }
   }, [v2, typing]);
 
+  // ---------- Page transition: the bubble flies between the wish and its matches ----------
+  // FLIP: after the layout switches, the bubble starts where it was on the last screen and springs
+  // to its new place and size, while the new screen's content slides in around it.
+  const orbSlot = useRef<HTMLDivElement>(null);
+  const orbFlip = useRef<HTMLDivElement>(null);
+  const lastOrb = useRef<{ slot: string; rect: DOMRect } | null>(null);
+  useLayoutEffect(() => {
+    const slotEl = orbSlot.current, el = orbFlip.current;
+    if (!slotEl || !el) return;
+    const prev = lastOrb.current;
+    if (prev && prev.slot !== slot) {
+      if (!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+        el.getAnimations().forEach((a) => a.cancel());
+        // The slot jumps straight to its new place (no CSS slide, no settle-in); the inner layer flies.
+        slotEl.style.transition = "none";
+        slotEl.style.animation = "none";
+        const now = el.getBoundingClientRect();
+        const k = now.width / (el.offsetWidth || 1); // the slot's own scale (launch sheet, campaign)
+        if (now.width > 0 && prev.rect.width > 0) {
+          const dx = (prev.rect.left + prev.rect.width / 2 - (now.left + now.width / 2)) / k;
+          const dy = (prev.rect.top + prev.rect.height / 2 - (now.top + now.height / 2)) / k;
+          el.animate(
+            [{ transform: `translate(${dx}px, ${dy}px) scale(${prev.rect.width / now.width})` }, { transform: "none" }],
+            { duration: 760, easing: "cubic-bezier(.34, 1.18, .64, 1)" },
+          );
+        }
+        requestAnimationFrame(() => requestAnimationFrame(() => { slotEl.style.transition = ""; }));
+      }
+    }
+    lastOrb.current = { slot, rect: el.getBoundingClientRect() };
+  });
+
   // "typing" (main #17) budgets room for the in-flow type box; v2's box floats at the cursor, so not there.
   return (
-    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${mode === "voice" && typeboxOpen && !v2 ? "typing" : ""} ${stagePending ? "stage-pending" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""} ${v2 && mode === "voice" && hasProduct ? "v2-product" : ""}`}>
+    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${mode === "voice" && typeboxOpen && !v2 ? "typing" : ""} ${stagePending ? "stage-pending" : ""} ${leaving ? "leaving" : ""} ${entering ? "entering" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""} ${v2 && mode === "voice" && hasProduct ? "v2-product" : ""}`}>
       {v2 && <IntroWords phase={phase} onSkip={skipIntro} />}
       <Glows />
       {showConfetti && <Celebration image={snapshot} line={campaign ? `Funded · ${campaign.captured || campaign.held} of ${campaign.targetBackers}` : undefined} onDone={() => setShowConfetti(false)} />}
       {debug && perf && <div className="perf">{perf}</div>}
       {mode === "voice" && <HoverTip name={hoverId && hoverId !== selection?.partId ? product.parts[hoverId]?.name ?? null : null} />}
 
-      <div className="orb-slot">
+      <div className="orb-slot" ref={orbSlot}>
+        <div className="orb-flip" ref={orbFlip}>
         {v2 && <IntroRing phase={phase} />}
         {!v2 && <BubbleSparks />}
         <Bubble
@@ -912,10 +980,13 @@ export default function Studio() {
             onGl={onGl}
             onShown={setShownId}
             paused={introHidden}
-            deferWarmup={!settled || (v2 && phase !== "done")}
+            // Not while the page loads, the intro plays, or the screen is changing (each compile stalls a frame).
+            deferWarmup={!settled || (v2 && phase !== "done") || leaving || entering}
             // The v2 wish screen: the showroom piece bigger in its bubble, and without the ambient
             // occlusion and bloom passes, which fill the canvas in white (the glass bubble is the backdrop).
             zoom={v2Landing ? 1.3 : 1}
+            // v2: the bubble changes size as it flies between screens; resize after it lands.
+            resizeDelay={v2 ? 1500 : 0}
             effects={!v2Landing}
           />
         </Bubble>
@@ -948,6 +1019,7 @@ export default function Studio() {
           </div>
         )}
         {mode === "voice" && hasProduct && hint && !selPart && !busy && <div className="tap-hint">Tap any part to edit it</div>}
+        </div>
       </div>
 
       {mode === "voice" && (
@@ -1115,7 +1187,7 @@ export default function Studio() {
             <Heart on={saved} onClick={toggleSave} />
           </header>
           <div className="res-head">
-            <h1 className="title-l">Matches</h1>
+            <h1 className="title-l" aria-live="polite">{found}</h1>
             <button className="mywish" onClick={() => setLaunchOpen(true)} aria-label={`Your wish: ${product.title}`}>
               <span className="mb" style={{ width: 42, height: 42, overflow: "hidden" }}>
                 {thumb ? <img src={thumb} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <CategoryIcon category={product.category ?? "generic"} color={root?.material.color} size={26} />}
@@ -1124,16 +1196,23 @@ export default function Studio() {
             </button>
           </div>
           <p className="res-sub">
-            {!result ? "Checking if it already exists…" : result.exists ? "It already exists!" : "Not quite. Nobody has made this yet."}
-            {matches && !matches.pending && matches.searched < matches.total && <span className="note warn">Searched {matches.searched} of {matches.total} stores</span>}
-            {status.filter((s) => s.cls === "warn").map((s) => <span key={s.text} className="note warn">{s.text}</span>)}
+            {!matches || matches.pending
+              ? "Searching Amazon and Google Shopping…"
+              : matches.searched < matches.total
+                ? `${matches.searched} of ${matches.total} sites searched`
+                : `${matches.total} sites searched`}
           </p>
+          <div className="res-wish">
+            <span className="res-wish-k">Your wish</span>
+            <b>{product.title}</b>
+            <button className="chip sm" onClick={() => setMode("voice")}>Keep editing</button>
+          </div>
           <MatchGrid res={matches} category={product.category ?? "generic"} color={root?.material.color} />
           <div className="bottom-fade" />
           {result && (
             <div className="bottom-cta">
               <button className="pill big" onClick={() => setLaunchOpen(true)}>
-                <span>{result.exists ? "Still wish for my exact version" : "Wish it into existence"}</span>
+                <span>{result.exists ? "Not quite yours? Wish for your exact version" : "Can't find it?"}</span>
                 <span className="pill-orb" aria-hidden="true"><Sparkle size={20} color="#F2D88A" /></span>
               </button>
             </div>
