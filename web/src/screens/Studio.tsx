@@ -31,6 +31,8 @@ import { useUiVariant } from "../ui/v2/useUiVariant.ts";
 import { IdlePrompt, useIdle } from "../ui/v2/IdlePrompt.tsx";
 
 type Mode = "voice" | "results" | "campaign";
+/** How long the wish screen takes to clear down to the bubble before it flies to the matches. */
+const LEAVE_MS = 420;
 
 /** The empty orb is a showroom: templates take turns on the pedestal until the first wish. */
 const SHOWCASE = ["sneaker", "headphones", "keyboard", "kettle", "teddy_bear", "bicycle", "planter", "smartwatch", "drone", "office_chair", "backpack", "desk_lamp", "sofa", "smartphone", "umbrella", "speaker", "bike_helmet", "sunglasses", "mug"];
@@ -252,6 +254,15 @@ export default function Studio() {
   const [perf, setPerf] = useState<string>("");
   const [hint, setHint] = useState(true);
   const [exploded, setExploded] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  // Just switched to the matches: their content comes in after the bubble lands (only then: anything
+  // that mounts later, like the grid once the search returns, shows straight away).
+  const [entering, setEntering] = useState(false);
+  useEffect(() => {
+    if (!entering) return;
+    const t = setTimeout(() => setEntering(false), 1600);
+    return () => clearTimeout(t);
+  }, [entering]);
   useEffect(() => {
     viewExploded = exploded;
   }, [exploded]);
@@ -655,9 +666,14 @@ export default function Studio() {
     voice.setThinking(false);
     select(null);
     modeRef.current = "results";
-    setMode("results");
+    // First the screen clears down to just the bubble (and an exploded view folds back up), then the
+    // bubble flies to its place on the matches screen (FLIP below) and the results come in after it.
+    setLeaving(true);
+    await Promise.all([assemble(), new Promise((r) => setTimeout(r, LEAVE_MS))]);
     setMatches({ matches: [], searched: 0, total: 2, pending: true, sample: false });
-    await assemble();
+    setMode("results");
+    setLeaving(false);
+    setEntering(true);
     const shot = snapshotThumb(gl.current);
     if (shot) setThumb(shot);
     await api.saveProduct(wishId, useProduct.getState().product, shot ?? undefined).catch(() => {});
@@ -885,7 +901,7 @@ export default function Studio() {
   });
 
   return (
-    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${stagePending ? "stage-pending" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""} ${v2 && mode === "voice" && hasProduct ? "v2-product" : ""}`}>
+    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${stagePending ? "stage-pending" : ""} ${leaving ? "leaving" : ""} ${entering ? "entering" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""} ${v2 && mode === "voice" && hasProduct ? "v2-product" : ""}`}>
       {v2 && <IntroWords phase={phase} onSkip={skipIntro} />}
       <Glows />
       {showConfetti && <Celebration image={snapshot} line={campaign ? `Funded · ${campaign.captured || campaign.held} of ${campaign.targetBackers}` : undefined} onDone={() => setShowConfetti(false)} />}
