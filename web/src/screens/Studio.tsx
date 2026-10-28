@@ -333,6 +333,17 @@ export default function Studio() {
   });
 
   // Persist edits (debounced) with a fresh thumbnail. Loads never trigger a save.
+  // Thumbnails: reading the canvas back waits on the GPU (up to ~0.5 s here), so each one is taken while
+  // the screen is still, and remembered with the product revision it shows.
+  const shotRev = useRef(-1);
+  const shootThumb = useCallback((): string | undefined => {
+    const shot = snapshotThumb(gl.current) ?? undefined;
+    if (shot) {
+      shotRev.current = useProduct.getState().rev;
+      setThumb(shot);
+    }
+    return shot;
+  }, []);
   const savedEdits = useRef(-1);
   useEffect(() => {
     if (!wishId) return;
@@ -345,10 +356,10 @@ export default function Studio() {
       savedEdits.current = edits;
       const p = useProduct.getState().product;
       if (live.current) return; // the server saves at the end of a turn
-      void api.saveProduct(wishId, p, isEmpty(p) ? undefined : snapshotThumb(gl.current) ?? undefined).catch(() => {});
+      void api.saveProduct(wishId, p, isEmpty(p) ? undefined : shootThumb()).catch(() => {});
     }, 1200);
     return () => clearTimeout(t);
-  }, [edits, wishId]);
+  }, [edits, wishId, shootThumb]);
 
   // ---------- Turns ----------
 
@@ -582,7 +593,7 @@ export default function Studio() {
     // Save with a thumbnail once the springs have settled.
     setTimeout(() => {
       const p = useProduct.getState().product;
-      if (!isEmpty(p)) void api.saveProduct(wishId, p, snapshotThumb(gl.current) ?? undefined).catch(() => {});
+      if (!isEmpty(p)) void api.saveProduct(wishId, p, shootThumb()).catch(() => {});
     }, 1400);
     // Then whatever the shopper asked for meanwhile, oldest first (and no locking: they're still going).
     const next = queued.current.shift();
@@ -666,17 +677,23 @@ export default function Studio() {
     voice.setThinking(false);
     select(null);
     modeRef.current = "results";
-    // First the screen clears down to just the bubble (and an exploded view folds back up), then the
-    // bubble flies to its place on the matches screen (FLIP below) and the results come in after it.
+    // The screen clears down to just the bubble, the bubble flies to its place on the matches screen
+    // (FLIP below) and the results come in after it.
+    await assemble();
     setLeaving(true);
-    await Promise.all([assemble(), new Promise((r) => setTimeout(r, LEAVE_MS))]);
+    await new Promise((r) => setTimeout(r, LEAVE_MS));
     setMatches({ matches: [], searched: 0, total: 2, pending: true, sample: false });
     setMode("results");
     setLeaving(false);
     setEntering(true);
-    const shot = snapshotThumb(gl.current);
-    if (shot) setThumb(shot);
-    await api.saveProduct(wishId, useProduct.getState().product, shot ?? undefined).catch(() => {});
+    // The thumbnail saved after the last edit usually still shows this product. Only if it doesn't,
+    // take a new one, once the bubble has landed (a readback mid-flight made it jump).
+    let shot: string | undefined;
+    if (shotRev.current !== useProduct.getState().rev) {
+      await new Promise((r) => setTimeout(r, 1500));
+      shot = shootThumb();
+    }
+    await api.saveProduct(wishId, useProduct.getState().product, shot).catch(() => {});
     await api.lock(wishId).catch(() => {});
     // Poll too, in case the socket event raced the room join or the socket dropped: store searches
     // take ~20 s, and a missed event would leave the grid searching forever.
@@ -687,7 +704,7 @@ export default function Studio() {
       else setTimeout(() => void poll(tries - 1), 3000);
     };
     setTimeout(() => void poll(40), 2500);
-  }, [wishId, select]);
+  }, [wishId, select, shootThumb]);
 
   const launch = async (b: { priceCents: number; targetBackers: number; deadlineAt: number }) => {
     if (!wishId) return;
@@ -956,10 +973,13 @@ export default function Studio() {
             onGl={onGl}
             onShown={setShownId}
             paused={introHidden}
-            deferWarmup={!settled || (v2 && phase !== "done")}
+            // Not while the page loads, the intro plays, or the screen is changing (each compile stalls a frame).
+            deferWarmup={!settled || (v2 && phase !== "done") || leaving || entering}
             // The v2 wish screen: the showroom piece bigger in its bubble, and without the ambient
             // occlusion and bloom passes, which fill the canvas in white (the glass bubble is the backdrop).
             zoom={v2Landing ? 1.3 : 1}
+            // v2: the bubble changes size as it flies between screens; resize after it lands.
+            resizeDelay={v2 ? 1500 : 0}
             effects={!v2Landing}
           />
         </Bubble>
@@ -1169,9 +1189,11 @@ export default function Studio() {
             </button>
           </div>
           <p className="res-sub">
-            {!result ? "Checking if it already exists…" : result.exists ? "It already exists!" : "Not quite. Nobody has made this yet."}
-            {matches && !matches.pending && matches.searched < matches.total && <span className="note warn">Searched {matches.searched} of {matches.total} stores</span>}
-            {status.filter((s) => s.cls === "warn").map((s) => <span key={s.text} className="note warn">{s.text}</span>)}
+            {!matches || matches.pending
+              ? "Searching Amazon and Google Shopping…"
+              : matches.searched < matches.total
+                ? `${matches.searched} of ${matches.total} sites searched`
+                : `${matches.total} sites searched`}
           </p>
           <div className="res-wish">
             <span className="res-wish-k">Your wish</span>
@@ -1183,7 +1205,7 @@ export default function Studio() {
           {result && (
             <div className="bottom-cta">
               <button className="pill big" onClick={() => setLaunchOpen(true)}>
-                <span>{result.exists ? "Still wish for my exact version" : "Wish it into existence"}</span>
+                <span>{result.exists ? "Not quite yours? Wish for your exact version" : "Can't find it?"}</span>
                 <span className="pill-orb" aria-hidden="true"><Sparkle size={20} color="#F2D88A" /></span>
               </button>
             </div>
