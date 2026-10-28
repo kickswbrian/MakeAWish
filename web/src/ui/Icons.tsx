@@ -42,7 +42,7 @@ export const MicIcon = ({ size = 15, color = "#FFFCF7" }: P) => (
 );
 
 export const MuteIcon = ({ size = 24, muted }: P & { muted?: boolean }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke={INK} strokeWidth="1.8" strokeLinecap="round">
+  <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
     <rect x="8.5" y="2.5" width="7" height="12" rx="3.5" />
     <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
     {muted && <path d="M4 3l16 18" />}

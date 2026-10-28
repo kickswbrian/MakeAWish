@@ -4,7 +4,7 @@ import http from "node:http";
 import path from "node:path";
 import { Server } from "socket.io";
 import {
-  CreateCampaignBody, EVENTS, isEmpty, parseProduct, PledgeBody, templateById, VoteBody,
+  CreateCampaignBody, EVENTS, isEmpty, parseProduct, PledgeBody, templateById, VoteBody, WishVoteBody,
   type Campaign, type ConfigResponse, type MatchesResponse, type OutlineEntry, type PledgeResponse, type TurnEvent, type TurnSelection,
 } from "@wishit/shared";
 import { setIo, emit } from "./bus.ts";
@@ -17,6 +17,7 @@ import {
 import { assertSafeConfig, env, isProd, logConfig, paymentMode, WEB_DIST } from "./env.ts";
 import { findMatches, getMatches } from "./apify.ts";
 import { resetDemo } from "./demo.ts";
+import { listWorld, voteWish } from "./world.ts";
 import { handleStripeEvent, mockConfirm, stripe } from "./payments.ts";
 import { agentAttack, agentPledge, handleAgentPledge, type Attack } from "./agent.ts";
 import { lookupKey } from "./tap.ts";
@@ -233,6 +234,20 @@ app.post("/api/campaigns", limits.createCampaign, (req, res) => {
   const w = assertFound(getWish(parsed.data.wishId), "Wish");
   const { priceCents, targetBackers, deadlineAt } = parsed.data;
   res.json(createCampaign(w.id, priceCents, targetBackers, deadlineAt));
+});
+
+// ---------- Wish world ----------
+
+const voterParam = (v: unknown) => (typeof v === "string" && /^[A-Za-z0-9-]{8,64}$/.test(v) ? v : null);
+app.get("/api/world", limits.read, (req, res) => {
+  const include = typeof req.query.include === "string" ? req.query.include : null;
+  res.json(listWorld(voterParam(req.query.voter), include));
+});
+
+app.post("/api/wish/:id/vote", limits.vote, (req, res) => {
+  const parsed = WishVoteBody.safeParse(req.body);
+  if (!parsed.success) throw badRequest("Invalid vote");
+  res.json(assertFound(voteWish(req.params.id, parsed.data.voter, parsed.data.value), "Wish"));
 });
 
 app.post("/api/campaigns/:id/vote", limits.vote, (req, res) => {

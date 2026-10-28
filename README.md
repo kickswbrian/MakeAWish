@@ -54,6 +54,7 @@ Add `?debug` to the studio URL to show per-turn latency (speech end → request 
 | `/` | The studio. Talk to the orb, watch the product form, lock it in, see matches, launch a campaign with a QR code. One canvas, no page changes. `?debug` shows per-turn latency. |
 | `/c/:id` | Mobile pledge page: email, card, hold. Shows released or captured afterwards, plus the purchase order. |
 | `/campaign/:id` | Laptop campaign view (QR, live demand bar). `?admin` adds a "Force deadline" button. |
+| `/` (wish world) | After the matches, "Can't find it?" flies your bubble into a pannable field of past wishes nobody has made yet (`GET /api/world`). Click one for its details and up/down votes (`POST /api/wish/:id/vote`, one per browser); **Organize** lines them up by popularity. Your own bubble's panel launches the campaign. |
 | `/wishlist` | My wishes and the live "Most wished" board, ranked by community upvotes (one per browser, toggleable; also on the campaign and pledge pages). |
 | `/debug` | 3D bench: templates (`?t=backpack`), bench results (`?src=/bench/lamp.json`), live product JSON; `&bare` for full screen. |
 | `/lab/materials`, `/lab/kit` | Material presets and the 31 kit parts under studio light. |

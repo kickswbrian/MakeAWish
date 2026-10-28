@@ -4,7 +4,7 @@ import { api } from "../lib/api.ts";
 import { pref, setPref } from "../lib/wishlist.ts";
 
 /** This browser's anonymous voter id (the server counts one vote per id per wish). */
-function voterId(): string {
+export function voterId(): string {
   let id = pref<string | null>("voter", null);
   if (!id) {
     id = crypto.randomUUID?.() ?? `v-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
