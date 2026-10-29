@@ -1,18 +1,19 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseProduct } from "@wishit/shared";
+import { parseProduct, templateById, templateProduct } from "@wishit/shared";
 import { db } from "../src/db.ts";
 import "../src/world.ts"; // creates the wish_votes table
 
 /**
- * Seeds the Wish World with demo wishes (real genie-built products with their thumbnails, from
- * server/seed/world.json) and demo vote counts. Safe to run again: the seeded wishes keep fixed ids and
+ * Seeds the Wish World with demo wishes (genie-built products, and the built-in templates, with their
+ * thumbnails, from server/seed/world.json) and demo vote counts. Safe to run again: the seeded wishes keep fixed ids and
  * their seeded votes are replaced, so real votes from visitors stay.
  *
  *   npm run world:seed
  */
-interface Seed { key: string; up: number; down: number; thumb: string; product: unknown }
+/** A seeded wish: a stored product, or a built-in template by id (built here, so it tracks the template). */
+interface Seed { key: string; up: number; down: number; thumb: string; product?: unknown; template?: string }
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const seeds = JSON.parse(fs.readFileSync(path.join(here, "..", "seed", "world.json"), "utf8")) as Seed[];
@@ -27,7 +28,8 @@ const now = Date.now();
 db.transaction(() => {
   seeds.forEach((s, i) => {
     const id = `world-${s.key}`;
-    const product = parseProduct({ ...(s.product as object), id });
+    const tpl = s.template ? templateById(s.template) : null;
+    const product = tpl ? templateProduct(tpl, id) : parseProduct({ ...(s.product as object), id });
     if (!product) throw new Error(`${s.key}: not a valid product`);
     // Spread over the past few weeks, so "newest" ordering looks natural.
     upsertWish.run(id, JSON.stringify(product), s.thumb, now - (i + 1) * 36 * 3600_000);

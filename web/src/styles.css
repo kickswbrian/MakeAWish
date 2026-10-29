@@ -1142,3 +1142,82 @@ p { margin: 0; }
 .v2-see:hover::before, .v2-see:hover::after { opacity: 1; }
 @keyframes seeShift { to { background-position: -300% 0; } }
 @keyframes seeSpark { to { background-position: 0 -46px, 30px -42px, 12px -30px; } }
+
+/* ---------- Matches: product cards, a green sort pill on the right, the magic "Can't find it?" ---------- */
+.res-sub { justify-content: space-between; }
+.sort-pill { background: #DCEBE2; color: #1F4D3B; box-shadow: none; margin-left: auto; }
+.sort-pill:hover { background: #CFE3D7; }
+.sort-pill:focus-within { box-shadow: inset 0 0 0 2px #1F4D3B; }
+.scroll { display: flex; flex-direction: column; }
+.mcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
+.mcardx {
+  display: flex; flex-direction: column; border-radius: 26px; overflow: hidden; color: var(--ink); text-decoration: none;
+  background: rgba(255, 255, 255, .88); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .9), 0 14px 34px rgba(24, 40, 37, .08);
+  animation: cardIn .6s cubic-bezier(.2, .9, .3, 1.15) both; transition: transform .2s var(--spring), box-shadow .2s ease;
+}
+.mcardx:hover { transform: translateY(-4px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .9), 0 22px 48px rgba(24, 40, 37, .14); }
+.mcardx .mphoto { aspect-ratio: 4 / 3; width: 100%; display: grid; place-items: center; background: #fff; overflow: hidden; }
+.mcardx .mphoto img { width: 100%; height: 100%; object-fit: contain; padding: 14px; }
+.mx-body { display: flex; flex-direction: column; gap: 6px; padding: 14px 18px 18px; }
+.mx-site { font-size: 13px; font-weight: 600; color: var(--ink-55); }
+.mx-name { font-size: 17px; font-weight: 700; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.6em; }
+.mx-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+.mx-price { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.mx-buy { display: inline-flex; align-items: center; gap: 4px; height: 38px; padding: 0 16px; border-radius: 100px; font-size: 14px; font-weight: 700; background: var(--ink); color: var(--cream); }
+.mcardx:hover .mx-buy { background: #2E7A66; }
+.mcardx.ghost .mphoto { background: rgba(24, 40, 37, .05); }
+.mcardx.ghost b { display: block; height: 14px; border-radius: 6px; background: rgba(24, 40, 37, .07); }
+.mcardx.ghost b.short { width: 50%; }
+/* The "none of these have..." line, and the empty state, sit in the middle of the space that's left. */
+.mshared, .scroll > .empty-magic { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; min-height: 90px; margin: 12px 0 0; }
+
+.cta-magic { position: relative; overflow: hidden; isolation: isolate; justify-content: flex-start; }
+.cta-fill {
+  position: absolute; right: 8px; top: 8px; bottom: 8px; width: 48px; z-index: 0; display: flex; align-items: center;
+  border-radius: 100px; background: rgba(24, 40, 37, .92); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2);
+  transition: width .8s cubic-bezier(.65, 0, .35, 1);
+}
+.cta-star { flex: none; width: 48px; height: 48px; display: grid; place-items: center; }
+.cta-magic:hover .cta-fill { width: calc(100% - 16px); }
+.cta-magic:hover .cta-star { animation: ctaSpin .8s cubic-bezier(.65, 0, .35, 1) both; }
+@keyframes ctaSpin { to { transform: rotate(540deg); } }
+.cta-text {
+  position: absolute; left: 28px; top: 50%; translate: 0 -50%; z-index: 1; white-space: nowrap;
+  transition: left .8s cubic-bezier(.65, 0, .35, 1), translate .8s cubic-bezier(.65, 0, .35, 1), color .3s ease .25s;
+}
+.cta-magic:hover .cta-text { left: 50%; translate: -50% -50%; color: #fff; }
+@media (min-width: 900px) {
+  /* As far up from the bottom as the "N matches found" heading is down from the top. */
+  .mode-results .bottom-cta { bottom: 64px; }
+  .mode-results .scroll { padding-bottom: 170px; }
+}
+
+/* ---------- Wish World: votes in the hover, Remix in the card ---------- */
+.wbub:focus-visible { outline: none; }
+.wbub:focus-visible .wbub-glass { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--ink); }
+/* The meta's top padding bridges the gap to the bubble, so the hover (and its vote buttons) holds. */
+.wbub-meta { top: 100%; padding-top: 10px; }
+.wbub:hover .wbub-meta { pointer-events: auto; }
+.tidy .wbub-meta { pointer-events: auto; }
+.wbub-votes { gap: 2px; padding: 2px; border-radius: 100px; background: rgba(255, 255, 255, .92); box-shadow: 0 4px 14px rgba(24, 40, 37, .1); }
+.wbub-votes b { min-width: 34px; text-align: center; font-size: 13px; color: var(--ink); }
+.wbv { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: var(--ink-55); transition: background .15s ease, color .15s ease; }
+.wbv:hover { background: rgba(24, 40, 37, .07); color: var(--ink); }
+.wbv.on.up { background: #2E7D5B; color: #fff; }
+.wbv.on.down { background: #B0102D; color: #fff; }
+.world-votes { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.wv-group { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 100px; background: rgba(255, 255, 255, .9); box-shadow: var(--glass-shadow); }
+.wv-group .wv { width: 44px; height: 44px; padding: 0; justify-content: center; box-shadow: none; background: transparent; }
+.wv-group .wv:hover { background: rgba(24, 40, 37, .06); transform: none; }
+.wv-score { min-width: 54px; text-align: center; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.wv-remix {
+  display: inline-flex; align-items: center; gap: 8px; height: 52px; padding: 0 22px; border-radius: 100px;
+  font-size: 16px; font-weight: 700; color: var(--ink); background: transparent; box-shadow: inset 0 0 0 2px var(--ink);
+  transition: background .15s ease, color .15s ease;
+}
+.wv-remix:hover { background: var(--ink); color: var(--cream); }
+.wv-remix:hover svg { transform: translate(2px, -2px); }
+.wv-remix svg { transition: transform .2s var(--spring); }
+
+/* The arrow icon draws in ink by default: follow the button text (white on the dark Buy). */
+.mx-buy svg, .mx-buy svg * { stroke: currentColor; }

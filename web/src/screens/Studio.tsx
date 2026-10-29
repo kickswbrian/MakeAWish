@@ -279,6 +279,14 @@ export default function Studio() {
   const [entering, setEntering] = useState(false);
   // The wish world: the bubble flies to its middle, then becomes one of the floating bubbles there.
   const [worldLanded, setWorldLanded] = useState(false);
+  /** Remix a wish from the Wish World: a new wish starting from a copy of it, opened in the editor. */
+  const remix = useCallback(async (id: string) => {
+    const src = await api.getWish(id).catch(() => null);
+    if (!src) return;
+    const w = await api.createWish();
+    await api.saveProduct(w.id, { ...src.product, id: w.id }, src.thumb ?? undefined).catch(() => {});
+    window.location.assign(`/?wish=${w.id}`);
+  }, []);
   const goWorld = useCallback(() => {
     setWorldLanded(false);
     modeRef.current = "world";
@@ -1277,9 +1285,11 @@ export default function Studio() {
           <div className="bottom-fade" />
           {result && (
             <div className="bottom-cta">
-              <button className="pill big" onClick={goWorld}>
-                <span>{result.exists ? "Not quite yours? Wish for your exact version" : "Can't find it?"}</span>
-                <span className="pill-orb" aria-hidden="true"><Sparkle size={20} color="#F2D88A" /></span>
+              {/* On hover the star spins over to the left, its dark circle filling the pill behind it, and the
+                  words slide to the middle in white. */}
+              <button className="pill big cta-magic" onClick={goWorld}>
+                <span className="cta-fill" aria-hidden="true"><span className="cta-star"><Sparkle size={20} color="#F2D88A" /></span></span>
+                <span className="cta-text">{result.exists ? "Not quite yours? Wish for your exact version" : "Can't find it?"}</span>
               </button>
             </div>
           )}
@@ -1298,6 +1308,7 @@ export default function Studio() {
             yourThumb={thumb}
             landed={worldLanded}
             onLaunch={() => setLaunchOpen(true)}
+            onRemix={(id) => void remix(id)}
           />
         </>
       )}

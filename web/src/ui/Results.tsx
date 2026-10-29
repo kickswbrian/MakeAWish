@@ -70,30 +70,34 @@ export function SortSelect({ value, onChange, res }: { value: SortKey; onChange:
   );
 }
 
-/** One listing as a plain row: photo, name, site, price, and a way to buy it. */
-function MatchRow({ m, category, color, i }: { m: Match; category: string; color?: string; i: number }) {
+/** One listing as a product card: a big photo, then the store, name, price and a way to buy it. */
+function MatchCard({ m, category, color, i }: { m: Match; category: string; color?: string; i: number }) {
   const store = STORE[m.source] ?? m.source;
   const price = money(m.price);
   return (
-    <a className="mrow-item" href={m.url} target="_blank" rel="noreferrer" style={{ animationDelay: `${0.05 + i * 0.06}s` }} aria-label={`${m.title} on ${store}${price ? `, ${price}` : ""}`}>
-      <Photo m={m} category={category} color={color} size={36} />
-      <span className="mr-name" title={m.title}>{m.title}</span>
-      <span className="mr-site">{store}</span>
-      <span className="mr-price">{price ?? "—"}</span>
-      <span className="mr-buy">Buy <ArrowOut size={15} /></span>
+    <a className="mcardx" href={m.url} target="_blank" rel="noreferrer" style={{ animationDelay: `${0.05 + i * 0.06}s` }} aria-label={`${m.title} on ${store}${price ? `, ${price}` : ""}`}>
+      <Photo m={m} category={category} color={color} size={96} />
+      <span className="mx-body">
+        <span className="mx-site">{store}</span>
+        <span className="mx-name" title={m.title}>{m.title}</span>
+        <span className="mx-foot">
+          <span className="mx-price">{price ?? "—"}</span>
+          <span className="mx-buy">Buy <ArrowOut size={15} /></span>
+        </span>
+      </span>
     </a>
   );
 }
 
-/** The listings as rows, best first (by the chosen sort). Skeleton rows while searching. */
+/** The listings as product cards, best first (by the chosen sort). Skeleton cards while searching. */
 export function MatchGrid({ res, category, color, sort = "best" }: { res: MatchesResponse | null; category: string; color?: string; sort?: SortKey }) {
   const list = useMemo(() => rankMatches(res, sort), [res, sort]);
   if (!res || (res.pending && !res.matches.length)) {
     return (
       <div className="scroll">
-        <div className="mrows" aria-hidden="true">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <div key={i} className="mrow-item ghost" style={{ animationDelay: `${i * 0.08}s` }}><div className="mphoto" /><b /><b className="short" /><b className="short" /></div>
+        <div className="mcards" aria-hidden="true">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="mcardx ghost" style={{ animationDelay: `${i * 0.08}s` }}><div className="mphoto" /><span className="mx-body"><b /><b /><b className="short" /></span></div>
           ))}
         </div>
       </div>
@@ -106,9 +110,8 @@ export function MatchGrid({ res, category, color, sort = "best" }: { res: Matche
     <div className="scroll">
       {!list.length && <div className="empty-magic">Nothing like it anywhere. A truly original wish.</div>}
       {list.length > 0 && (
-        <div className="mrows">
-          <div className="mrow-head" aria-hidden="true"><span /><span>Name</span><span>Site</span><span>Price</span><span /></div>
-          {list.map((m, i) => <MatchRow key={m.url + i} m={m} category={category} color={color} i={i} />)}
+        <div className="mcards">
+          {list.map((m, i) => <MatchCard key={m.url + i} m={m} category={category} color={color} i={i} />)}
         </div>
       )}
       {shared.length > 0 && <p className="mshared">{lacking.length === list.length ? "None of these have" : "Most of these lack"} {shared.slice(0, 2).join(" or ")}. Yours would.</p>}

@@ -40,9 +40,9 @@ function floating(items: WorldItem[], yours: string): Map<string, Pos> {
   others.forEach((it, i) => {
     const n = i + 1;
     const depth = 0.55 + 0.45 * hash(it.id);
-    const r = 190 * Math.sqrt(n) + 60;
+    const r = 118 * Math.sqrt(n) + 95;
     const a = n * 2.39996;
-    out.set(it.id, { x: Math.cos(a) * r, y: Math.sin(a) * r * 0.78, size: (110 + 60 * hash(it.id + "s")) * (0.65 + 0.35 * depth), depth });
+    out.set(it.id, { x: Math.cos(a) * r, y: Math.sin(a) * r * 0.8, size: (92 + 52 * hash(it.id + "s")) * (0.65 + 0.35 * depth), depth });
   });
   return out;
 }
@@ -70,13 +70,15 @@ const Arrow = ({ down, size = 18 }: { down?: boolean; size?: number }) => (
   </svg>
 );
 
-export function WishWorld({ wishId, yourTitle, yourThumb, landed, onLaunch }: {
+export function WishWorld({ wishId, yourTitle, yourThumb, landed, onLaunch, onRemix }: {
   wishId: string;
   yourTitle: string;
   yourThumb: string | null;
   /** Your bubble has arrived (until then the 3D bubble flying in stands in for it). */
   landed: boolean;
   onLaunch: () => void;
+  /** Start a new wish from this one, in the editor. */
+  onRemix: (id: string) => void;
 }) {
   const [items, setItems] = useState<WorldItem[] | null>(null);
   const [tidy, setTidy] = useState(false);
@@ -200,8 +202,16 @@ export function WishWorld({ wishId, yourTitle, yourThumb, landed, onLaunch }: {
           const yours = it.id === wishId;
           const dist = Math.hypot(p.x, p.y);
           return (
-            <button
+            <div
               key={it.id}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setSel(it.id);
+                }
+              }}
               className={`wbub ${yours ? "yours" : ""} ${sel === it.id ? "on" : ""} ${yours && !landed ? "waiting" : ""}`}
               style={{
                 left: p.x, top: p.y, width: p.size, height: p.size,
@@ -220,12 +230,16 @@ export function WishWorld({ wishId, yourTitle, yourThumb, landed, onLaunch }: {
                 </span>
               </span>
               {yours && <span className="wbub-tag">Your wish</span>}
-              {/* Name and votes: on hover while floating, always when organized. */}
+              {/* Name and net votes (vote right here): on hover while floating, always when organized. */}
               <span className="wbub-meta">
                 <span className="wbub-name" title={it.title}>{it.title}</span>
-                <span className="wbub-votes"><Arrow size={14} /> {fmt(it.up)} <Arrow down size={14} /> {fmt(it.down)}</span>
+                <span className="wbub-votes">
+                  <button className={`wbv ${it.myVote === 1 ? "on up" : ""}`} aria-label="Upvote" aria-pressed={it.myVote === 1} onClick={(e) => { e.stopPropagation(); void vote(it, 1); }}><Arrow size={15} /></button>
+                  <b>{fmt(it.score)}</b>
+                  <button className={`wbv ${it.myVote === -1 ? "on down" : ""}`} aria-label="Downvote" aria-pressed={it.myVote === -1} onClick={(e) => { e.stopPropagation(); void vote(it, -1); }}><Arrow down size={15} /></button>
+                </span>
               </span>
-            </button>
+            </div>
           );
         })}
       </div>
@@ -240,17 +254,22 @@ export function WishWorld({ wishId, yourTitle, yourThumb, landed, onLaunch }: {
               {selected.thumb ? <img src={selected.thumb} alt="" /> : <CategoryIcon category={selected.category ?? "generic"} size={120} />}
             </div>
             <div className="world-card-body">
-              <span className="world-kicker">{selected.id === wishId ? "Your wish" : "Wished by someone"}</span>
+              {selected.id === wishId && <span className="world-kicker">Your wish</span>}
               <h2 title={selected.title}>{selected.title}</h2>
               {selected.description && <p className="world-desc">{selected.description}</p>}
               {selected.priceUsd != null && <p className="world-price">Around ${Math.round(selected.priceUsd)}</p>}
-              <div className="world-votes" role="group" aria-label="Vote">
-                <button className={`wv up ${selected.myVote === 1 ? "on" : ""}`} aria-pressed={selected.myVote === 1} aria-label="Upvote" onClick={() => void vote(selected, 1)}>
-                  <Arrow /> <span>{fmt(selected.up)}</span>
-                </button>
-                <button className={`wv down ${selected.myVote === -1 ? "on" : ""}`} aria-pressed={selected.myVote === -1} aria-label="Downvote" onClick={() => void vote(selected, -1)}>
-                  <Arrow down /> <span>{fmt(selected.down)}</span>
-                </button>
+              <div className="world-votes">
+                <span className="wv-group" role="group" aria-label="Vote">
+                  <button className={`wv up ${selected.myVote === 1 ? "on" : ""}`} aria-pressed={selected.myVote === 1} aria-label="Upvote" onClick={() => void vote(selected, 1)}><Arrow /></button>
+                  <b className="wv-score" aria-label={`${selected.score} votes`}>{fmt(selected.score)}</b>
+                  <button className={`wv down ${selected.myVote === -1 ? "on" : ""}`} aria-pressed={selected.myVote === -1} aria-label="Downvote" onClick={() => void vote(selected, -1)}><Arrow down /></button>
+                </span>
+                {selected.id !== wishId && (
+                  <button className="wv-remix" onClick={() => onRemix(selected.id)}>
+                    Remix
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17L17 7" /><path d="M8 7h9v9" /></svg>
+                  </button>
+                )}
               </div>
               {selected.id === wishId ? (
                 <button className="pill world-launch" onClick={onLaunch}>Make it real: launch a campaign</button>
