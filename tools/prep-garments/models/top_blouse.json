@@ -1,0 +1,248 @@
+{
+  "credit": "\"Satin Grey Blouse Semi Low Poly Mesh\" by EUTHA_3D (https://sketchfab.com/3d-models/satin-grey-blouse-semi-low-poly-mesh-dbf0ee5aa6f24510ac22e9e15258327c), CC-BY-4.0",
+  "height": 0.58,
+  "budget": 40000,
+  "fold": "^material$",
+  "drop": [
+    "eyelets",
+    "laces"
+  ],
+  "rules": [
+    {
+      "name": "collar",
+      "when": "'|collar' in src"
+    },
+    {
+      "name": "sleeve_l",
+      "when": "'|sleeve1' in src"
+    },
+    {
+      "name": "sleeve_r",
+      "when": "'|sleeve2' in src"
+    },
+    {
+      "name": "body",
+      "when": "True"
+    }
+  ],
+  "zones": {
+    "chest_left": {
+      "from": [
+        -0.07,
+        0.33,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.07,
+        0.07
+      ],
+      "bend": 0.12,
+      "label": "left chest"
+    },
+    "chest_right": {
+      "from": [
+        0.07,
+        0.33,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.07,
+        0.07
+      ],
+      "bend": 0.12,
+      "label": "right chest"
+    },
+    "chest_center": {
+      "from": [
+        0,
+        0.4,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.06,
+        0.05
+      ],
+      "bend": 0.15,
+      "label": "center front below the collar"
+    },
+    "neck_label": {
+      "from": [
+        0.025,
+        0.535,
+        0
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.03,
+        0.015
+      ],
+      "label": "inside back collar",
+      "part": "collar"
+    },
+    "sleeve_left": {
+      "from": [
+        -0.31,
+        0.33,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.06,
+        0.07
+      ],
+      "bend": 0.06,
+      "label": "left upper sleeve"
+    },
+    "sleeve_right": {
+      "from": [
+        0.31,
+        0.33,
+        0.4
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.06,
+        0.07
+      ],
+      "bend": 0.06,
+      "label": "right upper sleeve"
+    },
+    "hem": {
+      "kind": "ring",
+      "center": [
+        0,
+        0.177,
+        0.0
+      ],
+      "axis": [
+        0,
+        1,
+        -0.17
+      ],
+      "radius": 0.19,
+      "samples": 40,
+      "label": "hem",
+      "part": "body"
+    },
+    "collar": {
+      "kind": "ring",
+      "center": [
+        0,
+        0.56,
+        -0.035
+      ],
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "radius": 0.2,
+      "samples": 32,
+      "label": "turtleneck top edge",
+      "part": "collar"
+    },
+    "cuff_left": {
+      "kind": "ring",
+      "center": [
+        -0.515,
+        0.06,
+        0
+      ],
+      "axis": [
+        0.51,
+        0.86,
+        0
+      ],
+      "radius": 0.15,
+      "samples": 24,
+      "label": "left cuff",
+      "part": "sleeve_l"
+    },
+    "cuff_right": {
+      "kind": "ring",
+      "center": [
+        0.515,
+        0.06,
+        0
+      ],
+      "axis": [
+        -0.51,
+        0.86,
+        0
+      ],
+      "radius": 0.15,
+      "samples": 24,
+      "label": "right cuff",
+      "part": "sleeve_r"
+    },
+    "side_seam_left": {
+      "kind": "line",
+      "from": [
+        -0.2,
+        0.26,
+        0.0
+      ],
+      "to": [
+        -0.2,
+        0.17,
+        0.0
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "samples": 8,
+      "label": "left side seam",
+      "part": "body"
+    },
+    "side_seam_right": {
+      "kind": "line",
+      "from": [
+        0.2,
+        0.26,
+        0.0
+      ],
+      "to": [
+        0.2,
+        0.17,
+        0.0
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "samples": 8,
+      "label": "right side seam",
+      "part": "body"
+    }
+  }
+}

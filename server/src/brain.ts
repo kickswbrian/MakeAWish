@@ -1,11 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 import {
-  addOrder, applyPatches, childrenOf, emptyProduct, fixChildFrame, floatingParts, groundPart, isEmpty, localBox, partsInOrder, subtreeIds, toProductSpace, matchTemplate, parseIntent, ProductMetaSchema, setMeta, templateById, templateProduct,
-  type OutlineEntry, type Part, type Patch, type Product, type ProductMeta, type TurnEvent, type TurnSelection, type TurnTiming, type Vec3,
+  addOrder, applyPatches, childrenOf, emptyProduct, fashionById, fixChildFrame, localOutfit, outfitProduct, floatingParts, groundPart, isEmpty, localBox, partsInOrder, subtreeIds, toProductSpace, matchTemplate, parseIntent, ProductMetaSchema, setMeta, templateById, templateProduct,
+  type FashionState, type FashionTemplate, type OutlineEntry, type Part, type Patch, type Product, type ProductMeta, type TurnEvent, type TurnSelection, type TurnTiming, type Vec3,
 } from "@wishit/shared";
 import { env } from "./env.ts";
 import { JsonStreamScanner } from "./jsonstream.ts";
 import { systemPrompt } from "./prompt.ts";
+import { applyControls, applyMaterials, applyModule, outfitContext, outfitProps, wishStyleLine, type OutfitSink } from "./outfit.ts";
 import type { TranscriptTurn } from "./wishes.ts";
 
 /**
@@ -38,7 +39,7 @@ export interface TurnResult {
   rejected: number;
 }
 
-// ---------- Tools (all three are sent on every call so the cached prefix is identical) ----------
+// ---------- Tools (all are sent on every call so the cached prefix is identical) ----------
 
 const partSchema = {
   type: "object",
@@ -112,13 +113,29 @@ const TOOLS = [
     },
   },
   {
+    name: "style_outfit",
+    description: "Design a new fashion product from its template (already on screen in the default look): set controls, slot materials and detail modules on zones so it matches the wish and its styles.",
+    eager_input_streaming: true,
+    input_schema: {
+      type: "object",
+      properties: {
+        ...outfitProps,
+        meta: metaSchema,
+        say: { type: "string", description: "Max 2 short sentences, spoken aloud." },
+        lock: { type: "boolean" },
+      },
+      required: ["meta", "say", "lock"],
+    },
+  },
+  {
     name: "apply_patches",
-    description: "Edit the current product with patches, then speak.",
+    description: "Edit the current product with patches (and, for fashion products, outfit fields), then speak.",
     eager_input_streaming: true,
     input_schema: {
       type: "object",
       properties: {
         newDesign: { type: "boolean", description: "True only if the shopper wants a different product entirely; then send no patches." },
+        ...outfitProps,
         patches: { type: "array", items: patchSchema },
         meta: metaSchema,
         say: { type: "string", description: "Max 2 short sentences, spoken aloud." },
@@ -208,6 +225,8 @@ function editContext(input: TurnInput): string {
   const byId = new Map(outline.map((o) => [o.id, o]));
   const parts = Object.values(product.parts);
   const lines: string[] = [`Product: ${product.title}${product.description ? ` — ${product.description}` : ""} (${parts.length} parts, root ${product.rootId})`];
+  const outfit = outfitContext(product);
+  if (outfit) lines.push(outfit);
   const sel = selection ? product.parts[selection.partId] : undefined;
   let detail: Part[];
   if (sel) {
@@ -379,6 +398,10 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
     product = setMeta(product, m.data);
     emit({ t: "meta", meta: m.data });
   };
+  const setFashion = (f: FashionState) => {
+    product = { ...product, fashion: f };
+    emit({ t: "fashion", fashion: f });
+  };
   const track = (s: CallStats) => {
     timing.calls! += 1;
     timing.inputTokens! += s.input;
@@ -435,6 +458,11 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
       const outlineById = new Map(input.outline.map((o) => [o.id, o]));
       // Parts updated earlier in this stream: their outline boxes (from the turn's start) are stale.
       const moved = new Set<string>();
+      const sink: OutfitSink = {
+        product: () => product,
+        apply: (p) => applyAndEmit(p),
+        setFashion: (f) => setFashion(f),
+      };
       timing.sent = at();
       track(await streamTool(env.editModel, "apply_patches", user, {
         onFirstToken: () => (timing.firstToken ??= at()),
@@ -447,6 +475,8 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
         },
         onValue: (k, v) => {
           if (k === "newDesign" && v === true) wantsNew = true;
+          else if (k === "controls" && !wantsNew) applyControls(sink, v);
+          else if (k === "materials" && !wantsNew) applyMaterials(sink, v);
           else if (k === "meta") applyMeta(v);
           else if (k === "say" && typeof v === "string") {
             say = clampSay(v);
@@ -454,7 +484,14 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
           } else if (k === "lock") lock = v === true;
         },
         onItem: (k, _i, v) => {
-          if (k !== "patches" || wantsNew) return;
+          if (wantsNew) return;
+          if (k === "modules") {
+            const why = applyModule(sink, v);
+            if (why) console.log(`[brain] module skipped: ${why}`);
+            return;
+          }
+          if (k === "remove" && typeof v === "string") return applyAndEmit([{ op: "remove", id: v }]);
+          if (k !== "patches") return;
           const up = v as { op?: unknown; id?: unknown };
           if (up?.op === "update" && typeof up.id === "string") moved.add(up.id);
           applyAndEmit([fixFrames(product, v, outlineById, moved)]);
@@ -469,7 +506,11 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
       mode = "create";
       say = "";
     }
-    return settle(await createDesign(input, { reset, emit, applyAndEmit, applyMeta, track, timing, at, signal, get: () => product, set: (p) => (product = p), setSay: (s) => (say = s), setLock: (l) => (lock = l), getSay: () => say, getLock: () => lock, rejected: () => rejected }));
+    const ctx: CreateCtx = { reset, emit, applyAndEmit, applyMeta, setFashion, track, timing, at, signal, get: () => product, set: (p) => (product = p), setSay: (s) => (say = s), setLock: (l) => (lock = l), getSay: () => say, getLock: () => lock, rejected: () => rejected };
+    const shownTpl = input.template ? templateById(input.template) : null;
+    const fashion = fashionById(shownTpl?.fashion ?? (isEmpty(product) ? matchTemplate(input.text)?.fashion : undefined));
+    if (fashion) return await createOutfit(input, ctx, fashion);
+    return settle(await createDesign(input, ctx));
   } catch (err) {
     if (signal.aborted) throw err;
     console.warn("[brain] LLM failed, using rules:", (err as Error).message);
@@ -483,6 +524,7 @@ interface CreateCtx {
   emit: (ev: TurnEvent) => void;
   applyAndEmit: (patches: unknown[]) => void;
   applyMeta: (raw: unknown) => void;
+  setFashion: (f: FashionState) => void;
   track: (s: CallStats) => void;
   timing: TurnTiming;
   at: () => number;
@@ -494,6 +536,55 @@ interface CreateCtx {
   getSay: () => string;
   getLock: () => boolean;
   rejected: () => number;
+}
+
+/**
+ * A new fashion product: the template (in the look the local style compiler picked) is on screen;
+ * one fast call re-styles it with controls, slot materials and detail modules, streamed as patches.
+ */
+async function createOutfit(input: TurnInput, c: CreateCtx, t: FashionTemplate): Promise<TurnResult> {
+  c.emit({ t: "start", mode: "create", model: env.designModel });
+  // Not on screen yet (the server matched the wish itself): build the local styled version first.
+  if (c.get().fashion?.template !== t.id) {
+    const local = outfitProduct(localOutfit(input.text, t.id), c.get().id);
+    if (local) {
+      if (!isEmpty(c.get())) c.reset();
+      c.applyAndEmit(addOrder(Object.values(local.parts), local.rootId).map((part) => ({ op: "add", part })));
+      if (local.fashion) c.setFashion(local.fashion);
+      c.applyMeta({ title: t.name, category: t.category, description: t.description, targetPriceUsd: t.targetPriceUsd });
+    }
+  }
+  const sink: OutfitSink = { product: c.get, apply: (p) => c.applyAndEmit(p), setFashion: c.setFashion };
+  const user = [
+    historyBlock(input.transcript),
+    `Shopper's wish: "${input.text}"`,
+    wishStyleLine(input.text),
+    `\nOn screen now (the template in a first local styling):\n${outfitContext(c.get())}`,
+    `\nRestyle it to match the wish exactly: change controls and slot materials where the wish or its styles call for it, remove standard details that don't fit (remove), and add detail modules on zones so the result has 8-15 rich, style-specific details in total (count what is already there). Write controls, then materials, then remove, then modules, then meta and say. Use at most 3 decimals. Call style_outfit now, with no other text.`,
+  ].filter(Boolean).join("\n");
+  c.timing.sent = c.at();
+  const stats = await streamTool(env.designModel, "style_outfit", user, {
+    onFirstToken: () => (c.timing.firstToken ??= c.at()),
+    onValue: (k, v) => {
+      if (k === "controls") applyControls(sink, v);
+      else if (k === "materials") applyMaterials(sink, v);
+      else if (k === "meta") c.applyMeta(v);
+      else if (k === "say" && typeof v === "string") {
+        c.setSay(clampSay(v));
+        c.emit({ t: "say", text: clampSay(v) });
+      } else if (k === "lock") c.setLock(v === true);
+    },
+    onItem: (k, _i, v) => {
+      if (k === "remove" && typeof v === "string") c.applyAndEmit([{ op: "remove", id: v }]);
+      else if (k === "modules") {
+        const why = applyModule(sink, v);
+        if (why) console.log(`[brain] module skipped: ${why}`);
+      }
+    },
+  }, c.signal, 2500);
+  c.track(stats);
+  c.timing.done = c.at();
+  return { product: c.get(), say: c.getSay(), lock: c.getLock(), brain: "llm", timing: c.timing, rejected: c.rejected() };
 }
 
 async function createDesign(input: TurnInput, outer: CreateCtx): Promise<TurnResult> {
@@ -654,7 +745,8 @@ function ruleTurn(
   const lock = /\b(lock it|wish it|make it real|yes,? make)\b/i.test(input.text);
   const tpl = shown ?? matchTemplate(input.text);
   if (tpl && (shown || isEmpty(product) || /\b(instead|actually|new)\b/i.test(input.text))) {
-    const p = templateProduct(tpl, product.id);
+    // Fashion templates come styled for the wish (the client shows the same local styling).
+    const p = (tpl.fashion ? outfitProduct(localOutfit(input.text, tpl.fashion), product.id) : null) ?? templateProduct(tpl, product.id);
     // The shown template may already be intact (possibly with some customizations streamed in).
     const intact = shown && product.rootId === p.rootId && Object.keys(p.parts).every((id) => product.parts[id]);
     if (!intact) {
@@ -663,6 +755,7 @@ function ruleTurn(
       if (!isEmpty(product)) reset();
       applyAndEmit(adds);
       applyMeta({ title: tpl.name, category: tpl.category, description: tpl.description, targetPriceUsd: tpl.targetPriceUsd });
+      if (p.fashion) emit({ t: "fashion", fashion: p.fashion });
     }
     say = `Your ${tpl.name.toLowerCase()} is taking shape. Tap any part to change it.`;
   } else if (lock) {

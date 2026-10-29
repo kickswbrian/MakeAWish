@@ -5,3 +5,6 @@ export * from "./intent.ts";
 export * from "./templates/index.ts";
 export * from "./frames.ts";
 export * from "./bounds.ts";
+export * from "./fashion/index.ts";
+export * from "./meshes.ts";
+export { bustRings, ringAt, ringPoint as formRingPoint, FORM_SE, type FormRing } from "./modules/display.ts";

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Patch, Product, ProductMeta } from "./product.ts";
+import type { FashionState, Patch, Product, ProductMeta } from "./product.ts";
 
 export type Vec3 = [number, number, number];
 
@@ -15,9 +15,12 @@ export interface Match {
   price: number | null;
   image: string | null;
   score: number;
-  /** How much the listing's photo looks like the shopper's render (0-100), once Claude has compared them. */
-  visual?: number | null;
   missing: string[];
+  /** Store rating out of 5, and how many reviews it's from. */
+  rating?: number | null;
+  reviews?: number | null;
+  /** One line on what it has and lacks ("Has the fold-out stand; no USB port"). */
+  why?: string;
 }
 
 export const CAMPAIGN_MAX_MS = 6 * 24 * 60 * 60 * 1000;
@@ -163,6 +166,8 @@ export type TurnEvent =
   | { t: "reset" }
   | { t: "patches"; patches: Patch[]; at: number }
   | { t: "meta"; meta: ProductMeta }
+  /** A fashion product's controls or slot materials changed (the patches carry the geometry). */
+  | { t: "fashion"; fashion: FashionState }
   | { t: "say"; text: string }
   | { t: "lock" }
   | { t: "done"; ms: number; brain: "llm" | "rules"; timing: TurnTiming; rejected: number }

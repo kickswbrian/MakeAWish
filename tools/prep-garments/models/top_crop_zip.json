@@ -1,0 +1,185 @@
+{
+  "credit": "\"Nightshade Zipper Crop Top 3d Model\" by Rinyata (https://sketchfab.com/3d-models/nightshade-zipper-crop-top-3d-model-5f455f6d85294e39a9aa4a7ed362ace9), CC-BY-4.0",
+  "height": 0.31,
+  "budget": 24000,
+  "fold": "Leather",
+  "rules": [
+    {
+      "name": "ruffle",
+      "when": "pcy < 0.05 and ph < 0.05"
+    },
+    {
+      "name": "body",
+      "when": "True"
+    }
+  ],
+  "zones": {
+    "placket": {
+      "kind": "line",
+      "from": [
+        0.0,
+        0.0474,
+        0.3647
+      ],
+      "to": [
+        0.0,
+        0.2662,
+        0.3647
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "samples": 20,
+      "label": "center front zip line, hem to neckline",
+      "part": "body"
+    },
+    "chest_left": {
+      "from": [
+        -0.0775,
+        0.2006,
+        0.3647
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.0638,
+        0.0547
+      ],
+      "bend": 0.1,
+      "label": "left chest"
+    },
+    "chest_right": {
+      "from": [
+        0.0775,
+        0.2006,
+        0.3647
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.0638,
+        0.0547
+      ],
+      "bend": 0.1,
+      "label": "right chest"
+    },
+    "back_center": {
+      "from": [
+        0.0,
+        0.1368,
+        -0.3647
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "room": [
+        0.1276,
+        0.1094
+      ],
+      "bend": 0.2,
+      "label": "center back"
+    },
+    "neck_label": {
+      "from": [
+        0.0,
+        0.1869,
+        0.0
+      ],
+      "dir": [
+        0,
+        0,
+        -1
+      ],
+      "room": [
+        0.0319,
+        0.0146
+      ],
+      "label": "inside back top edge",
+      "part": "body"
+    },
+    "hem": {
+      "kind": "ring",
+      "center": [
+        0.0,
+        0.0547,
+        0.0
+      ],
+      "axis": [
+        0,
+        1,
+        0
+      ],
+      "radius": 0.4,
+      "samples": 48,
+      "label": "waist seam above the ruffle (the hem without it)",
+      "part": "body"
+    },
+    "ruffle_hem": {
+      "kind": "ring",
+      "center": [
+        0.0,
+        0.0228,
+        0.0
+      ],
+      "axis": [
+        0,
+        1,
+        -0.1
+      ],
+      "radius": 0.4,
+      "samples": 64,
+      "label": "ruffle edge",
+      "part": "ruffle"
+    },
+    "side_seam_left": {
+      "kind": "line",
+      "from": [
+        -0.3647,
+        0.2462,
+        0.0091
+      ],
+      "to": [
+        -0.3647,
+        0.0593,
+        0.0091
+      ],
+      "dir": [
+        1,
+        0,
+        0
+      ],
+      "samples": 12,
+      "label": "left side seam"
+    },
+    "side_seam_right": {
+      "kind": "line",
+      "from": [
+        0.3647,
+        0.2462,
+        0.0091
+      ],
+      "to": [
+        0.3647,
+        0.0593,
+        0.0091
+      ],
+      "dir": [
+        -1,
+        0,
+        0
+      ],
+      "samples": 12,
+      "label": "right side seam"
+    }
+  }
+}
