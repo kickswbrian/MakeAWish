@@ -203,6 +203,23 @@ async function downloadGlb(registry: PartRegistry, title: string) {
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
+/** A small hint next to the cursor (UI variation 2: "Type to make a change"). */
+function CursorHint({ text }: { text: string | null }) {
+  const el = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      if (el.current) el.current.style.transform = `translate3d(${e.clientX + 18}px, ${e.clientY + 20}px, 0)`;
+    };
+    window.addEventListener("pointermove", move);
+    return () => window.removeEventListener("pointermove", move);
+  }, []);
+  return (
+    <div ref={el} className={`cursor-hint ${text ? "on" : ""}`} aria-hidden="true">
+      {text}
+    </div>
+  );
+}
+
 /** The hovered part's name, following the cursor (desktop discoverability). */
 function HoverTip({ name }: { name: string | null }) {
   const el = useRef<HTMLDivElement>(null);
@@ -964,6 +981,9 @@ export default function Studio() {
       {showConfetti && <Celebration image={snapshot} line={campaign ? `Funded · ${campaign.captured || campaign.held} of ${campaign.targetBackers}` : undefined} onDone={() => setShowConfetti(false)} />}
       {debug && perf && <div className="perf">{perf}</div>}
       {mode === "voice" && <HoverTip name={hoverId && hoverId !== selection?.partId ? product.parts[hoverId]?.name ?? null : null} />}
+      {v2 && mode === "voice" && hasProduct && (
+        <CursorHint text={hintIdle && !typing && !hoverId && !mutedHeard && !selPart ? (voice.active && !voice.muted ? "Say a change, or type it" : "Type to make a change") : null} />
+      )}
 
       <div className="orb-slot" ref={orbSlot}>
         <div className="orb-flip" ref={orbFlip}>
@@ -1115,8 +1135,6 @@ export default function Studio() {
                 <SpeechLine captions={voice.captions} interim={voice.interim} />
                 {v2 && mutedHeard ? (
                   <p className="line v2-muted">You&apos;re muted. <button onClick={voice.toggleMute}>Unmute?</button></p>
-                ) : v2 && hasProduct && hintIdle ? (
-                  <p className="line v2-hint">{voice.active && !voice.muted ? "Say a change, or just type it" : "Type to make a change"}</p>
                 ) : null}
               </>
             )}
@@ -1267,7 +1285,7 @@ export default function Studio() {
         <>
           <header className="hdr world-hdr">
             <button className="cbtn" aria-label="Back to the matches" onClick={() => setMode("results")}><BackIcon /></button>
-            <span className="world-title">Wishes nobody has made yet</span>
+            <span className="world-title">Wish World</span>
           </header>
           <WishWorld
             wishId={wishId}
@@ -1275,7 +1293,6 @@ export default function Studio() {
             yourThumb={thumb}
             landed={worldLanded}
             onLaunch={() => setLaunchOpen(true)}
-            onEdit={() => setMode("voice")}
           />
         </>
       )}

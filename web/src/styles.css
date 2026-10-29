@@ -847,7 +847,6 @@ p { margin: 0; }
   flex: 1; height: 68px; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; gap: 14px;
   transition: transform .18s var(--spring), box-shadow .18s ease, background .18s ease;
 }
-.v2-see:hover { transform: translateY(-2px); background: var(--ink); color: var(--cream); box-shadow: 0 14px 30px rgba(24, 40, 37, .22); }
 .v2-see:active { transform: translateY(0) scale(.98); }
 .v2-see-arrow { transition: transform .2s var(--spring); }
 .v2-see:hover .v2-see-arrow { transform: translateX(6px); }
@@ -925,72 +924,101 @@ p { margin: 0; }
 /* !important: the edit bar's own entrance animation would otherwise hold it visible. */
 .app.leaving .edit-bar, .app.leaving .tap-hint, .app.leaving .b-overlay { opacity: 0 !important; transition: opacity .25s ease; pointer-events: none; }
 
-/* ---------- Wish world ---------- */
+/* ---------- Wish World ---------- */
 .app.mode-world { max-width: none; padding: 0; }
 .mode-world .orb-slot { --bubble: 200px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 30; transition: opacity .35s ease; }
 .world-landed .orb-slot { opacity: 0; pointer-events: none; }
 .world-hdr { position: absolute; left: 24px; right: 24px; top: 0; z-index: 20; justify-content: flex-start; gap: 16px; pointer-events: none; }
 .world-hdr > * { pointer-events: auto; }
-.world-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
-.world { position: absolute; inset: 0; overflow: hidden; cursor: grab; touch-action: none; user-select: none; }
+.world-title { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; color: var(--ink); }
+.world { position: absolute; inset: 0; overflow: hidden; cursor: grab; touch-action: none; user-select: none; --mx: 0; --my: 0; }
 .world:active { cursor: grabbing; }
 .world-plane { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-origin: 0 0; }
-.world-plane.glide { transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
+.world-plane.glide { transition: transform 1.1s cubic-bezier(.16, 1, .3, 1); }
+
+/* Each bubble: placed by left/top, shifted by the mouse according to its depth (parallax). Organizing
+   eases them in and slows to a stop (expo-out), rippling outward from the middle. */
 .wbub {
-  position: absolute; translate: -50% -50%; border-radius: 50%; padding: 0; cursor: pointer;
-  transition: left .7s cubic-bezier(.3, 1.2, .5, 1), top .7s cubic-bezier(.3, 1.2, .5, 1), width .7s ease, height .7s ease, opacity .4s ease;
-  animation: wbob var(--bob, 5s) ease-in-out var(--d, 0s) infinite;
+  position: absolute; padding: 0; border-radius: 50%; cursor: pointer; z-index: calc(var(--depth) * 100);
+  translate: calc(-50% - var(--mx) * var(--par) * 1px) calc(-50% - var(--my) * var(--par) * 1px);
+  transition: left 1.1s cubic-bezier(.16, 1, .3, 1) var(--k, 0ms), top 1.1s cubic-bezier(.16, 1, .3, 1) var(--k, 0ms),
+    width 1.1s cubic-bezier(.16, 1, .3, 1) var(--k, 0ms), height 1.1s cubic-bezier(.16, 1, .3, 1) var(--k, 0ms), translate .9s cubic-bezier(.2, .8, .2, 1);
 }
-.tidy .wbub { animation: none; }
+/* Arriving: bubbles drift up out of the haze, nearest first. */
+.world.ready .wbub { animation: wIn 1.4s cubic-bezier(.16, 1, .3, 1) var(--in, 0ms) backwards; }
+@keyframes wIn { from { opacity: 0; scale: .55; } }
 .wbub.waiting { opacity: 0; }
-@keyframes wbob { 50% { transform: translateY(-10px); } }
+.wbub-float { position: absolute; inset: 0; display: block; opacity: calc(.38 + .62 * var(--depth)); animation: wbob var(--bob, 6s) ease-in-out var(--d, 0s) infinite; }
+.tidy .wbub-float { animation: none; opacity: 1; }
+@keyframes wbob { 50% { transform: translateY(-12px); } }
+
+/* Soap bubbles, not outlined circles: a clear body, a pearly iridescent rim and a soft highlight. */
 .wbub-glass {
   position: absolute; inset: 0; border-radius: 50%; overflow: hidden; display: grid; place-items: center;
-  background: radial-gradient(circle at 50% 55%, #fff 0 55%, rgba(255, 255, 255, .7) 78%, rgba(220, 231, 226, .6) 100%);
-  box-shadow: inset 0 0 0 1.5px #fff, inset 0 0 18px rgba(255, 255, 255, .9), inset -10px -14px 26px rgba(197, 216, 207, .35), 0 16px 34px rgba(24, 40, 37, .1);
-  transition: transform .2s var(--spring), box-shadow .2s ease;
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .95) 0 5%, rgba(255, 255, 255, 0) 16%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, .05) 0 58%, rgba(255, 255, 255, .45) 80%, rgba(255, 255, 255, .7) 92%, rgba(255, 255, 255, .25) 100%);
+  transition: transform .35s cubic-bezier(.2, .9, .3, 1.2), box-shadow .3s ease;
+  box-shadow: 0 18px 40px rgba(24, 40, 37, .08);
 }
-.wbub-glass img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; pointer-events: none; }
-.wbub:hover .wbub-glass { transform: scale(1.06); box-shadow: inset 0 0 0 2px #fff, inset 0 0 18px rgba(255, 255, 255, .9), 0 20px 44px rgba(24, 40, 37, .16); }
-.wbub.on .wbub-glass { box-shadow: inset 0 0 0 3px var(--gold-deep), inset 0 0 18px rgba(255, 255, 255, .9), 0 20px 44px rgba(233, 196, 106, .35); }
-.wbub.yours .wbub-glass { box-shadow: inset 0 0 0 3px #F4A8C8, inset 0 0 18px rgba(255, 255, 255, .9), 0 18px 40px rgba(244, 168, 200, .3); }
-.wbub-score {
-  position: absolute; left: 50%; bottom: -12px; translate: -50% 0; padding: 3px 10px; border-radius: 100px; white-space: nowrap;
-  font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink-70); background: #fff; box-shadow: 0 4px 12px rgba(24, 40, 37, .1);
+.wbub-glass::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; opacity: .75;
+  background: conic-gradient(from 210deg, #F9C6DC, #F6E7BF, #C9E7DB, #D9D1F5, #F9C6DC);
+  -webkit-mask: radial-gradient(closest-side, transparent 86%, #000 95%, transparent 100%); mask: radial-gradient(closest-side, transparent 86%, #000 95%, transparent 100%);
 }
-.wbub-score.up { color: #2E7D5B; }
-.wbub-score.down { color: #B0102D; }
-.wbub-tag { position: absolute; left: 50%; top: -16px; translate: -50% 0; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #C2638E; white-space: nowrap; }
+/* Snapshots include the pedestal: zoom in so the model fills the bubble. */
+.wbub-glass img { position: absolute; inset: 9%; width: 82%; height: 82%; object-fit: cover; border-radius: 50%; pointer-events: none; mix-blend-mode: multiply; transform: scale(1.35) translateY(-3%); }
+.wbub:hover { z-index: 200; }
+.wbub:hover .wbub-glass { transform: scale(1.1); box-shadow: 0 0 0 3px rgba(255, 255, 255, .95), 0 0 0 5px rgba(233, 196, 106, .65), 0 24px 50px rgba(24, 40, 37, .14); }
+.wbub.on .wbub-glass, .wbub.yours .wbub-glass { box-shadow: 0 0 0 3px rgba(255, 255, 255, .95), 0 0 0 5px rgba(244, 168, 200, .75), 0 22px 46px rgba(244, 168, 200, .25); }
+.wbub-tag { position: absolute; left: 50%; top: -22px; translate: -50% 0; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #C2638E; white-space: nowrap; }
+
+/* Name and votes under a bubble: on hover while floating, always when organized. */
+.wbub-meta {
+  position: absolute; left: 50%; top: calc(100% + 10px); translate: -50% 0; width: max(160px, 120%);
+  display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none;
+  opacity: 0; transform: translateY(-4px); transition: opacity .2s ease, transform .2s ease;
+}
+.wbub:hover .wbub-meta, .tidy .wbub-meta { opacity: 1; transform: none; }
+.wbub-name { max-width: 100%; font-size: 15px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: "Bricolage Grotesque", var(--font); }
+.wbub:hover .wbub-name { white-space: normal; overflow: visible; text-align: center; }
+.wbub-votes { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink-70); }
+.wbub-votes svg:last-of-type { margin-left: 8px; }
 .world-empty { position: absolute; left: 0; right: 0; bottom: 120px; text-align: center; color: var(--ink-55); font-size: 16px; pointer-events: none; }
-.world-panel {
-  position: absolute; right: 24px; top: 88px; bottom: 110px; width: min(360px, calc(100% - 48px)); z-index: 25; overflow-y: auto;
-  padding: 24px; border-radius: 28px; display: flex; flex-direction: column; gap: 12px; cursor: default;
-  background: linear-gradient(160deg, rgba(255, 255, 255, .96), rgba(246, 250, 248, .92)); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .9), 0 24px 60px rgba(24, 40, 37, .16); animation: gbIn .3s var(--spring) both;
+
+/* Details: a card over the world, the model on the left, the words and votes on the right. */
+.world-pop { position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px; background: rgba(255, 252, 247, .45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: fadeOnly .25s ease both; cursor: default; }
+.world-card {
+  position: relative; width: min(860px, 100%); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 32px; align-items: center;
+  padding: 36px; border-radius: 34px; background: linear-gradient(160deg, rgba(255, 255, 255, .98), rgba(246, 250, 248, .95));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .9), 0 30px 80px rgba(24, 40, 37, .18); animation: gbIn .35s var(--spring) both;
 }
-.world-close { position: absolute; right: 14px; top: 10px; width: 36px; height: 36px; border-radius: 50%; font-size: 24px; line-height: 1; color: var(--ink-55); }
+.world-card-model { aspect-ratio: 1; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: radial-gradient(circle at 50% 55%, #fff 0 60%, rgba(220, 231, 226, .6) 100%); box-shadow: inset 0 0 0 1.5px #fff, inset 0 0 24px rgba(255, 255, 255, .9), 0 18px 40px rgba(24, 40, 37, .1); }
+.world-card-model img { width: 88%; height: 88%; object-fit: cover; border-radius: 50%; mix-blend-mode: multiply; }
+.world-card-body { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.world-close { position: absolute; right: 16px; top: 12px; width: 40px; height: 40px; border-radius: 50%; font-size: 26px; line-height: 1; color: var(--ink-55); }
 .world-close:hover { background: rgba(24, 40, 37, .06); color: var(--ink); }
-.world-thumb { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; align-self: center; box-shadow: inset 0 0 0 1px #fff, 0 10px 26px rgba(24, 40, 37, .12); }
 .world-kicker { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-55); }
-.world-panel h2 { font-size: 28px; line-height: 1.1; letter-spacing: -0.03em; }
-.world-desc { font-size: 15px; line-height: 1.5; color: var(--ink-70); }
-.world-price { font-size: 17px; font-weight: 700; }
-.world-votes { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
-.wv { width: 48px; height: 48px; border-radius: 50%; font-size: 18px; background: rgba(255, 255, 255, .9); box-shadow: var(--glass-shadow); transition: transform .15s var(--spring), background .15s ease, color .15s ease; }
+.world-card h2 { font-family: "Bricolage Grotesque", var(--font); font-size: clamp(28px, 3vw, 40px); line-height: 1.05; letter-spacing: -0.03em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.world-desc { font-size: 16px; line-height: 1.5; color: var(--ink-70); }
+.world-price { font-size: 18px; font-weight: 700; }
+.world-votes { display: flex; gap: 10px; margin-top: 4px; }
+.wv { display: inline-flex; align-items: center; gap: 8px; height: 48px; padding: 0 18px; border-radius: 100px; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; background: rgba(255, 255, 255, .9); box-shadow: var(--glass-shadow); transition: transform .15s var(--spring), background .15s ease, color .15s ease; }
 .wv:hover { transform: translateY(-2px); }
 .wv.up.on { background: #2E7D5B; color: #fff; }
 .wv.down.on { background: #B0102D; color: #fff; }
-.wv-score { min-width: 36px; text-align: center; font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
-.wv-split { width: 100%; font-size: 13px; color: var(--ink-55); }
-.world-actions { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
-.world-launch { height: 56px; font-size: 17px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+.world-launch { height: 56px; margin-top: 8px; font-size: 17px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
 .world-launch:hover { background: var(--ink); color: var(--cream); }
+@media (max-width: 760px) {
+  .world-card { grid-template-columns: 1fr; padding: 28px 22px; }
+  .world-card-model { width: 60%; justify-self: center; }
+}
 .world-bar { position: absolute; left: 0; right: 0; bottom: max(28px, env(safe-area-inset-bottom)); display: flex; justify-content: center; z-index: 22; pointer-events: none; }
 .world-organize { pointer-events: auto; width: auto; height: 56px; padding: 0 32px; font-size: 18px; font-weight: 700; box-shadow: 0 12px 30px rgba(24, 40, 37, .14); transition: transform .18s var(--spring), background .18s ease, color .18s ease; }
 .world-organize:hover { transform: translateY(-2px); background: var(--ink); color: var(--cream); }
 
 /* ---------- v2 type and words ---------- */
-.v2 .title-product, .v2 .title-edit, .v2 .res-head h1, .v2 .world-title, .v2 .line, .v2 .world-panel h2 { font-family: "Bricolage Grotesque", var(--font); }
+.v2 .title-product, .v2 .title-edit, .v2 .res-head h1, .v2 .world-title, .v2 .line, .v2 .world-card h2 { font-family: "Bricolage Grotesque", var(--font); }
 /* The genie's words in color, the shopper's in grey. */
 .v2 .line.genie { color: #2E7A66; }
 .v2 .line.you, .v2 .line.interim { color: var(--ink-55); }
@@ -1065,3 +1093,43 @@ p { margin: 0; }
   .app.mode-voice.has-product.v2-product .orb-slot { left: calc(var(--stage) / 2 + 6vw); }
   .app.mode-voice.has-product.v2-product .hdr { margin-left: calc(-1 * (var(--stage) + 11vw) + 24px); }
 }
+
+/* ---------- v2 editor: hint at the cursor, See matches right under the name ---------- */
+.cursor-hint {
+  position: fixed; left: 0; top: 0; z-index: 70; pointer-events: none; white-space: nowrap;
+  font-family: "Bricolage Grotesque", var(--font); font-size: 14px; font-weight: 600; color: var(--ink-55);
+  text-shadow: 0 1px 0 #fff, 0 0 8px rgba(255, 252, 247, .9); opacity: 0; transition: opacity .25s ease;
+}
+.cursor-hint.on { opacity: 1; }
+@media (hover: none) { .cursor-hint { display: none; } }
+.app.v2-product > * { order: 10; }
+.app.v2-product > .hdr { order: 0; }
+.app.v2-product > .title-product { order: 1; }
+.app.v2-product > .product-size { order: 2; }
+.app.v2-product > .v2-actions { order: 3; }
+.app.v2-product > .wavebox { order: 4; }
+.app.v2-product > .speech { order: 5; }
+.app.mode-voice.v2-product .v2-actions { margin: 28px 0 0; max-width: 560px; }
+
+/* See matches: on hover it turns into a shifting wash of the brand colors with sparkles drifting up. */
+.v2-see { position: relative; overflow: hidden; isolation: isolate; }
+.v2-see::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0; transition: opacity .35s ease;
+  background: linear-gradient(110deg, #F2D88A, #F4A8C8, #C9C1F2, #A9D8C8, #F2D88A); background-size: 300% 100%;
+  animation: seeShift 4s linear infinite;
+}
+.v2-see::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0; transition: opacity .35s ease; pointer-events: none;
+  background-image:
+    radial-gradient(circle, #fff 0 1.6px, transparent 2.6px), radial-gradient(circle, #fff 0 1.1px, transparent 2px),
+    radial-gradient(circle, rgba(255, 255, 255, .9) 0 1.3px, transparent 2.3px);
+  background-size: 70px 46px, 110px 62px, 46px 38px; background-position: 0 0, 30px 20px, 12px 8px;
+  animation: seeSpark 2.6s linear infinite;
+}
+.v2-see:hover {
+  background: transparent; color: var(--ink); transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .85), 0 18px 44px rgba(244, 168, 200, .45), 0 0 70px rgba(242, 216, 138, .45);
+}
+.v2-see:hover::before, .v2-see:hover::after { opacity: 1; }
+@keyframes seeShift { to { background-position: -300% 0; } }
+@keyframes seeSpark { to { background-position: 0 -46px, 30px -42px, 12px -30px; } }

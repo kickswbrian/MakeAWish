@@ -15,7 +15,8 @@
     "test": "npm test -w shared && npm test -w server",
     "brain:test": "npm run brain:test -w server",
     "demo:reset": "npm run demo:reset -w server --",
-    "tap:demo": "npm run tap:demo -w server --"
+    "tap:demo": "npm run tap:demo -w server --",
+    "world:seed": "npm run world:seed -w server --"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
