@@ -19,7 +19,7 @@ interface Row {
   best: number | null; up: number; down: number; mine: number | null; campaign_id: string | null;
 }
 
-const WORLD_SIZE = 60;
+const WORLD_SIZE = 120;
 
 export function listWorld(voter: string | null, include: string | null): WorldItem[] {
   // Searched wishes whose best store listing wasn't "this is it", newest first, plus the asking

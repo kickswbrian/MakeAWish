@@ -1221,3 +1221,14 @@ p { margin: 0; }
 
 /* The arrow icon draws in ink by default: follow the button text (white on the dark Buy). */
 .mx-buy svg, .mx-buy svg * { stroke: currentColor; }
+
+/* Wish World card: the live model over its thumbnail (which shows while the model loads). */
+.world-card-model { position: relative; }
+.world-card-model img { transition: opacity .4s ease .3s; }
+.world-card-model.live img { opacity: 0; }
+.world-card-stage { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; cursor: grab; animation: fadeOnly .6s ease .2s both; }
+.world-card-stage:active { cursor: grabbing; }
+.world-card-stage canvas { width: 100% !important; height: 100% !important; }
+
+/* Breathing room between the description and the votes / Remix row. */
+.world-card .world-votes { margin-top: 18px; }

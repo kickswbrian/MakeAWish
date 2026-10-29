@@ -1045,7 +1045,8 @@ export default function Studio() {
             onTransform={(id, tr) => applyLocal([{ op: "update", id, changes: { transform: tr } }])}
             onGl={onGl}
             onShown={setShownId}
-            paused={introHidden}
+            // Also while the Wish World covers it (its card shows models in a canvas of its own).
+            paused={introHidden || (mode === "world" && worldLanded && !launchOpen)}
             // Not while the page loads, the intro plays, or the screen is changing (each compile stalls a frame).
             deferWarmup={!settled || (v2 && phase !== "done") || leaving || entering}
             // The v2 wish screen: the showroom piece bigger in its bubble, and without the ambient

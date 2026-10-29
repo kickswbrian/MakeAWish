@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { WorldItem } from "@wishit/shared";
+import type { Product, WorldItem } from "@wishit/shared";
+import Stage from "../three/Stage.tsx";
 import { api } from "../lib/api.ts";
 import { voterId } from "./Upvote.tsx";
 import { CategoryIcon } from "./Icons.tsx";
@@ -109,6 +110,17 @@ export function WishWorld({ wishId, yourTitle, yourThumb, landed, onLaunch, onRe
   }, [items, wishId, yourTitle, yourThumb]);
   const pos = useMemo(() => (tidy ? organized(all) : floating(all, wishId)), [all, tidy, wishId]);
   const selected = all.find((it) => it.id === sel) ?? null;
+  // The open card's real model (the thumbnail stands in until it arrives).
+  const [model, setModel] = useState<Product | null>(null);
+  useEffect(() => {
+    setModel(null);
+    if (!sel) return;
+    let cancelled = false;
+    void api.getWish(sel).then((w) => !cancelled && setModel(w.product)).catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [sel]);
   // The order bubbles settle into place when organizing (a ripple outward, not all at once).
   const order = useMemo(() => new Map([...pos.entries()].sort((a, b) => Math.hypot(a[1].x, a[1].y) - Math.hypot(b[1].x, b[1].y)).map(([id], i) => [id, i])), [pos]);
 
@@ -247,11 +259,24 @@ export function WishWorld({ wishId, yourTitle, yourThumb, landed, onLaunch, onRe
       {items && all.length <= 1 && <p className="world-empty">No other wishes floating here yet. Yours is the first.</p>}
 
       {selected && (
-        <div className="world-pop" role="dialog" aria-label={selected.title} onClick={(e) => e.target === e.currentTarget && setSel(null)}>
+        <div
+          className="world-pop"
+          role="dialog"
+          aria-label={selected.title}
+          onClick={(e) => e.target === e.currentTarget && setSel(null)}
+          // Scrolling over the card zooms the model, not the world behind it.
+          onWheel={(e) => e.stopPropagation()}
+        >
           <div className="world-card">
             <button className="world-close" aria-label="Close" onClick={() => setSel(null)}>×</button>
-            <div className="world-card-model">
+            {/* The real model: drag to turn it, scroll to zoom. */}
+            <div className={`world-card-model ${model ? "live" : ""}`}>
               {selected.thumb ? <img src={selected.thumb} alt="" /> : <CategoryIcon category={selected.category ?? "generic"} size={120} />}
+              {model && (
+                <div className="world-card-stage">
+                  <Stage key={model.id} product={model} framing="bubble" transparent interactive preload={false} />
+                </div>
+              )}
             </div>
             <div className="world-card-body">
               {selected.id === wishId && <span className="world-kicker">Your wish</span>}
