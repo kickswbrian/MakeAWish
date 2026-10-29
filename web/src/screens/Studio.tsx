@@ -877,7 +877,7 @@ export default function Studio() {
   }, [v2, phase, select]);
   const lastCaption = voice.captions[voice.captions.length - 1];
   const idle = useIdle(
-    `${voice.interim}|${lastCaption?.id ?? ""}|${voice.state}|${voice.active}|${busy}|${typing}|${text}`,
+    `${voice.interim}|${lastCaption?.id ?? ""}|${voice.state}|${voice.active}|${busy}`,
     v2Landing && phase === "done" && !busy && !voice.interim && (voice.state === "idle" || voice.state === "listening"),
     // Right away until something's been said; after that, once the last caption has had a moment.
     lastCaption ? 8000 : 0,
