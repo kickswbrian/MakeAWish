@@ -1108,14 +1108,17 @@ p { margin: 0; }
 }
 .cursor-hint.on { opacity: 1; }
 @media (hover: none) { .cursor-hint { display: none; } }
-.app.v2-product > * { order: 10; }
-.app.v2-product > .hdr { order: 0; }
-.app.v2-product > .title-product { order: 1; }
-.app.v2-product > .product-size { order: 2; }
-.app.v2-product > .v2-actions { order: 3; }
-.app.v2-product > .wavebox { order: 4; }
-.app.v2-product > .speech { order: 5; }
-.app.mode-voice.v2-product .v2-actions { margin: 28px 0 0; max-width: 560px; }
+/* Wide layout only: on narrow screens the bubble sits in the flow, and moving these up would put them under it. */
+@media (min-width: 1100px) and (min-aspect-ratio: 5/4) {
+  .app.v2-product > * { order: 10; }
+  .app.v2-product > .hdr { order: 0; }
+  .app.v2-product > .title-product { order: 1; }
+  .app.v2-product > .product-size { order: 2; }
+  .app.v2-product > .v2-actions { order: 3; }
+  .app.v2-product > .wavebox { order: 4; }
+  .app.v2-product > .speech { order: 5; }
+  .app.mode-voice.v2-product .v2-actions { margin: 28px 0 0; max-width: 560px; }
+}
 
 /* See matches: on hover it turns into a shifting wash of the brand colors with sparkles drifting up. */
 .v2-see { position: relative; overflow: hidden; isolation: isolate; }
