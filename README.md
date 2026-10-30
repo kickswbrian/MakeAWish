@@ -168,7 +168,9 @@ Each model has a config in `tools/prep-garments/models/<id>.json`: split rules, 
 
 ### Deploy
 
-`render.yaml` defines a single Render web service with a persistent disk for SQLite. Create it as a Blueprint from this repo, set `PUBLIC_URL` to its HTTPS address, and add your keys. In production the server refuses to start without an HTTPS `PUBLIC_URL`, an `ADMIN_TOKEN` (Render generates one) and, if Stripe is configured, a webhook secret. Register `https://<host>/api/stripe/webhook` for the `payment_intent.*` events.
+`render.yaml` defines a single web service on Render's free plan. Create it as a Blueprint from this repo, set `PUBLIC_URL` to its HTTPS address (e.g. `https://wish-it.onrender.com`), and add your Anthropic, Cartesia and Apify keys. Card holds are simulated. In production the server refuses to start without an HTTPS `PUBLIC_URL` and an `ADMIN_TOKEN` (Render generates one).
+
+The free plan sleeps after 15 minutes idle (the next visit takes about a minute to wake it) and has no disk, so the SQLite data resets on every restart or redeploy.
 
 ## Repo layout
 
