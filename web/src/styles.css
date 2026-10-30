@@ -1128,11 +1128,8 @@ p { margin: 0; }
 }
 .v2-see::after {
   content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0; transition: opacity .35s ease; pointer-events: none;
-  background-image:
-    radial-gradient(circle, #fff 0 1.6px, transparent 2.6px), radial-gradient(circle, #fff 0 1.1px, transparent 2px),
-    radial-gradient(circle, rgba(255, 255, 255, .9) 0 1.3px, transparent 2.3px);
-  background-size: 70px 46px, 110px 62px, 46px 38px; background-position: 0 0, 30px 20px, 12px 8px;
-  animation: seeSpark 2.6s linear infinite;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 64' width='120' height='64'%3E%3Cpath fill='white' fill-opacity='1' transform='translate(18 14) scale(0.455)' d='M0 -11C1 -2 2 -1 11 0C2 1 1 2 0 11C-1 2 -2 1 -11 0C-2 -1 -1 -2 0 -11Z'/%3E%3Cpath fill='white' fill-opacity='0.85' transform='translate(70 44) scale(0.318)' d='M0 -11C1 -2 2 -1 11 0C2 1 1 2 0 11C-1 2 -2 1 -11 0C-2 -1 -1 -2 0 -11Z'/%3E%3Cpath fill='white' fill-opacity='0.75' transform='translate(104 22) scale(0.227)' d='M0 -11C1 -2 2 -1 11 0C2 1 1 2 0 11C-1 2 -2 1 -11 0C-2 -1 -1 -2 0 -11Z'/%3E%3Cpath fill='white' fill-opacity='0.7' transform='translate(44 54) scale(0.182)' d='M0 -11C1 -2 2 -1 11 0C2 1 1 2 0 11C-1 2 -2 1 -11 0C-2 -1 -1 -2 0 -11Z'/%3E%3Cpath fill='white' fill-opacity='0.6' transform='translate(88 8) scale(0.182)' d='M0 -11C1 -2 2 -1 11 0C2 1 1 2 0 11C-1 2 -2 1 -11 0C-2 -1 -1 -2 0 -11Z'/%3E%3C/svg%3E"); background-repeat: repeat; background-size: 120px 64px;
+  animation: seeSpark 7s linear infinite;
 }
 .v2-see:hover {
   background: transparent; color: var(--ink); transform: translateY(-3px) scale(1.02);
@@ -1140,7 +1137,7 @@ p { margin: 0; }
 }
 .v2-see:hover::before, .v2-see:hover::after { opacity: 1; }
 @keyframes seeShift { to { background-position: -300% 0; } }
-@keyframes seeSpark { to { background-position: 0 -46px, 30px -42px, 12px -30px; } }
+@keyframes seeSpark { from { background-position: 0 0; } to { background-position: 240px 0; } }
 
 /* ---------- Matches: product cards, a green sort pill on the right, the magic "Can't find it?" ---------- */
 .res-sub { justify-content: space-between; }
