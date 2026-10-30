@@ -20,6 +20,7 @@ import { resetDemo } from "./demo.ts";
 import { listWorld, voteWish } from "./world.ts";
 import { handleStripeEvent, mockConfirm, stripe } from "./payments.ts";
 import { agentAttack, agentPledge, handleAgentPledge, type Attack } from "./agent.ts";
+import { agentBuy, handleAgentOrder, ORDER_PATH } from "./orders.ts";
 import { lookupKey } from "./tap.ts";
 import { isInternal } from "./internal.ts";
 import { appendTranscript, createWish, getWish, saveProduct, saveThumb, setWishStatus, toWishDTO } from "./wishes.ts";
@@ -81,6 +82,13 @@ app.post("/api/agent/campaigns/:id/pledges", limits.agent, express.raw({ type: "
   const r = await handleAgentPledge(req.params.id, { host: req.headers.host ?? "", path: req.originalUrl.split("?")[0], headers: req.headers, rawBody, internal: isInternal(req) });
   res.status(r.status).json(r.body);
 }));
+
+// Agent purchase of a store listing, merchant side (same TAP checks; raw body for the digest).
+app.post(ORDER_PATH, limits.agent, express.raw({ type: "application/json", limit: "20kb" }), (req, res) => {
+  const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+  const r = handleAgentOrder({ host: req.headers.host ?? "", path: req.originalUrl.split("?")[0], headers: req.headers, rawBody });
+  res.status(r.status).json(r.body);
+});
 
 app.use(express.json({ limit: "400kb" }));
 
@@ -279,6 +287,14 @@ app.post("/api/campaigns/:id/agent-pledge", limits.agentPledge, wrap(async (req,
   const maxCents = Math.round(Number(req.body?.maxCents ?? c.priceCents));
   if (!Number.isFinite(maxCents) || maxCents < 50 || maxCents > 1_000_000) throw badRequest("Pick a spending limit.");
   const r = await agentPledge(c.id, email, maxCents);
+  res.status(r.status).json(r.body);
+}));
+
+/** "Purchase" on a match card: the genie buys that listing for the shopper (a test-mode order). */
+app.post("/api/wish/:id/agent-buy", limits.agentPledge, wrap(async (req, res) => {
+  const url = String(req.body?.url ?? "");
+  if (!/^https?:\/\//.test(url) || url.length > 2000) throw badRequest("Which listing?");
+  const r = await agentBuy(req.params.id, url);
   res.status(r.status).json(r.body);
 }));
 

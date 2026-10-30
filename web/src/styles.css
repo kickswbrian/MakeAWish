@@ -1255,3 +1255,53 @@ p { margin: 0; }
 .sort-dd-opt:hover, .sort-dd-opt:focus-visible { background: #EEF5F1; outline: none; }
 .sort-dd-opt[aria-selected="true"] { color: #1F4D3B; }
 .sort-dd-opt[aria-selected="true"]::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #2E7A66; }
+
+/* ---------- /wishlist: two big choices ---------- */
+.app.wl-choose { max-width: none; padding: 0 40px; justify-content: center; align-items: center; gap: 44px; }
+.wl-choose-title { font-family: "Bricolage Grotesque", var(--font); font-size: clamp(40px, 5vw, 72px); letter-spacing: -0.04em; text-align: center; }
+.wl-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; width: min(1100px, 100%); }
+.wl-choice {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; padding: 56px 36px 48px; border-radius: 40px;
+  color: var(--ink); text-decoration: none; background: linear-gradient(160deg, rgba(255, 255, 255, .95), rgba(246, 250, 248, .85));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .9), 0 20px 50px rgba(24, 40, 37, .08);
+  transition: transform .25s var(--spring), box-shadow .25s ease;
+}
+.wl-choice:hover { transform: translateY(-6px); box-shadow: inset 0 0 0 1px #fff, 0 30px 70px rgba(24, 40, 37, .14); }
+.wl-orb {
+  position: relative; width: 180px; height: 180px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 10px;
+  background: radial-gradient(circle at 32% 26%, #fff 0 6%, transparent 18%), radial-gradient(circle at 50% 55%, rgba(255, 255, 255, .2) 0 55%, rgba(255, 255, 255, .7) 85%, rgba(220, 231, 226, .6) 100%);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .9), inset 0 0 26px rgba(255, 255, 255, .9), 0 0 0 1px rgba(244, 168, 200, .35), 0 24px 50px rgba(197, 216, 207, .4);
+  animation: float 6s ease-in-out infinite;
+}
+.wl-choice:hover .wl-orb svg { animation: ctaSpin 1.2s cubic-bezier(.65, 0, .35, 1); }
+.wl-orb.wl-world { background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, .5), rgba(249, 198, 220, .25) 70%, rgba(201, 231, 219, .4)); }
+.wl-orb.wl-world i { position: absolute; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff 0 12%, rgba(255, 255, 255, .5) 60%, rgba(244, 168, 200, .35)); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .9), 0 6px 14px rgba(24, 40, 37, .08); animation: wbob 4s ease-in-out infinite; }
+.wl-orb.wl-world i:nth-child(1) { width: 62px; height: 62px; left: 58px; top: 54px; }
+.wl-orb.wl-world i:nth-child(2) { width: 38px; height: 38px; left: 26px; top: 34px; animation-delay: -1s; }
+.wl-orb.wl-world i:nth-child(3) { width: 44px; height: 44px; left: 116px; top: 30px; animation-delay: -2s; }
+.wl-orb.wl-world i:nth-child(4) { width: 30px; height: 30px; left: 34px; top: 116px; animation-delay: -3s; }
+.wl-orb.wl-world i:nth-child(5) { width: 40px; height: 40px; left: 112px; top: 112px; animation-delay: -1.5s; }
+.wl-choice-name { font-family: "Bricolage Grotesque", var(--font); font-size: clamp(30px, 3vw, 44px); font-weight: 800; letter-spacing: -0.03em; }
+.wl-choice-sub { font-size: 17px; line-height: 1.45; color: var(--ink-70); max-width: 340px; }
+@media (max-width: 760px) {
+  .wl-choices { grid-template-columns: 1fr; }
+  .app.wl-choose { padding: 32px 16px; justify-content: flex-start; height: auto; min-height: 100dvh; overflow: visible; }
+}
+/* /world on its own page. */
+.app.world-page { height: 100dvh; }
+
+/* ---------- Purchase on a match card (agent checkout) ---------- */
+.mcardx { position: relative; }
+.mx-link { display: block; }
+.mx-site { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-55); text-decoration: none; }
+.mx-site:hover { color: var(--ink); text-decoration: underline; }
+.mx-site svg, .mx-site svg * { stroke: currentColor; }
+button.mx-buy { border: 0; cursor: pointer; font: inherit; font-size: 14px; font-weight: 700; transition: background .15s ease, transform .15s var(--spring); }
+button.mx-buy:hover { background: #2E7A66; transform: translateY(-1px); }
+button.mx-buy.confirm { background: #2E7A66; box-shadow: 0 0 0 3px rgba(46, 122, 102, .25); }
+button.mx-buy.buying { background: var(--ink-55); cursor: progress; }
+.mx-done { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; padding: 10px 12px; border-radius: 14px; background: #E3F1EA; color: #1F4D3B; animation: fadeIn .35s ease both; }
+.mx-done b { font-size: 15px; }
+.mx-done small { font-size: 12px; color: #3D6B58; }
+.mcardx.bought { box-shadow: inset 0 0 0 2px #7FBFA5, 0 14px 34px rgba(24, 40, 37, .08); }
+.mx-fail { font-size: 13px; color: #B0102D; }

@@ -36,10 +36,12 @@ function hue(hex: string | null): number {
 /** Floating: a sunflower spiral around your wish, ordered by color so similar colors sit together. */
 function floating(items: WorldItem[], yours: string): Map<string, Pos> {
   const out = new Map<string, Pos>();
-  out.set(yours, { x: 0, y: 0, size: YOUR_SIZE, depth: 1 });
+  const hasYours = items.some((it) => it.id === yours);
+  if (hasYours) out.set(yours, { x: 0, y: 0, size: YOUR_SIZE, depth: 1 });
   const others = items.filter((it) => it.id !== yours).sort((a, b) => hue(a.color) - hue(b.color));
   others.forEach((it, i) => {
-    const n = i + 1;
+    // With no wish of your own in the middle, the spiral starts there.
+    const n = hasYours ? i + 1 : i;
     const depth = 0.55 + 0.45 * hash(it.id);
     const r = 118 * Math.sqrt(n) + 95;
     const a = n * 2.39996;
@@ -71,13 +73,14 @@ const Arrow = ({ down, size = 18 }: { down?: boolean; size?: number }) => (
   </svg>
 );
 
-export function WishWorld({ wishId, yourTitle, yourThumb, landed, onLaunch, onRemix }: {
-  wishId: string;
-  yourTitle: string;
-  yourThumb: string | null;
+export function WishWorld({ wishId = "", yourTitle = "", yourThumb = null, landed = true, onLaunch, onRemix }: {
+  /** Your wish, floating in the middle (none when the world is opened on its own). */
+  wishId?: string;
+  yourTitle?: string;
+  yourThumb?: string | null;
   /** Your bubble has arrived (until then the 3D bubble flying in stands in for it). */
-  landed: boolean;
-  onLaunch: () => void;
+  landed?: boolean;
+  onLaunch?: () => void;
   /** Start a new wish from this one, in the editor. */
   onRemix: (id: string) => void;
 }) {
@@ -91,7 +94,7 @@ export function WishWorld({ wishId, yourTitle, yourThumb, landed, onLaunch, onRe
 
   useEffect(() => {
     let cancelled = false;
-    void api.world(voterId(), wishId).then((list) => !cancelled && setItems(list)).catch(() => !cancelled && setItems([]));
+    void api.world(voterId(), wishId || undefined).then((list) => !cancelled && setItems(list)).catch(() => !cancelled && setItems([]));
     return () => {
       cancelled = true;
     };
@@ -100,6 +103,7 @@ export function WishWorld({ wishId, yourTitle, yourThumb, landed, onLaunch, onRe
   // Your own bubble always floats (with your latest render and name), even before its search finishes.
   const all = useMemo(() => {
     if (!items) return [];
+    if (!wishId) return items;
     const mine = items.find((it) => it.id === wishId);
     const you: WorldItem = {
       ...(mine ?? { id: wishId, description: null, category: null, priceUsd: null, color: null, score: 0, up: 0, down: 0, myVote: 0, campaignId: null, createdAt: Date.now() }),
@@ -314,10 +318,10 @@ export function WishWorld({ wishId, yourTitle, yourThumb, landed, onLaunch, onRe
                   </button>
                 )}
               </div>
-              {selected.id === wishId ? (
+              {selected.id === wishId && onLaunch ? (
                 <button className="pill world-launch" onClick={onLaunch}>Make it real: launch a campaign</button>
               ) : selected.campaignId ? (
-                <a className="pill world-launch" href={`/c/${selected.campaignId}`}>Back this wish</a>
+                <a className="pill world-launch" href={`/campaign/${selected.campaignId}`}>Back this wish</a>
               ) : null}
             </div>
           </div>

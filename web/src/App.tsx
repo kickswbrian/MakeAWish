@@ -6,6 +6,7 @@ const Studio = lazy(() => import("./screens/Studio.tsx"));
 const CampaignRoute = lazy(() => import("./screens/CampaignRoute.tsx"));
 const Pledge = lazy(() => import("./screens/Pledge.tsx"));
 const Wishlist = lazy(() => import("./screens/Wishlist.tsx"));
+const World = lazy(() => import("./screens/World.tsx"));
 const Debug = lazy(() => import("./screens/Debug.tsx"));
 const MaterialLab = lazy(() => import("./screens/MaterialLab.tsx"));
 const KitLab = lazy(() => import("./screens/KitLab.tsx"));
@@ -18,6 +19,7 @@ export function App() {
         <Route path="/campaign/:id" element={<CampaignRoute />} />
         <Route path="/c/:id" element={<Pledge />} />
         <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/world" element={<World />} />
         <Route path="/debug" element={<Debug />} />
         <Route path="/lab/materials" element={<MaterialLab />} />
         <Route path="/lab/kit" element={<KitLab />} />
