@@ -8,7 +8,7 @@ import "../src/world.ts"; // creates the wish_votes table
 /**
  * Seeds the Wish World with demo wishes (genie-built products, and the built-in templates, with their
  * thumbnails, from server/seed/world.json) and demo vote counts. Safe to run again: the seeded wishes keep fixed ids and
- * their seeded votes are replaced, so real votes from visitors stay.
+ * their seeded votes are replaced, so real votes from visitors stay. Seeded wishes dropped from the file are removed.
  *
  *   npm run world:seed
  */
@@ -26,6 +26,11 @@ const addVote = db.prepare("INSERT OR REPLACE INTO wish_votes (wish_id, voter, v
 
 const now = Date.now();
 db.transaction(() => {
+  // The file is the whole demo set: seeded wishes no longer in it go (with their votes).
+  const keep = new Set(seeds.map((s) => `world-${s.key}`));
+  for (const { id } of db.prepare("SELECT id FROM wishes WHERE id LIKE 'world-%'").all() as { id: string }[]) {
+    if (!keep.has(id)) db.prepare("DELETE FROM wishes WHERE id = ?").run(id);
+  }
   seeds.forEach((s, i) => {
     const id = `world-${s.key}`;
     const tpl = s.template ? templateById(s.template) : null;
