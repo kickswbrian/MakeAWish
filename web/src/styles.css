@@ -1311,3 +1311,13 @@ button.mx-buy.buying { background: var(--ink-55); cursor: progress; }
 .mx-done small { font-size: 12px; color: #3D6B58; }
 .mcardx.bought { box-shadow: inset 0 0 0 2px #7FBFA5, 0 14px 34px rgba(24, 40, 37, .08); }
 .mx-fail { font-size: 13px; color: #B0102D; }
+
+/* ---------- Wish screen: the globe to the Wish World ---------- */
+.v2-world-link {
+  position: fixed; right: 26px; bottom: max(24px, env(safe-area-inset-bottom)); z-index: 8; padding: 8px; line-height: 0;
+  color: var(--ink-55); background: none; animation: fadeOnly 1s ease .4s both; transition: color .2s ease, transform .5s cubic-bezier(.2, .9, .3, 1.2);
+}
+.v2-world-link:hover { color: var(--ink); transform: rotate(-25deg) scale(1.15); }
+/* Leaving for the Wish World: the bubble swells and fades, everything else fades first. */
+.app.v2-landing.to-world .orb-slot { transform: translate(-50%, -50%) scale(2.6); opacity: 0; transition: transform .7s cubic-bezier(.5, 0, .2, 1), opacity .6s ease .1s; }
+.app.to-world > :not(.orb-slot):not(.glows) { opacity: 0 !important; transition: opacity .3s ease !important; }
