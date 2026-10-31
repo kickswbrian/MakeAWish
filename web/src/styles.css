@@ -859,7 +859,6 @@ p { margin: 0; }
   flex: 1; height: 68px; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; gap: 14px;
   transition: transform .18s var(--spring), box-shadow .18s ease, background .18s ease;
 }
-.v2-see:hover { transform: translateY(-2px); background: var(--ink); color: var(--cream); box-shadow: 0 14px 30px rgba(24, 40, 37, .22); }
 .v2-see:active { transform: translateY(0) scale(.98); }
 .v2-see-arrow { transition: transform .2s var(--spring); }
 .v2-see:hover .v2-see-arrow { transform: translateX(6px); }
@@ -936,3 +935,379 @@ p { margin: 0; }
 .app.leaving > :not(.orb-slot):not(.glows) { opacity: 0 !important; transition: opacity .35s ease !important; pointer-events: none; }
 /* !important: the edit bar's own entrance animation would otherwise hold it visible. */
 .app.leaving .edit-bar, .app.leaving .tap-hint, .app.leaving .b-overlay { opacity: 0 !important; transition: opacity .25s ease; pointer-events: none; }
+
+/* ---------- Wish World ---------- */
+.app.mode-world { max-width: none; padding: 0; }
+.mode-world .orb-slot { --bubble: 200px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 30; transition: opacity .35s ease; }
+.world-landed .orb-slot { opacity: 0; pointer-events: none; }
+.world-hdr { position: absolute; left: 24px; right: 24px; top: 0; z-index: 20; justify-content: flex-start; gap: 16px; pointer-events: none; }
+.world-hdr > * { pointer-events: auto; }
+.world-title { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; color: var(--ink); }
+.world { position: absolute; inset: 0; overflow: hidden; cursor: grab; touch-action: none; user-select: none; --mx: 0; --my: 0; }
+.world:active { cursor: grabbing; }
+.world-plane { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-origin: 0 0; }
+.world-plane.glide { transition: transform 1.1s cubic-bezier(.16, 1, .3, 1); }
+
+/* Each bubble: placed by left/top, shifted by the mouse according to its depth (parallax). Organizing
+   eases them in and slows to a stop (expo-out), rippling outward from the middle. */
+.wbub {
+  position: absolute; padding: 0; border-radius: 50%; cursor: pointer; z-index: calc(var(--depth) * 100);
+  translate: calc(-50% - var(--mx) * var(--par) * 1px) calc(-50% - var(--my) * var(--par) * 1px);
+  transition: left 1.1s cubic-bezier(.16, 1, .3, 1) var(--k, 0ms), top 1.1s cubic-bezier(.16, 1, .3, 1) var(--k, 0ms),
+    width 1.1s cubic-bezier(.16, 1, .3, 1) var(--k, 0ms), height 1.1s cubic-bezier(.16, 1, .3, 1) var(--k, 0ms), translate .9s cubic-bezier(.2, .8, .2, 1);
+}
+/* Arriving: bubbles drift up out of the haze, nearest first. */
+.world.ready .wbub { animation: wIn 1.4s cubic-bezier(.16, 1, .3, 1) var(--in, 0ms) backwards; }
+@keyframes wIn { from { opacity: 0; scale: .55; } }
+.wbub.waiting { opacity: 0; }
+.wbub-float { position: absolute; inset: 0; display: block; opacity: calc(.38 + .62 * var(--depth)); animation: wbob var(--bob, 6s) ease-in-out var(--d, 0s) infinite; }
+.tidy .wbub-float { animation: none; opacity: 1; }
+@keyframes wbob { 50% { transform: translateY(-12px); } }
+
+/* Soap bubbles, not outlined circles: a clear body, a pearly iridescent rim and a soft highlight. */
+.wbub-glass {
+  position: absolute; inset: 0; border-radius: 50%; overflow: hidden; display: grid; place-items: center;
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .95) 0 5%, rgba(255, 255, 255, 0) 16%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, .05) 0 58%, rgba(255, 255, 255, .45) 80%, rgba(255, 255, 255, .7) 92%, rgba(255, 255, 255, .25) 100%);
+  transition: transform .35s cubic-bezier(.2, .9, .3, 1.2), box-shadow .3s ease;
+  box-shadow: 0 18px 40px rgba(24, 40, 37, .08);
+}
+.wbub-glass::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; opacity: .75;
+  background: conic-gradient(from 210deg, #F9C6DC, #F6E7BF, #C9E7DB, #D9D1F5, #F9C6DC);
+  -webkit-mask: radial-gradient(closest-side, transparent 86%, #000 95%, transparent 100%); mask: radial-gradient(closest-side, transparent 86%, #000 95%, transparent 100%);
+}
+/* Snapshots include the pedestal: zoom in so the model fills the bubble. */
+.wbub-glass img { position: absolute; inset: 9%; width: 82%; height: 82%; object-fit: cover; border-radius: 50%; pointer-events: none; mix-blend-mode: multiply; transform: scale(1.35) translateY(-3%); }
+.wbub:hover { z-index: 200; }
+.wbub:hover .wbub-glass { transform: scale(1.1); box-shadow: 0 0 0 3px rgba(255, 255, 255, .95), 0 0 0 5px rgba(233, 196, 106, .65), 0 24px 50px rgba(24, 40, 37, .14); }
+.wbub.on .wbub-glass, .wbub.yours .wbub-glass { box-shadow: 0 0 0 3px rgba(255, 255, 255, .95), 0 0 0 5px rgba(244, 168, 200, .75), 0 22px 46px rgba(244, 168, 200, .25); }
+.wbub-tag { position: absolute; left: 50%; top: -22px; translate: -50% 0; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #C2638E; white-space: nowrap; }
+
+/* Name and votes under a bubble: on hover while floating, always when organized. */
+.wbub-meta {
+  position: absolute; left: 50%; top: calc(100% + 10px); translate: -50% 0; width: max(160px, 120%);
+  display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none;
+  opacity: 0; transform: translateY(-4px); transition: opacity .2s ease, transform .2s ease;
+}
+.wbub:hover .wbub-meta, .tidy .wbub-meta { opacity: 1; transform: none; }
+.wbub-name { max-width: 100%; font-size: 15px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: "Bricolage Grotesque", var(--font); }
+.wbub:hover .wbub-name { white-space: normal; overflow: visible; text-align: center; }
+.wbub-votes { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink-70); }
+.world-empty { position: absolute; left: 0; right: 0; bottom: 120px; text-align: center; color: var(--ink-55); font-size: 16px; pointer-events: none; }
+
+/* Details: a card over the world, the model on the left, the words and votes on the right. */
+.world-pop { position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px; background: rgba(255, 252, 247, .45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: fadeOnly .25s ease both; cursor: default; }
+.world-card {
+  position: relative; width: min(860px, 100%); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 32px; align-items: center;
+  padding: 36px; border-radius: 34px; background: linear-gradient(160deg, rgba(255, 255, 255, .98), rgba(246, 250, 248, .95));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .9), 0 30px 80px rgba(24, 40, 37, .18); animation: gbIn .35s var(--spring) both;
+}
+.world-card-model { aspect-ratio: 1; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: radial-gradient(circle at 50% 55%, #fff 0 60%, rgba(220, 231, 226, .6) 100%); box-shadow: inset 0 0 0 1.5px #fff, inset 0 0 24px rgba(255, 255, 255, .9), 0 18px 40px rgba(24, 40, 37, .1); }
+.world-card-model img { width: 88%; height: 88%; object-fit: cover; border-radius: 50%; mix-blend-mode: multiply; }
+.world-card-body { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.world-close { position: absolute; right: 16px; top: 12px; width: 40px; height: 40px; border-radius: 50%; font-size: 26px; line-height: 1; color: var(--ink-55); }
+.world-close:hover { background: rgba(24, 40, 37, .06); color: var(--ink); }
+.world-kicker { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-55); }
+.world-card h2 { font-family: "Bricolage Grotesque", var(--font); font-size: clamp(28px, 3vw, 40px); line-height: 1.05; letter-spacing: -0.03em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.world-desc { font-size: 16px; line-height: 1.5; color: var(--ink-70); }
+.world-price { font-size: 18px; font-weight: 700; }
+.world-votes { display: flex; gap: 10px; margin-top: 4px; }
+.wv { display: inline-flex; align-items: center; gap: 8px; height: 48px; padding: 0 18px; border-radius: 100px; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; background: rgba(255, 255, 255, .9); box-shadow: var(--glass-shadow); transition: transform .15s var(--spring), background .15s ease, color .15s ease; }
+.wv:hover { transform: translateY(-2px); }
+.wv.up.on { background: #2E7D5B; color: #fff; }
+.wv.down.on { background: #B0102D; color: #fff; }
+.world-launch { height: 56px; margin-top: 8px; font-size: 17px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+.world-launch:hover { background: var(--ink); color: var(--cream); }
+@media (max-width: 760px) {
+  .world-card { grid-template-columns: 1fr; padding: 28px 22px; }
+  .world-card-model { width: 60%; justify-self: center; }
+}
+.world-bar { position: absolute; left: 0; right: 0; bottom: max(28px, env(safe-area-inset-bottom)); display: flex; justify-content: center; z-index: 22; pointer-events: none; }
+.world-organize { pointer-events: auto; width: auto; height: 56px; padding: 0 32px; font-size: 18px; font-weight: 700; box-shadow: 0 12px 30px rgba(24, 40, 37, .14); transition: transform .18s var(--spring), background .18s ease, color .18s ease; }
+.world-organize:hover { transform: translateY(-2px); background: var(--ink); color: var(--cream); }
+
+/* ---------- v2 type and words ---------- */
+.v2 .title-product, .v2 .title-edit, .v2 .res-head h1, .v2 .world-title, .v2 .line, .v2 .world-card h2 { font-family: "Bricolage Grotesque", var(--font); }
+/* The genie's words in color, the shopper's in grey. */
+.v2 .line.genie { color: #2E7A66; }
+.v2 .line.you, .v2 .line.interim { color: var(--ink-55); }
+.app.mode-voice.v2-product .line { font-size: clamp(22px, 2vw, 30px); line-height: 1.25; font-weight: 700; }
+.v2 .note-row { display: none; }
+.v2-hint { color: var(--ink-55); }
+.v2-muted { color: var(--ink); }
+.v2-muted button { font: inherit; color: inherit; text-decoration: underline; text-underline-offset: .15em; text-decoration-thickness: .08em; cursor: pointer; pointer-events: auto; }
+/* Nothing clips the bubble while it flies between screens. */
+.app.v2.leaving, .app.v2.entering { overflow: visible; }
+
+/* ---------- Matches as plain rows ---------- */
+.res-sub { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.sort-pill {
+  position: relative; display: inline-flex; align-items: center; height: 38px; padding: 0 14px 0 16px; gap: 8px; border-radius: 100px;
+  background: rgba(255, 255, 255, .85); box-shadow: var(--glass-shadow); font-size: 14px; font-weight: 600; color: var(--ink); cursor: pointer;
+}
+.sort-pill select { appearance: none; -webkit-appearance: none; border: 0; outline: none; background: transparent; font: inherit; color: inherit; padding-right: 2px; cursor: pointer; }
+.sort-pill:focus-within { box-shadow: inset 0 0 0 2px var(--ink); }
+.mrows { display: flex; flex-direction: column; }
+.mrow-head, .mrow-item { display: grid; grid-template-columns: 52px minmax(0, 1fr) 140px 90px 84px; align-items: center; gap: 16px; }
+.mrow-head { padding: 0 12px 8px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-55); }
+.mrow-item {
+  padding: 10px 12px; border-radius: 16px; color: var(--ink); text-decoration: none; border-top: 1px solid rgba(24, 40, 37, .07);
+  animation: fadeIn .4s ease both; transition: background .15s ease;
+}
+.mrow-item:hover { background: rgba(255, 255, 255, .7); }
+.mrow-item .mphoto { width: 52px; height: 52px; border-radius: 12px; overflow: hidden; display: grid; place-items: center; background: #fff; }
+.mrow-item .mphoto img { width: 100%; height: 100%; object-fit: cover; }
+.mr-name { font-size: 16px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mr-site { font-size: 14px; color: var(--ink-70); }
+.mr-price { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.mr-buy { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 700; color: var(--ink); justify-self: end; }
+.mrow-item:hover .mr-buy { text-decoration: underline; }
+.mrow-item.ghost b { display: block; height: 14px; border-radius: 6px; background: rgba(24, 40, 37, .07); }
+.mrow-item.ghost b.short { width: 60%; }
+.mrow-item.ghost .mphoto { background: rgba(24, 40, 37, .06); }
+.mshared { margin: 14px 12px 0; font-size: 15px; color: var(--ink-70); }
+@media (max-width: 700px) {
+  .mrow-head { display: none; }
+  .mrow-head, .mrow-item { grid-template-columns: 44px minmax(0, 1fr) auto; }
+  .mr-site { grid-column: 2; grid-row: 2; font-size: 13px; }
+  .mr-price { grid-column: 3; grid-row: 1; }
+  .mr-buy { grid-column: 3; grid-row: 2; }
+}
+
+/* ---------- Matches: the left column is just the name (renamable); back sits top-left ---------- */
+.res-wish .title-product { font-size: clamp(30px, 2.8vw, 44px); line-height: 1.08; text-align: center; white-space: normal; margin: 0; }
+.res-wish .title-edit { text-align: center; }
+.v2.mode-results .hdr > :not(:first-child) { display: none; }
+@media (min-width: 900px) {
+  .app.mode-results .hdr { position: absolute; left: 24px; top: 0; margin: 16px 0 0; z-index: 8; }
+  .app.mode-results .res-head { margin-top: 64px; }
+}
+
+/* ---------- Launch sheet on desktop: the bubble on the left, the details as a card on the right ---------- */
+@media (min-width: 900px) {
+  .app.mode-detail { max-width: 1280px; }
+  .mode-detail .orb-slot { --bubble: min(40vw, calc(100dvh - 220px), 540px); left: 27%; top: 50%; transform: translate(-50%, -50%); }
+  .detail { padding: 0 40px; }
+  .detail .orbit, .detail .spin-hint { display: none; }
+  .detail .dcard {
+    position: absolute; right: 48px; top: 50%; transform: translateY(-50%); width: min(500px, 42vw); margin: 0;
+    border-radius: 34px; padding: 36px 32px 30px; box-shadow: 0 24px 60px rgba(24, 40, 37, .12);
+  }
+}
+
+/* v2 editor on wide screens: the bubble and the text column sit a little further right; the back
+   button stays in the top-left corner. */
+@media (min-width: 1100px) and (min-aspect-ratio: 5/4) {
+  .app.mode-voice.has-product.v2-product { padding-left: calc(var(--stage) + 11vw); padding-right: max(3vw, calc(100vw - var(--stage) - 11vw - 720px)); }
+  .app.mode-voice.has-product.v2-product .orb-slot { left: calc(var(--stage) / 2 + 6vw); }
+  .app.mode-voice.has-product.v2-product .hdr { margin-left: calc(-1 * (var(--stage) + 11vw) + 24px); }
+}
+
+/* ---------- v2 editor: hint at the cursor, See matches right under the name ---------- */
+.cursor-hint {
+  position: fixed; left: 0; top: 0; z-index: 70; pointer-events: none; white-space: nowrap;
+  font-family: "Bricolage Grotesque", var(--font); font-size: 14px; font-weight: 600; color: var(--ink-55);
+  text-shadow: 0 1px 0 #fff, 0 0 8px rgba(255, 252, 247, .9); opacity: 0; transition: opacity .25s ease;
+}
+.cursor-hint.on { opacity: 1; }
+@media (hover: none) { .cursor-hint { display: none; } }
+/* Wide layout only: on narrow screens the bubble sits in the flow, and moving these up would put them under it. */
+@media (min-width: 1100px) and (min-aspect-ratio: 5/4) {
+  .app.v2-product > * { order: 10; }
+  .app.v2-product > .hdr { order: 0; }
+  .app.v2-product > .title-product { order: 1; }
+  .app.v2-product > .product-size { order: 2; }
+  .app.v2-product > .v2-actions { order: 3; }
+  .app.v2-product > .wavebox { order: 4; }
+  .app.v2-product > .speech { order: 5; }
+  .app.mode-voice.v2-product .v2-actions { margin: 28px 0 0; max-width: 560px; }
+}
+
+/* See matches: on hover it turns into a shifting wash of the brand colors with sparkles drifting up. */
+.v2-see { position: relative; overflow: hidden; isolation: isolate; }
+.v2-see::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0; transition: opacity .35s ease;
+  background: linear-gradient(110deg, #F2D88A, #F4A8C8, #C9C1F2, #A9D8C8, #F2D88A); background-size: 300% 100%;
+  animation: seeShift 4s linear infinite;
+}
+.v2-see::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0; transition: opacity .35s ease; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 64' width='120' height='64'%3E%3Cpath fill='white' fill-opacity='1' transform='translate(18 14) scale(0.455)' d='M0 -11C1 -2 2 -1 11 0C2 1 1 2 0 11C-1 2 -2 1 -11 0C-2 -1 -1 -2 0 -11Z'/%3E%3Cpath fill='white' fill-opacity='0.85' transform='translate(70 44) scale(0.318)' d='M0 -11C1 -2 2 -1 11 0C2 1 1 2 0 11C-1 2 -2 1 -11 0C-2 -1 -1 -2 0 -11Z'/%3E%3Cpath fill='white' fill-opacity='0.75' transform='translate(104 22) scale(0.227)' d='M0 -11C1 -2 2 -1 11 0C2 1 1 2 0 11C-1 2 -2 1 -11 0C-2 -1 -1 -2 0 -11Z'/%3E%3Cpath fill='white' fill-opacity='0.7' transform='translate(44 54) scale(0.182)' d='M0 -11C1 -2 2 -1 11 0C2 1 1 2 0 11C-1 2 -2 1 -11 0C-2 -1 -1 -2 0 -11Z'/%3E%3Cpath fill='white' fill-opacity='0.6' transform='translate(88 8) scale(0.182)' d='M0 -11C1 -2 2 -1 11 0C2 1 1 2 0 11C-1 2 -2 1 -11 0C-2 -1 -1 -2 0 -11Z'/%3E%3C/svg%3E"); background-repeat: repeat; background-size: 120px 64px;
+  animation: seeSpark 7s linear infinite;
+}
+.v2-see:hover {
+  background: transparent; color: var(--ink); transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .85), 0 18px 44px rgba(244, 168, 200, .45), 0 0 70px rgba(242, 216, 138, .45);
+}
+.v2-see:hover::before, .v2-see:hover::after { opacity: 1; }
+@keyframes seeShift { to { background-position: -300% 0; } }
+@keyframes seeSpark { from { background-position: 0 0; } to { background-position: 240px 0; } }
+
+/* ---------- Matches: product cards, a green sort pill on the right, the magic "Can't find it?" ---------- */
+.res-sub { justify-content: space-between; }
+.sort-pill { background: #DCEBE2; color: #1F4D3B; box-shadow: none; margin-left: auto; }
+.sort-pill:hover { background: #CFE3D7; }
+.sort-pill:focus-within { box-shadow: inset 0 0 0 2px #1F4D3B; }
+.scroll { display: flex; flex-direction: column; }
+.mcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
+.mcardx {
+  display: flex; flex-direction: column; border-radius: 26px; overflow: hidden; color: var(--ink); text-decoration: none;
+  background: rgba(255, 255, 255, .88); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .9), 0 14px 34px rgba(24, 40, 37, .08);
+  animation: cardIn .6s cubic-bezier(.2, .9, .3, 1.15) both; transition: transform .2s var(--spring), box-shadow .2s ease;
+}
+.mcardx:hover { transform: translateY(-4px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .9), 0 22px 48px rgba(24, 40, 37, .14); }
+.mcardx .mphoto { aspect-ratio: 4 / 3; width: 100%; display: grid; place-items: center; background: #fff; overflow: hidden; }
+.mcardx .mphoto img { width: 100%; height: 100%; object-fit: contain; padding: 14px; }
+.mx-body { display: flex; flex-direction: column; gap: 6px; padding: 14px 18px 18px; }
+.mx-site { font-size: 13px; font-weight: 600; color: var(--ink-55); }
+.mx-name { font-size: 17px; font-weight: 700; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.6em; }
+.mx-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+.mx-price { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.mx-buy { display: inline-flex; align-items: center; gap: 4px; height: 38px; padding: 0 16px; border-radius: 100px; font-size: 14px; font-weight: 700; background: var(--ink); color: var(--cream); }
+.mcardx:hover .mx-buy { background: #2E7A66; }
+.mcardx.ghost .mphoto { background: rgba(24, 40, 37, .05); }
+.mcardx.ghost b { display: block; height: 14px; border-radius: 6px; background: rgba(24, 40, 37, .07); }
+.mcardx.ghost b.short { width: 50%; }
+/* The "none of these have..." line, and the empty state, sit in the middle of the space that's left. */
+.mshared, .scroll > .empty-magic { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; min-height: 90px; margin: 12px 0 0; }
+
+.cta-magic { position: relative; overflow: hidden; isolation: isolate; justify-content: flex-start; }
+.cta-fill {
+  position: absolute; right: 8px; top: 8px; bottom: 8px; width: 48px; z-index: 0; display: flex; align-items: center;
+  border-radius: 100px; background: rgba(24, 40, 37, .92); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2);
+  transition: width .8s cubic-bezier(.65, 0, .35, 1);
+}
+.cta-star { flex: none; width: 48px; height: 48px; display: grid; place-items: center; }
+.cta-magic:hover .cta-fill { width: calc(100% - 16px); }
+.cta-magic:hover .cta-star { animation: ctaSpin .8s cubic-bezier(.65, 0, .35, 1) both; }
+@keyframes ctaSpin { to { transform: rotate(540deg); } }
+.cta-text {
+  position: absolute; left: 28px; top: 50%; translate: 0 -50%; z-index: 1; white-space: nowrap;
+  transition: left .8s cubic-bezier(.65, 0, .35, 1), translate .8s cubic-bezier(.65, 0, .35, 1), color .3s ease .25s;
+}
+.cta-magic:hover .cta-text { left: 50%; translate: -50% -50%; color: #fff; }
+@media (min-width: 900px) {
+  /* As far up from the bottom as the "N matches found" heading is down from the top. */
+  .mode-results .bottom-cta { bottom: 64px; }
+  .mode-results .scroll { padding-bottom: 170px; }
+}
+
+/* ---------- Wish World: votes in the hover, Remix in the card ---------- */
+.wbub:focus-visible { outline: none; }
+.wbub:focus-visible .wbub-glass { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--ink); }
+/* The meta's top padding bridges the gap to the bubble, so the hover (and its vote buttons) holds. */
+.wbub-meta { top: 100%; padding-top: 10px; }
+.wbub:hover .wbub-meta { pointer-events: auto; }
+.tidy .wbub-meta { pointer-events: auto; }
+.wbub-votes { gap: 2px; padding: 2px; border-radius: 100px; background: rgba(255, 255, 255, .92); box-shadow: 0 4px 14px rgba(24, 40, 37, .1); }
+.wbub-votes b { min-width: 34px; text-align: center; font-size: 13px; color: var(--ink); }
+.wbv { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: var(--ink-55); transition: background .15s ease, color .15s ease; }
+.wbv:hover { background: rgba(24, 40, 37, .07); color: var(--ink); }
+.wbv.on.up { background: #2E7D5B; color: #fff; }
+.wbv.on.down { background: #B0102D; color: #fff; }
+.world-votes { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.wv-group { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 100px; background: rgba(255, 255, 255, .9); box-shadow: var(--glass-shadow); }
+.wv-group .wv { width: 44px; height: 44px; padding: 0; justify-content: center; box-shadow: none; background: transparent; }
+.wv-group .wv:hover { background: rgba(24, 40, 37, .06); transform: none; }
+.wv-score { min-width: 54px; text-align: center; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.wv-remix {
+  display: inline-flex; align-items: center; gap: 8px; height: 52px; padding: 0 22px; border-radius: 100px;
+  font-size: 16px; font-weight: 700; color: var(--ink); background: transparent; box-shadow: inset 0 0 0 2px var(--ink);
+  transition: background .15s ease, color .15s ease;
+}
+.wv-remix:hover { background: var(--ink); color: var(--cream); }
+.wv-remix:hover svg { transform: translate(2px, -2px); }
+.wv-remix svg { transition: transform .2s var(--spring); }
+
+/* The arrow icon draws in ink by default: follow the button text (white on the dark Buy). */
+.mx-buy svg, .mx-buy svg * { stroke: currentColor; }
+
+/* Wish World card: the live model over its thumbnail (which shows while the model loads). */
+.world-card-model { position: relative; }
+.world-card-model img { transition: opacity .4s ease .3s; }
+.world-card-model.live img { opacity: 0; }
+.world-card-stage { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; cursor: grab; animation: fadeOnly .6s ease .2s both; }
+.world-card-stage:active { cursor: grabbing; }
+.world-card-stage canvas { width: 100% !important; height: 100% !important; }
+
+/* Breathing room between the description and the votes / Remix row. */
+.world-card .world-votes { margin-top: 18px; }
+
+/* Remix at the far right of the vote row. */
+.world-card .world-votes { justify-content: space-between; }
+/* The card's model: the thumbnail pulses until the 3D model has drawn its first frame, then hands over. */
+.world-card-model:not(.shown) img { animation: thumbPulse 1.2s ease-in-out infinite; }
+@keyframes thumbPulse { 50% { opacity: .45; } }
+.world-card-model.shown img { opacity: 0; }
+.world-card-stage { opacity: 0; transition: opacity .35s ease; animation: none; }
+.world-card-model.shown .world-card-stage { opacity: 1; }
+
+/* Sort: a custom dropdown (light green pill, menu below). */
+.sort-dd { position: relative; margin-left: auto; }
+.sort-dd-btn {
+  display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px 0 16px; border-radius: 100px;
+  background: #DCEBE2; color: #1F4D3B; font-size: 14px; font-weight: 700; transition: background .15s ease;
+}
+.sort-dd-btn:hover, .sort-dd.open .sort-dd-btn { background: #CFE3D7; }
+.sort-dd-btn svg { transition: transform .2s ease; }
+.sort-dd.open .sort-dd-btn svg { transform: rotate(180deg); }
+.sort-dd-menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; min-width: 220px; padding: 6px; border-radius: 18px;
+  background: #fff; box-shadow: 0 18px 44px rgba(24, 40, 37, .16), inset 0 0 0 1px rgba(24, 40, 37, .06); animation: gbIn .2s var(--spring) both;
+}
+.sort-dd-opt { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; height: 40px; padding: 0 12px; border-radius: 12px; font-size: 14px; font-weight: 600; color: var(--ink); text-align: left; }
+.sort-dd-opt:hover, .sort-dd-opt:focus-visible { background: #EEF5F1; outline: none; }
+.sort-dd-opt[aria-selected="true"] { color: #1F4D3B; }
+.sort-dd-opt[aria-selected="true"]::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #2E7A66; }
+
+/* ---------- /wishlist: two big choices ---------- */
+.app.wl-choose { max-width: none; padding: 0 40px; justify-content: center; align-items: center; gap: 44px; }
+.wl-choose-title { font-family: "Bricolage Grotesque", var(--font); font-size: clamp(40px, 5vw, 72px); letter-spacing: -0.04em; text-align: center; }
+.wl-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; width: min(1100px, 100%); }
+.wl-choice {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; padding: 56px 36px 48px; border-radius: 40px;
+  color: var(--ink); text-decoration: none; background: linear-gradient(160deg, rgba(255, 255, 255, .95), rgba(246, 250, 248, .85));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .9), 0 20px 50px rgba(24, 40, 37, .08);
+  transition: transform .25s var(--spring), box-shadow .25s ease;
+}
+.wl-choice:hover { transform: translateY(-6px); box-shadow: inset 0 0 0 1px #fff, 0 30px 70px rgba(24, 40, 37, .14); }
+.wl-orb {
+  position: relative; width: 180px; height: 180px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 10px;
+  background: radial-gradient(circle at 32% 26%, #fff 0 6%, transparent 18%), radial-gradient(circle at 50% 55%, rgba(255, 255, 255, .2) 0 55%, rgba(255, 255, 255, .7) 85%, rgba(220, 231, 226, .6) 100%);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .9), inset 0 0 26px rgba(255, 255, 255, .9), 0 0 0 1px rgba(244, 168, 200, .35), 0 24px 50px rgba(197, 216, 207, .4);
+  animation: float 6s ease-in-out infinite;
+}
+.wl-choice:hover .wl-orb svg { animation: ctaSpin 1.2s cubic-bezier(.65, 0, .35, 1); }
+.wl-orb.wl-world { background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, .5), rgba(249, 198, 220, .25) 70%, rgba(201, 231, 219, .4)); }
+.wl-orb.wl-world i { position: absolute; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff 0 12%, rgba(255, 255, 255, .5) 60%, rgba(244, 168, 200, .35)); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .9), 0 6px 14px rgba(24, 40, 37, .08); animation: wbob 4s ease-in-out infinite; }
+.wl-orb.wl-world i:nth-child(1) { width: 62px; height: 62px; left: 58px; top: 54px; }
+.wl-orb.wl-world i:nth-child(2) { width: 38px; height: 38px; left: 26px; top: 34px; animation-delay: -1s; }
+.wl-orb.wl-world i:nth-child(3) { width: 44px; height: 44px; left: 116px; top: 30px; animation-delay: -2s; }
+.wl-orb.wl-world i:nth-child(4) { width: 30px; height: 30px; left: 34px; top: 116px; animation-delay: -3s; }
+.wl-orb.wl-world i:nth-child(5) { width: 40px; height: 40px; left: 112px; top: 112px; animation-delay: -1.5s; }
+.wl-choice-name { font-family: "Bricolage Grotesque", var(--font); font-size: clamp(30px, 3vw, 44px); font-weight: 800; letter-spacing: -0.03em; }
+.wl-choice-sub { font-size: 17px; line-height: 1.45; color: var(--ink-70); max-width: 340px; }
+@media (max-width: 760px) {
+  .wl-choices { grid-template-columns: 1fr; }
+  .app.wl-choose { padding: 32px 16px; justify-content: flex-start; height: auto; min-height: 100dvh; overflow: visible; }
+}
+/* /world on its own page. */
+.app.world-page { height: 100dvh; }
+
+/* ---------- Purchase on a match card (agent checkout) ---------- */
+.mcardx { position: relative; }
+.mx-link { display: block; }
+.mx-site { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-55); text-decoration: none; }
+.mx-site:hover { color: var(--ink); text-decoration: underline; }
+.mx-site svg, .mx-site svg * { stroke: currentColor; }
+button.mx-buy { border: 0; cursor: pointer; font: inherit; font-size: 14px; font-weight: 700; transition: background .15s ease, transform .15s var(--spring); }
+button.mx-buy:hover { background: #2E7A66; transform: translateY(-1px); }
+button.mx-buy.confirm { background: #2E7A66; box-shadow: 0 0 0 3px rgba(46, 122, 102, .25); }
+button.mx-buy.buying { background: var(--ink-55); cursor: progress; }
+.mx-done { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; padding: 10px 12px; border-radius: 14px; background: #E3F1EA; color: #1F4D3B; animation: fadeIn .35s ease both; }
+.mx-done b { font-size: 15px; }
+.mx-done small { font-size: 12px; color: #3D6B58; }
+.mcardx.bought { box-shadow: inset 0 0 0 2px #7FBFA5, 0 14px 34px rgba(24, 40, 37, .08); }
+.mx-fail { font-size: 13px; color: #B0102D; }

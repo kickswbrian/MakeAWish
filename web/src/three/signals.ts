@@ -5,7 +5,8 @@ import { useEffect } from "react";
  * useFrame, so mic levels never cause React re-renders.
  */
 export type OrbState = "idle" | "listening" | "thinking" | "speaking";
-export const orbSignal = { state: "idle" as OrbState, level: 0 };
+/** `heard`: the mic level while muted (the stream stays open), for a "you're muted" nudge. */
+export const orbSignal = { state: "idle" as OrbState, level: 0, heard: 0 };
 
 /** Drive the orb from React: state as a prop, level as a 0..1 number (or write orbSignal.level per frame). */
 export function useOrbState(state: OrbState, level?: number) {
