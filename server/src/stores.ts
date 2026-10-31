@@ -218,7 +218,8 @@ const wantedText = (w: Wanted) =>
     .join("\n");
 
 const plans = new Map<string, Promise<SearchPlan>>();
-const planKey = (w: Wanted) => hash(JSON.stringify([w.name, w.category, w.description, w.query, w.parts]));
+// Parts help the planner but aren't part of the key: adding a part shouldn't start a new (paid) search.
+const planKey = (w: Wanted) => hash(JSON.stringify([w.name, w.category, w.description, w.query]));
 
 /**
  * The search plan for a wish, cached: call it early (a design just finished) and the search at
