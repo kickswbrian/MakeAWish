@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CLOSE_SCORE, describeProduct, EXISTS_SCORE, type Match, type MatchesResponse, type Product } from "@wishit/shared";
 import { api } from "../lib/api.ts";
+import { voterId } from "./Upvote.tsx";
 import { ArrowOut, BackIcon, CategoryIcon, HeartIcon, LockIcon, MicIcon, MinusIcon, PlusIcon, SpinIcon, Sparkle } from "./Icons.tsx";
 
 const STORE: Record<string, string> = { amazon: "Amazon", etsy: "Etsy", google_shopping: "Google Shopping", sample: "Sample" };
@@ -125,7 +126,7 @@ function MatchCard({ m, category, color, i, wishId }: { m: Match; category: stri
     if (buy.step !== "confirm") return;
     setBuy({ step: "buying" });
     try {
-      const r = await api.agentBuy(wishId, m.url);
+      const r = await api.agentBuy(wishId, m.url, voterId());
       setBuy(r.ok ? { step: "done", orderId: r.orderId } : { step: "failed", why: r.outcome });
     } catch (err) {
       setBuy({ step: "failed", why: (err as Error).message });
