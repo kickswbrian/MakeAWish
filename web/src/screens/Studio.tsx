@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useStore } from "zustand";
 import * as THREE from "three";
 import {
@@ -248,6 +248,7 @@ interface Prepared {
 /** Screens 1 to 3 of the wish, on one canvas: talk and build, see what exists, launch and track. */
 export default function Studio() {
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const debug = params.has("debug");
   const [wish, setWish] = useState<WishDTO | null>(null);
   const product = useProduct((s) => s.product);
@@ -898,6 +899,17 @@ export default function Studio() {
       window.clearTimeout(hide);
     };
   }, [v2, voice.active, voice.muted, typing]);
+  // The globe in the corner of the wish screen: the bubble swells and fades, then the Wish World.
+  const [toWorld, setToWorld] = useState(false);
+  const openWorld = () => {
+    if (toWorld) return;
+    setToWorld(true);
+    const q = new URLSearchParams(window.location.search);
+    q.delete("wish");
+    q.delete("intro");
+    const qs = q.toString() ? `?${q}` : "";
+    window.setTimeout(() => navigate(`/world${qs}`, { state: { from: "studio" } }), 650);
+  };
   // Nothing on screen to type into: start typing anywhere and the box opens with that letter, centered
   // on the mouse (bottom center when there's no mouse).
   // Type-anywhere works on the wish screen and next to a product (not while a part's edit card is open).
@@ -984,7 +996,7 @@ export default function Studio() {
 
   // "typing" (main #17) budgets room for the in-flow type box; v2's box floats at the cursor, so not there.
   return (
-    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${mode === "voice" && typeboxOpen && !v2 ? "typing" : ""} ${stagePending ? "stage-pending" : ""} ${leaving ? "leaving" : ""} ${entering ? "entering" : ""} ${mode === "world" && worldLanded && !launchOpen ? "world-landed" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""} ${v2 && mode === "voice" && hasProduct ? "v2-product" : ""}`}>
+    <div className={`app mode-${slot} ${mode === "campaign" ? "scrolls wide" : ""} ${mode === "voice" && hasProduct ? "has-product" : ""} ${editing ? "is-editing" : ""} ${mode === "voice" && typeboxOpen && !v2 ? "typing" : ""} ${stagePending ? "stage-pending" : ""} ${leaving ? "leaving" : ""} ${entering ? "entering" : ""} ${mode === "world" && worldLanded && !launchOpen ? "world-landed" : ""} ${v2 ? `v2 v2-phase-${phase}` : ""} ${v2Landing ? "v2-landing" : ""} ${toWorld ? "to-world" : ""} ${v2 && mode === "voice" && hasProduct ? "v2-product" : ""}`}>
       {v2 && <IntroWords phase={phase} onSkip={skipIntro} />}
       <Glows />
       {showConfetti && <Celebration image={snapshot} line={campaign ? `Funded · ${campaign.captured || campaign.held} of ${campaign.targetBackers}` : undefined} onDone={() => setShowConfetti(false)} />}
@@ -1164,6 +1176,15 @@ export default function Studio() {
               </div>
             )}
           </div>
+          {v2Landing && phase === "done" && (
+            <button className="v2-world-link" onClick={openWorld} aria-label="Open the Wish World" title="Wish World">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18" />
+                <path d="M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z" />
+              </svg>
+            </button>
+          )}
           {v2Landing && phase === "done" && (
             <div className="v2-captions">
               {mutedHeard ? (
