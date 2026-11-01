@@ -1178,10 +1178,13 @@ export default function Studio() {
           </div>
           {v2Landing && phase === "done" && (
             <button className="v2-world-link" onClick={openWorld} aria-label="Open the Wish World" title="Wish World">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M3 12h18" />
-                <path d="M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z" />
+              {/* A little ringed world with a twinkle: thin lines, faint until hovered. */}
+              <svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" aria-hidden="true">
+                <circle cx="15" cy="17" r="7.5" />
+                <ellipse cx="15" cy="17" rx="13" ry="3.6" transform="rotate(-18 15 17)" className="wl-ring" />
+                <path className="wl-twinkle" d="M26 4.5c.3 2 .9 2.6 2.9 2.9-2 .3-2.6.9-2.9 2.9-.3-2-.9-2.6-2.9-2.9 2-.3 2.6-.9 2.9-2.9z" fill="currentColor" stroke="none" />
+                <circle className="wl-dot" cx="6" cy="6.5" r=".7" fill="currentColor" stroke="none" />
+                <circle className="wl-dot b" cx="27.5" cy="25" r=".55" fill="currentColor" stroke="none" />
               </svg>
             </button>
           )}
