@@ -1321,3 +1321,13 @@ button.mx-buy.buying { background: var(--ink-55); cursor: progress; }
 /* Leaving for the Wish World: the bubble swells and fades, everything else fades first. */
 .app.v2-landing.to-world .orb-slot { transform: translate(-50%, -50%) scale(2.6); opacity: 0; transition: transform .7s cubic-bezier(.5, 0, .2, 1), opacity .6s ease .1s; }
 .app.to-world > :not(.orb-slot):not(.glows) { opacity: 0 !important; transition: opacity .3s ease !important; }
+
+/* The world link: faint and dreamy until hovered; the sparkle and the specks twinkle. */
+.v2-world-link { color: #8C9A95; opacity: .38; transition: opacity .3s ease, color .3s ease, transform .6s cubic-bezier(.2, .9, .3, 1.2); }
+.v2-world-link:hover { opacity: .9; color: #C2638E; transform: rotate(-12deg) scale(1.12); }
+.v2-world-link .wl-twinkle { transform-origin: 26px 7.4px; animation: wlTwinkle 3.2s ease-in-out infinite; }
+.v2-world-link .wl-dot { animation: wlDot 2.6s ease-in-out infinite; }
+.v2-world-link .wl-dot.b { animation-delay: -1.3s; }
+.v2-world-link:hover .wl-ring { stroke: #E9C46A; }
+@keyframes wlTwinkle { 0%, 100% { transform: scale(.6); opacity: .5; } 50% { transform: scale(1.15) rotate(45deg); opacity: 1; } }
+@keyframes wlDot { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
