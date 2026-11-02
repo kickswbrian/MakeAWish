@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Glows } from "../ui/Chrome.tsx";
-import { BackIcon } from "../ui/Icons.tsx";
+import { BackIcon, HomeIcon } from "../ui/Icons.tsx";
+import { goHome } from "../lib/goHome.ts";
 import { WishWorld } from "../ui/WishWorld.tsx";
 import { remixWish } from "../lib/remix.ts";
 
@@ -14,7 +15,10 @@ export default function World() {
     <div className="app v2 mode-world world-page">
       <Glows />
       <header className="hdr world-hdr">
-        <Link to={back} reloadDocument={fromStudio} className="cbtn" aria-label="Back"><BackIcon /></Link>
+        <span className="world-nav">
+          <Link to={back} reloadDocument={fromStudio} className="cbtn" aria-label="Back"><BackIcon /></Link>
+          <button className="cbtn" aria-label="Home: start a new wish" title="Home" onClick={goHome}><HomeIcon /></button>
+        </span>
         <span className="world-title">Wish World</span>
       </header>
       <WishWorld onRemix={(id) => void remixWish(id)} />

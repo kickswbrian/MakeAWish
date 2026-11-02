@@ -22,12 +22,13 @@ import { orbSignal, sendView } from "../three/signals.ts";
 import { GenieBubble } from "../ui/GenieBubble.tsx";
 import { PartsList } from "../ui/PartsList.tsx";
 import { Waveform } from "../ui/Waveform.tsx";
-import { BackIcon, CategoryIcon, ChevronDown, HeartIcon, KeyboardIcon, MicIcon, MuteIcon, Sparkle } from "../ui/Icons.tsx";
+import { BackIcon, HomeIcon, CategoryIcon, ChevronDown, HeartIcon, KeyboardIcon, MicIcon, MuteIcon, Sparkle } from "../ui/Icons.tsx";
 import { LaunchSheet, MatchGrid, rankMatches, SortSelect, summarize, type SortKey } from "../ui/Results.tsx";
 import { CampaignPanel, Celebration } from "../ui/Campaign.tsx";
 import { WishWorld } from "../ui/WishWorld.tsx";
 import { Purchases } from "../ui/Purchases.tsx";
 import { remixWish } from "../lib/remix.ts";
+import { goHome } from "../lib/goHome.ts";
 import Bubble3D from "../three/Bubble3D.tsx";
 import { IntroRing, IntroWords, useFramesSettled, useIntroPhase } from "../ui/v2/IntroV2.tsx";
 import { useUiVariant } from "../ui/v2/useUiVariant.ts";
@@ -1336,13 +1337,13 @@ export default function Studio() {
           </div>
           <MatchGrid res={matches} category={product.category ?? "generic"} color={root?.material.color} sort={sort} wishId={wishId ?? undefined} />
           <div className="bottom-fade" />
-          {result && (
+          {matches && (
             <div className="bottom-cta">
               {/* On hover the star spins over to the left, its dark circle filling the pill behind it, and the
                   words slide to the middle in white. */}
               <button className="pill big cta-magic" onClick={goWorld}>
                 <span className="cta-fill" aria-hidden="true"><span className="cta-star"><Sparkle size={20} color="#F2D88A" /></span></span>
-                <span className="cta-text">{result.exists ? "Not quite yours? Wish for your exact version" : "Can't find it?"}</span>
+                <span className="cta-text">{result?.exists ? "Not quite yours? Wish for your exact version" : "Can't find it?"}</span>
               </button>
             </div>
           )}
@@ -1352,7 +1353,10 @@ export default function Studio() {
       {mode === "world" && wishId && (
         <>
           <header className="hdr world-hdr">
-            <button className="cbtn" aria-label="Back to the matches" onClick={() => setMode("results")}><BackIcon /></button>
+            <span className="world-nav">
+              <button className="cbtn" aria-label="Back to the matches" onClick={() => setMode("results")}><BackIcon /></button>
+              <button className="cbtn" aria-label="Home: start a new wish" title="Home" onClick={goHome}><HomeIcon /></button>
+            </span>
             <span className="world-title">Wish World</span>
           </header>
           <WishWorld
