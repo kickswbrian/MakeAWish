@@ -1334,7 +1334,6 @@ button.mx-buy.buying { background: var(--ink-55); cursor: progress; }
 
 /* ---------- Your purchases: a bag to the left of the planet, and the panel ---------- */
 .v2-orders-link { right: 70px; }
-.v2-orders-link .wl-twinkle { transform-origin: 25.5px 6.1px; animation-delay: -1.6s; }
 .v2-orders-link:hover { color: #2E7A66; transform: rotate(8deg) scale(1.12); }
 .pur-pop { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 24px; background: rgba(255, 252, 247, .5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: fadeOnly .25s ease both; }
 .pur-panel {
