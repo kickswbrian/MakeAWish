@@ -371,7 +371,10 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
   let lock = false;
 
   /** Start over with an empty product (a different product entirely). */
+  // A new design (no "before" to compare collisions against): set again if the turn starts over.
+  let fresh = isEmpty(input.product) || !!input.template;
   const reset = () => {
+    fresh = true;
     product = emptyProduct(product.id);
     emit({ t: "reset" });
   };
@@ -457,7 +460,7 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
     const issuesNow = () => levelIssues(product, [...touched].filter((id) => product.parts[id]));
     let issues = issuesNow();
     // Edits only: a new design has no "before", and its cushions tuck into each other on purpose.
-    const collisions = isEmpty(input.product) || input.template ? [] : newCollisions(input.product, product, [...touched].filter((id) => product.parts[id]));
+    const collisions = fresh ? [] : newCollisions(input.product, product, [...touched].filter((id) => product.parts[id]));
     if (!issues.length && !collisions.length) return false;
     const before = product;
     console.log(`[brain] geometry issues: ${[...issues, ...collisions].map(describeIssue).join(" | ")}`);
@@ -471,8 +474,8 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
         ].join("\n");
         track(await streamTool(env.editModel, "apply_patches", user, {
           onItem: (k, _i, v) => {
-            if (k === "patches") applyAndEmit([v]);
-            else if (k === "remove" && typeof v === "string") applyAndEmit([{ op: "remove", id: v }]);
+            // Move and resize only: a repair never deletes the shopper's parts.
+            if (k === "patches" && (v as { op?: unknown })?.op !== "remove") applyAndEmit([v]);
           },
         }, signal, 2500));
       } catch (err) {
@@ -493,8 +496,9 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
         }
         if (i.kind !== "hovers") continue;
         const sink = Math.min(0.2 * (box.max[1] - box.min[1]), 0.01);
-        const stretched = i.posts.length ? i.posts.map((id) => stretchUp(product, id, i.gap + sink)) : [];
-        if (stretched.length && stretched.every(Boolean)) fixes.push(...stretched.flat());
+        // Posts under it: stretch the ones that can be, and never drop it back (that undoes a "raise").
+        const stretched = i.posts.flatMap((id) => stretchUp(product, id, i.gap + sink) ?? []);
+        if (i.posts.length) fixes.push(...stretched);
         else {
           const position = movedBy(product, i.id, [0, sink - i.gap, 0]);
           if (position) fixes.push({ op: "update", id: i.id, changes: { transform: { position } } });
