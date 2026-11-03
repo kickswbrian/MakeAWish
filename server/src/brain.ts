@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import {
-  addOrder, applyPatches, childrenOf, emptyProduct, fashionById, fixChildFrame, localOutfit, outfitProduct, floatingParts, groundPart, isEmpty, localBox, partsInOrder, subtreeIds, toProductSpace, matchTemplate, parseIntent, ProductMetaSchema, setMeta, templateById, templateProduct,
-  type FashionState, type FashionTemplate, type OutlineEntry, type Part, type Patch, type Product, type ProductMeta, type TurnEvent, type TurnSelection, type TurnTiming, type Vec3,
+  addOrder, applyPatches, childrenOf, emptyProduct, fashionById, fixChildFrame, localOutfit, outfitProduct, floatingParts, groundPart, isEmpty, levelIssues, localBox, movedBy, newCollisions, partBox, stretchUp, partsInOrder, subtreeIds, toProductSpace, matchTemplate, parseIntent, ProductMetaSchema, setMeta, templateById, templateProduct,
+  type FashionState, type FashionTemplate, type LevelIssue, type OutlineEntry, type Part, type Patch, type Product, type ProductMeta, type TurnEvent, type TurnSelection, type TurnTiming, type Vec3,
 } from "@wishit/shared";
 import { env } from "./env.ts";
 import { JsonStreamScanner } from "./jsonstream.ts";
@@ -423,8 +423,9 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
    * above the head) reads as broken. Settle every part this turn added or moved onto the product,
    * parents first so children ride along, as one last batch of updates.
    */
-  const settle = (result: TurnResult): TurnResult => {
+  const settle = async (result: TurnResult): Promise<TurnResult> => {
     if (!touched.size) return result;
+    const levels = await settleLevels();
     const fixes: Patch[] = [];
     let work = product;
     // A reshaped part can strand its children (speakers on a hood that got deeper): check them too.
@@ -439,11 +440,74 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
       work = r.product;
       fixes.push(fix);
     }
-    if (!fixes.length) return result;
+    if (!fixes.length) return levels ? { ...result, product, timing } : result;
     console.log(`[brain] settled ${fixes.length} floating part(s): ${fixes.map((f) => (f as { id: string }).id).join(", ")}`);
     applyAndEmit(fixes);
     timing.done = at();
     return { ...result, product, timing };
+  };
+
+  /**
+   * Collision sense for levels (a bunk's upper deck, a shelf, a tabletop): one that slices through
+   * the parts below it or hovers above its supports gets one repair call that sees the problem, then
+   * a geometric fix for whatever is left: lift it clear, then stretch its posts up to meet it (or
+   * drop it onto what's below when there are none). True when anything changed.
+   */
+  const settleLevels = async (): Promise<boolean> => {
+    const issuesNow = () => levelIssues(product, [...touched].filter((id) => product.parts[id]));
+    let issues = issuesNow();
+    // Edits only: a new design has no "before", and its cushions tuck into each other on purpose.
+    const collisions = isEmpty(input.product) || input.template ? [] : newCollisions(input.product, product, [...touched].filter((id) => product.parts[id]));
+    if (!issues.length && !collisions.length) return false;
+    const before = product;
+    console.log(`[brain] geometry issues: ${[...issues, ...collisions].map(describeIssue).join(" | ")}`);
+    if (client && !signal.aborted) {
+      try {
+        const user = [
+          editContext({ ...input, product, selection: null, outline: outlineOf(product) }),
+          `\nThe shopper said: "${input.text}". The geometry check found problems in the result:`,
+          ...[...issues, ...collisions].map((i) => `- ${describeIssue(i)}`),
+          "\nFix only these with apply_patches: move a level up clear of what it cuts through (with real room underneath, e.g. sitting headroom under a bunk's upper deck), resize supports (posts, legs, ladders) so they meet the underside of what they hold, and move colliding parts apart (or resize them) so they don't pass through each other, whichever keeps the shopper's change. Keep everything else as is; say nothing new. Use at most 3 decimals.",
+        ].join("\n");
+        track(await streamTool(env.editModel, "apply_patches", user, {
+          onItem: (k, _i, v) => {
+            if (k === "patches") applyAndEmit([v]);
+            else if (k === "remove" && typeof v === "string") applyAndEmit([{ op: "remove", id: v }]);
+          },
+        }, signal, 2500));
+      } catch (err) {
+        if (signal.aborted) throw err;
+        console.warn("[brain] level repair failed:", (err as Error).message);
+      }
+      issues = issuesNow();
+    }
+    for (let round = 0; issues.length && round < 3; round++) {
+      const fixes: unknown[] = [];
+      for (const i of issues) {
+        const box = partBox(product, i.id);
+        if (!box) continue;
+        if (i.kind === "cuts") {
+          const position = movedBy(product, i.id, [0, i.clearY - box.min[1], 0]);
+          if (position) fixes.push({ op: "update", id: i.id, changes: { transform: { position } } });
+          continue;
+        }
+        if (i.kind !== "hovers") continue;
+        const sink = Math.min(0.2 * (box.max[1] - box.min[1]), 0.01);
+        const stretched = i.posts.length ? i.posts.map((id) => stretchUp(product, id, i.gap + sink)) : [];
+        if (stretched.length && stretched.every(Boolean)) fixes.push(...stretched.flat());
+        else {
+          const position = movedBy(product, i.id, [0, sink - i.gap, 0]);
+          if (position) fixes.push({ op: "update", id: i.id, changes: { transform: { position } } });
+        }
+      }
+      if (!fixes.length) break;
+      console.log(`[brain] level fix: ${issues.map(describeIssue).join(" | ")}`);
+      applyAndEmit(fixes);
+      issues = issuesNow();
+    }
+    if (product === before) return false;
+    timing.done = at();
+    return true;
   };
 
   if (!client || forceRules) return ruleTurn(input, applyAndEmit, applyMeta, emit, timing, at, () => product, reset);
@@ -499,7 +563,7 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
       }, signal, 4000));
       if (!wantsNew) {
         timing.done = at();
-        return settle({ product, say, lock, brain: "llm", timing, rejected });
+        return await settle({ product, say, lock, brain: "llm", timing, rejected });
       }
       // A different product entirely: start over.
       reset();
@@ -510,7 +574,7 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
     const shownTpl = input.template ? templateById(input.template) : null;
     const fashion = fashionById(shownTpl?.fashion ?? (isEmpty(product) ? matchTemplate(input.text)?.fashion : undefined));
     if (fashion) return await createOutfit(input, ctx, fashion);
-    return settle(await createDesign(input, ctx));
+    return await settle(await createDesign(input, ctx));
   } catch (err) {
     if (signal.aborted) throw err;
     console.warn("[brain] LLM failed, using rules:", (err as Error).message);
@@ -694,12 +758,18 @@ async function createDesignInner(input: TurnInput, c: CreateCtx): Promise<TurnRe
         startGroup(grp);
       }
     },
-  }, c.signal, 3000);
+  }, c.signal, 6000);
   c.track(planStats);
   if (process.env.BRAIN_TRACE) console.log(`[trace] plan done ${c.at()}ms out ${planStats.output} groups ${groups.length}`);
   await Promise.allSettled(builders);
   c.timing.done = c.at();
   if (isEmpty(c.get())) throw new Error("planner produced no parts");
+  // The reply comes last in the plan: a long template customization can run out before it.
+  if (!c.getSay()) {
+    const s = `Here's your ${(c.get().title || "wish").toLowerCase()}. What would you change?`;
+    c.setSay(s);
+    c.emit({ t: "say", text: s });
+  }
   return { product: c.get(), say: c.getSay(), lock: c.getLock(), brain: "llm", timing: c.timing, rejected: c.rejected() };
 }
 
@@ -718,6 +788,20 @@ function fixFrames(product: Product, raw: unknown, outline: Map<string, OutlineE
   if (!fixed) return raw;
   if (process.env.BRAIN_TRACE) console.log(`[trace] frame fix: ${parent} child at [${pos.join(",")}] -> [${fixed.join(",")}]`);
   return { ...patch, part: { ...patch.part, transform: { ...patch.part!.transform, position: fixed } } };
+}
+
+/** Product-space boxes for every part, like the client's outline. */
+function outlineOf(product: Product): OutlineEntry[] {
+  return Object.keys(product.parts).flatMap((id) => {
+    const b = partBox(product, id);
+    return b ? [{ id, center: b.min.map((v, i) => r3((v + b.max[i]) / 2)) as Vec3, size: b.max.map((v, i) => r3(v - b.min[i])) as Vec3 }] : [];
+  });
+}
+
+function describeIssue(i: LevelIssue): string {
+  if (i.kind === "cuts") return `${i.id} cuts through ${i.others.join(", ")}: its underside must be above y=${r3(i.clearY)}`;
+  if (i.kind === "hovers") return `${i.id} hovers ${r3(i.gap)} m above ${i.below.join(", ")}, with nothing holding it up`;
+  return `${i.id} runs into ${i.other} (their boxes share ${Math.round(i.share * 100)}% of the smaller one)`;
 }
 
 /** The voice rule, enforced: at most two sentences. */

@@ -116,6 +116,7 @@ ${styleBlock()}
 - A full new product has 14-40 parts: a main body, then secondary volumes (pockets, lids, bases, handles), then trims/edges/seams (stitching kit along panel edges, piping tubes, bumpers), then hardware (zippers, buckles, screws, rivets, feet, ports, LEDs) and a brand_patch or label where a real product would have one.
 - Real proportions and thicknesses: fabric panels 3-8 mm, plastic shells 2-3 mm, straps 25-50 mm wide and ~4 mm thick.
 - Every part must touch or slightly overlap its parent. Nothing floats. Compute positions from the parent's dimensions.
+- Parts don't pass through each other. A level stacked over other parts (a bunk's upper deck, a loft, a shelf) sits above the tops of everything under it, with real room beneath (sitting headroom under a bunk), and its posts or legs reach exactly to its underside. When you raise or lower a level, resize its posts and ladders in the same patch list.
 - Symmetric pairs get mirrored x positions (and mirrored rotations where needed), names like "Left strap"/"Right strap".
 - Make it look desirable: soft radii, contrasting accents, considered details. When the shopper's wish has a twist (a laptop stand, built-in headphones, a convertible part), make that feature the visual hero.
 

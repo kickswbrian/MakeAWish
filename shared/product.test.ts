@@ -182,3 +182,34 @@ test("groundPart settles a part placed in the air onto the product", async () =>
   assert.deepEqual(floatingParts(slip), ["zip"]);
   assert.deepEqual(groundPart(slip, "zip"), [0, 0, 0.03]);
 });
+
+test("levels: a bunk deck that hovers gets its posts stretched; one through the cushions is caught", async () => {
+  const { levelIssues, stretchUp, TEMPLATES, templateProduct } = await import("./index.ts");
+  const box = (id: string, parent: string | null, w: number, h: number, d: number, position: [number, number, number]): unknown => ({
+    id, name: id, kind: "primitive", parent, geometry: { type: "roundedBox", params: { width: w, height: h, depth: d } }, transform: { position }, material: { preset: "fabric_knit", color: "#888888" },
+  });
+  const post = (id: string, x: number, z: number): unknown => ({
+    id, name: id, kind: "primitive", parent: "base", geometry: { type: "cylinder", params: { radiusTop: 0.03, radiusBottom: 0.03, height: 0.7 } }, transform: { position: [x, 0.5, z] }, material: { preset: "wood_oak", color: "#7A5230" },
+  });
+  // A couch base on the floor (y 0..0.3), a back cushion up to 0.75, posts up to 1.0, the deck on them.
+  const bunk = (deckBottom: number) => applyPatches(emptyProduct("bunk"), [
+    { op: "add", part: box("base", null, 2, 0.3, 0.9, [0, 0.15, 0]) },
+    { op: "add", part: box("cushion", "base", 0.6, 0.45, 0.3, [0, 0.375, -0.25]) },
+    ...[[-0.95, 0.4], [0.95, 0.4], [-0.95, -0.4], [0.95, -0.4]].map(([x, z], i) => ({ op: "add", part: post(`post${i}`, x, z) })),
+    { op: "add", part: box("deck", "base", 2, 0.05, 0.9, [0, deckBottom + 0.025 - 0.15, 0]) },
+  ]).product;
+  assert.deepEqual(levelIssues(bunk(1)), []);
+
+  const raised = bunk(1.2);
+  const [hover] = levelIssues(raised);
+  assert.equal(hover?.kind, "hovers");
+  assert.ok(hover.kind === "hovers" && Math.abs(hover.gap - 0.2) < 1e-6 && hover.posts.length === 4, JSON.stringify(hover));
+  const fixed = applyPatches(raised, hover.kind === "hovers" ? hover.posts.flatMap((id) => stretchUp(raised, id, hover.gap)!) : []).product;
+  assert.deepEqual(levelIssues(fixed), []);
+  assert.equal(fixed.parts.post0.geometry?.type === "cylinder" && fixed.parts.post0.geometry.params.height, 0.9);
+
+  const [cut] = levelIssues(bunk(0.5));
+  assert.ok(cut?.kind === "cuts" && cut.others.includes("cushion") && Math.abs(cut.clearY - 0.75) < 1e-6, JSON.stringify(cut));
+
+  for (const t of TEMPLATES) assert.deepEqual(levelIssues(templateProduct(t, "l")), [], t.id);
+});
