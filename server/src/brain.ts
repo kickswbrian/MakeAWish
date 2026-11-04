@@ -213,6 +213,7 @@ function templateOutline(id: string): string {
         return `lathe r${r(Math.max(...pts.map((v) => v[0])))} y${r(Math.min(...pts.map((v) => v[1])))}..${r(Math.max(...pts.map((v) => v[1])))}`;
       }
       case "extrude": return `extrude depth${r(q.depth as number)}`;
+      case "text": return `text "${String(q.text).slice(0, 24)}" size${r(q.size as number)}`;
       default: return g.type;
     }
   };
