@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import {
-  addOrder, applyPatches, childrenOf, emptyProduct, fashionById, fixChildFrame, localOutfit, outfitProduct, floatingParts, groundPart, isEmpty, levelIssues, localBox, movedBy, newCollisions, partBox, stretchUp, partsInOrder, subtreeIds, toProductSpace, matchTemplate, parseIntent, ProductMetaSchema, setMeta, templateById, templateProduct,
+  addOrder, applyPatches, childrenOf, emptyProduct, fashionById, fixChildFrame, localOutfit, outfitProduct, floatingParts, groundPart, hangCords, isEmpty, levelIssues, localBox, movedBy, newCollisions, partBox, stretchUp, partsInOrder, subtreeIds, toPartSpace, toProductSpace, matchTemplate, parseIntent, ProductMetaSchema, setMeta, templateById, templateProduct,
   type FashionState, type FashionTemplate, type LevelIssue, type OutlineEntry, type Part, type Patch, type Product, type ProductMeta, type TurnEvent, type TurnSelection, type TurnTiming, type Vec3,
 } from "@wishit/shared";
 import { env } from "./env.ts";
@@ -242,8 +242,8 @@ function editContext(input: TurnInput): string {
     detail = parts.length <= 40 ? parts : [product.parts[product.rootId], ...childrenOf(product, product.rootId)];
   }
   const detailIds = new Set(detail.map((p) => p.id));
-  lines.push("\nFull JSON of the relevant parts (productOrigin: where the part's own frame origin sits in product space; a new child's position is in its PARENT's frame, so for a product-space point P on an unrotated parent X, position = (P - X.productOrigin) / X.transform.scale per axis):");
-  for (const p of detail) lines.push(JSON.stringify({ ...compactPart(p), productOrigin: toProductSpace(product, p.id, [0, 0, 0]).map(r3) }));
+  lines.push("\nFull JSON of the relevant parts (productOrigin: where the part's own frame origin sits in product space; a new child's position is in its PARENT's frame, so for a product-space point P on an unrotated parent X, position = (P - X.productOrigin) / X.transform.scale per axis; down: on a tilted part, the direction gravity pulls in its frame, so things hanging from it go along down, not -Y):");
+  for (const p of detail) lines.push(JSON.stringify({ ...compactPart(p), productOrigin: toProductSpace(product, p.id, [0, 0, 0]).map(r3), ...downIn(product, p.id) }));
   const rest = parts.filter((p) => !detailIds.has(p.id));
   if (rest.length) {
     lines.push("\nOther parts (id, name, type, parent, material, product-space center/size in meters):");
@@ -380,12 +380,16 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
   };
   // Parts added or moved this turn: checked for floating once the turn's patches are all in.
   const touched = new Set<string>();
+  const added = new Set<string>();
   const applyAndEmit = (patches: unknown[]) => {
     const r = applyPatches(product, patches);
     product = r.product;
     rejected += r.rejected.length;
     for (const p of r.applied) {
-      if (p.op === "add") touched.add(p.part.id);
+      if (p.op === "add") {
+        touched.add(p.part.id);
+        added.add(p.part.id);
+      }
       else if (p.op === "update" && (p.changes.transform || p.changes.geometry || p.changes.parent !== undefined || p.changes.kitParams)) touched.add(p.id);
     }
     if (r.rejected.length) console.log(`[brain] rejected: ${r.rejected.map((x) => x.reason).join(" | ").slice(0, 300)}`);
@@ -428,7 +432,14 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
    */
   const settle = async (result: TurnResult): Promise<TurnResult> => {
     if (!touched.size) return result;
-    const levels = await settleLevels();
+    // New pull cords and charms hang straight down, whatever the tilt of what they hang from.
+    // (Edits only: in a new design a slanted rope, like a balloon basket's, is usually meant.)
+    const hung = fresh ? [] : hangCords(product, [...added].filter((id) => product.parts[id]));
+    if (hung.length) {
+      console.log(`[brain] re-hung ${hung.map((u) => u.id).join(", ")}`);
+      applyAndEmit(hung);
+    }
+    const levels = (await settleLevels()) || hung.length > 0;
     const fixes: Patch[] = [];
     let work = product;
     // A reshaped part can strand its children (speakers on a hood that got deeper): check them too.
@@ -792,6 +803,15 @@ function fixFrames(product: Product, raw: unknown, outline: Map<string, OutlineE
   if (!fixed) return raw;
   if (process.env.BRAIN_TRACE) console.log(`[trace] frame fix: ${parent} child at [${pos.join(",")}] -> [${fixed.join(",")}]`);
   return { ...patch, part: { ...patch.part, transform: { ...patch.part!.transform, position: fixed } } };
+}
+
+/** Gravity in a tilted part's own frame (a unit vector), for hanging things off it; nothing when it's upright. */
+function downIn(product: Product, id: string): { down?: Vec3 } {
+  const a = toPartSpace(product, id, [0, 0, 0]), b = toPartSpace(product, id, [0, -1, 0]);
+  const v = b.map((x, i) => x - a[i]);
+  const n = Math.hypot(...v) || 1;
+  const down = v.map((x) => r3(x / n)) as Vec3;
+  return Math.abs(down[0]) < 0.02 && Math.abs(down[2]) < 0.02 && down[1] < 0 ? {} : { down };
 }
 
 /** Product-space boxes for every part, like the client's outline. */

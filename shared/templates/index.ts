@@ -55,6 +55,16 @@ const TRAILING = new Set([
   "version", "edition", "i", "we", "you", "it", "is", "thats", "one", "idea", "concept", "design",
   "now", "too", "thanks", "thank", "today", "again", "right", "ok", "okay", "yes", "real", "quick", "quickly", "asap", "there", "here",
 ]);
+/**
+ * Catch-all words ("plush", "stuffed animal") only mean the teddy when nothing else is named: "a cute
+ * plush" is a teddy, "a sonic the hedgehog plush" or "a frog plushie" is its own design, which the
+ * teddy's bear ears and muzzle would spoil.
+ */
+const GENERIC = new Set(["plush", "plushie", "stuffed animal", "soft toy"]);
+const PLAIN = new Set([
+  "", "|", "a", "an", "the", "my", "some", "one", "two", "three", "cute", "soft", "big", "giant", "huge", "little", "small", "tiny", "mini", "fluffy",
+  "cuddly", "squishy", "fuzzy", "plush", "classic", "new", "kids", "baby", "pink", "brown", "white", "black", "blue", "red", "green", "yellow", "purple", "grey", "gray", "cream",
+]);
 /** Words before a specific keyword that make it a different product ("wine glasses", "table runner"). */
 const MODIFIERS: Record<string, string[]> = {
   glasses: ["wine", "drinking", "shot", "beer", "champagne", "cocktail", "magnifying"],
@@ -98,6 +108,7 @@ export function matchTemplate(text: string): Template | null {
         const after = t.slice(at + f.length + 2).trim().split(" ")[0] ?? "";
         if (after && after !== "|" && !TRAILING.has(after)) continue;
         if (MODIFIERS[k]?.includes(before)) continue;
+        if (GENERIC.has(k) && !PLAIN.has(before) && !/ (bear|bears|teddy|teddies) /.test(t)) continue;
         const score = k.length;
         // The noun the shopper says first is usually the product ("a backpack with a water bottle
         // pocket"); at the same spot the longer phrase wins ("desk lamp" over "desk").
