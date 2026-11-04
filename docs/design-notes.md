@@ -40,6 +40,9 @@ How Wish it came together over the weekend: the calls we made, the parts we're p
   - *Fix:* "levels" (big flat parts like decks, shelves and tabletops) must clear what's under them and be held up. Edits that newly push similar-sized parts into each other are flagged too.
   - The issues go to one repair call, then the code lifts the level clear or stretches its posts to meet it.
   - Before shipping, we scanned all 54 templates and the 29 seeds: no false alarms.
+- **It couldn't draw.** An "eagle buckle" came out as a few-point polygon that read as a star. The only way to draw was hand-placed point lists. Extrudes now take an SVG path, which Claude writes well, so emblems and silhouettes look like what was asked for.
+- **Sonic came out as a blue teddy bear.** The word "plush" locked every plush wish into the teddy template, and the genie only recolored it. Catch-all words now pick the teddy only when nothing else is named.
+- **The pull-cord bird ended up against the bulb.** The genie hangs things "down" in the frame of the part they hang from, so under a tilted lamp shade the cord went sideways. New cords under tilted parts are now re-hung straight down, with the charm upright below.
 - **The planner ran out of room.** "A double decker couch" sometimes came back with no genie reply. Customizing the big sofa template overran the planner's 3,000-token budget, and the reply is written last. We doubled the budget and added a fallback line.
 - **"Double decker couch" matched a regular couch.** The search planner rewrote the wish into generic queries, which lost the one word that mattered. Now the shopper's own phrase is always the first query, and results wait for it. It finds real bunk couches.
 - **Search-ahead quietly spent the budget.** Every settled design ran a paid store search. Bulk-building the demo wishes used 164 searches against a cap of 60. Past the cap, the app quietly serves sample matches, which looked like "Apify is down".

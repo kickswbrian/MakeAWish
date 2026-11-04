@@ -99,6 +99,9 @@ test("templates: every part survives validation, keywords pick the product noun"
   // A keyword used as a modifier names a different product.
   for (const other of ["a phone charger", "a board game", "a wine glasses rack", "a car seat", "a watch winder box"]) assert.equal(matchTemplate(other), null, other);
   assert.equal(matchTemplate("a polar bear plush")?.id, "teddy_bear");
+  for (const plain of ["a plush", "a cute plushie", "a giant stuffed animal", "a pink soft toy"]) assert.equal(matchTemplate(plain)?.id, "teddy_bear", plain);
+  // A named character or creature is its own design, not a recolored bear.
+  for (const named of ["a sonic the hedgehog plush", "a frog plushie", "a kirby plush", "a dinosaur stuffed animal"]) assert.equal(matchTemplate(named), null, named);
   assert.equal(matchTemplate("a backpack made of cork")?.id, "backpack");
   for (const [wish, id] of [["a backpack, red and waterproof", "backpack"], ["a mug now", "mug"], ["a beer mug", "mug"], ["two teddies", "teddy_bear"], ["Hi! I want a backpack with wheels", "backpack"]]) assert.equal(matchTemplate(wish)?.id, id, wish);
   for (const other of ["a hot water bottle", "a table runner", "wine glasses"]) assert.equal(matchTemplate(other), null, other);
@@ -212,4 +215,34 @@ test("levels: a bunk deck that hovers gets its posts stretched; one through the 
   assert.ok(cut?.kind === "cuts" && cut.others.includes("cushion") && Math.abs(cut.clearY - 0.75) < 1e-6, JSON.stringify(cut));
 
   for (const t of TEMPLATES) assert.deepEqual(levelIssues(templateProduct(t, "l")), [], t.id);
+});
+
+test("svg extrudes: pieces, holes and arcs parse; the part gets a fallback outline and a real box", async () => {
+  const { svgOutline, parsePart, localBox } = await import("./index.ts");
+  const ring = svgOutline("M50 10 A40 40 0 1 1 49.9 10 Z M50 30 a20 20 0 1 0 0.1 0z M120 10 h30 v30 h-30 z", 0.1)!;
+  assert.equal(ring.shapes.length, 2);
+  assert.deepEqual(ring.shapes.map((s) => s.holes.length).sort(), [0, 1]);
+  assert.ok(Math.abs(ring.width - 0.1) < 1e-6);
+  const r = parsePart({ id: "eagle", name: "Eagle", kind: "primitive", parent: "plate", geometry: { type: "extrude", params: { svg: "M0 0 L40 0 L40 20 C30 30 10 30 0 20 Z", width: 0.04, depth: 0.004 } }, material: { preset: "metal_polished", color: "#cccccc" } });
+  assert.ok("part" in r, JSON.stringify(r));
+  const box = localBox(r.part)!;
+  assert.ok(Math.abs(box.max[0] - 0.02) < 1e-6 && box.max[1] > 0.01, JSON.stringify(box));
+});
+
+test("hangCords: a pull cord under a tilted shade hangs straight down, its charm below it", async () => {
+  const { hangCords, toProductSpace } = await import("./index.ts");
+  const p = applyPatches(emptyProduct("lamp"), [
+    { op: "add", part: { id: "base", name: "Base", kind: "primitive", parent: null, geometry: { type: "cylinder", params: { radiusTop: 0.08, radiusBottom: 0.08, height: 0.02 } }, material: { preset: "metal_brushed", color: "#888888" } } },
+    { op: "add", part: { id: "shade", name: "Shade", kind: "primitive", parent: "base", geometry: { type: "cylinder", params: { radiusTop: 0.03, radiusBottom: 0.07, height: 0.1, open: true } }, transform: { position: [0, 0.4, 0], rotation: [-55, 0, 30] }, material: { preset: "metal_brushed", color: "#C0603A" } } },
+    { op: "add", part: { id: "pull_cord", name: "Pull cord", kind: "primitive", parent: "shade", geometry: { type: "tube", params: { points: [[0, 0.03, 0], [0, -0.03, 0], [0, -0.09, 0]], radius: 0.0012 } }, material: { preset: "cotton", color: "#eeeeee" } } },
+    { op: "add", part: { id: "bird", name: "Bird charm", kind: "primitive", parent: "pull_cord", geometry: { type: "sphere", params: { radius: 0.012 } }, transform: { position: [0, -0.1, 0] }, material: { preset: "plastic_gloss", color: "#3A7CA5" } } },
+  ]).product;
+  const fixed = applyPatches(p, hangCords(p, ["pull_cord", "bird"])).product;
+  const g = fixed.parts.pull_cord.geometry as { params: { points: [number, number, number][] } };
+  const pts = g.params.points.map((q) => toProductSpace(fixed, "pull_cord", q));
+  for (const q of pts) assert.ok(Math.abs(q[0] - pts[0][0]) < 2e-3 && Math.abs(q[2] - pts[0][2]) < 2e-3, `cord not vertical: ${JSON.stringify(pts)}`);
+  const bird = toProductSpace(fixed, "bird", [0, 0, 0]);
+  assert.ok(Math.abs(bird[0] - pts[0][0]) < 2e-3 && bird[1] < Math.min(...pts.map((q) => q[1])), `bird not below: ${bird}`);
+  // Hanging already: nothing to do.
+  assert.deepEqual(hangCords(fixed, ["pull_cord", "bird"]), []);
 });
