@@ -181,6 +181,7 @@ The free plan sleeps after 15 minutes idle (the next visit takes about a minute 
 | `web/` | React + react-three-fiber studio, product renderer (`three/parts/`), pledge and campaign pages |
 | `actor/` | The `wish-matcher` Apify Actor |
 | `tools/prep-garments/` | Headless Blender pipeline for base garments |
+| `docs/` | The build plan, step specs, and [design notes](docs/design-notes.md): decisions, what we're proud of, failures we got past |
 
 ## Credits
 
