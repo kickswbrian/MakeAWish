@@ -208,8 +208,10 @@ function turnFlags(before: Product, after: Product): { adds?: true; fresh?: true
   return { ...(adds ? { adds: true } : {}), ...(fresh ? { fresh: true } : {}) };
 }
 const speculativeFlags = new Map<string, { adds?: true; fresh?: true }>();
+// The client keeps a voice guess when it matches the final words up to case and punctuation (sameUtterance).
+const flagKey = (wishId: string, text: string) => `${wishId}|${text.toLowerCase().replace(/[^a-z0-9 ]+/g, "").replace(/\s+/g, " ").trim()}`;
 function rememberFlags(wishId: string, text: string, flags: { adds?: true; fresh?: true }) {
-  speculativeFlags.set(`${wishId}|${text.trim()}`, flags);
+  speculativeFlags.set(flagKey(wishId, text), flags);
   if (speculativeFlags.size > 300) speculativeFlags.delete(speculativeFlags.keys().next().value!);
 }
 
@@ -220,8 +222,8 @@ app.post("/api/wish/:id/transcript", limits.editProduct, (req, res) => {
   const genie = String(req.body?.genie ?? "").trim().slice(0, 600);
   if (!user || !genie) throw badRequest("user and genie text required");
   const now = Date.now();
-  const flags = speculativeFlags.get(`${req.params.id}|${user}`) ?? {};
-  speculativeFlags.delete(`${req.params.id}|${user}`);
+  const flags = speculativeFlags.get(flagKey(req.params.id, user)) ?? {};
+  speculativeFlags.delete(flagKey(req.params.id, user));
   appendTranscript(req.params.id, [{ role: "user", text: user, at: now - 1, ...flags }, { role: "genie", text: genie, at: now }]);
   res.json({ ok: true });
 });
