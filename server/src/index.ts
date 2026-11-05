@@ -4,7 +4,7 @@ import http from "node:http";
 import path from "node:path";
 import { Server } from "socket.io";
 import {
-  CreateCampaignBody, EVENTS, isEmpty, parseProduct, PledgeBody, templateById, VoteBody, WishVoteBody,
+  CreateCampaignBody, EVENTS, isEmpty, parseProduct, PledgeBody, templateById, VoteBody, WishVoteBody, type Product,
   type Campaign, type ConfigResponse, type MatchesResponse, type OutlineEntry, type PledgeResponse, type TurnEvent, type TurnSelection,
 } from "@wishit/shared";
 import { setIo, emit } from "./bus.ts";
@@ -179,12 +179,13 @@ app.post("/api/wish/:id/turn", ...limits.turn, wrap(async (req, res) => {
     if (abort.signal.aborted) return;
     if (!speculative) {
       saveProduct(id, result.product);
-      const adds = Object.keys(result.product.parts).some((pid) => !product.parts[pid]);
-      if (result.say) appendTranscript(id, [{ role: "user", text, at: started, ...(adds ? { adds } : {}) }, { role: "genie", text: result.say, at: Date.now() }]);
+      if (result.say) appendTranscript(id, [{ role: "user", text, at: started, ...turnFlags(product, result.product) }, { role: "genie", text: result.say, at: Date.now() }]);
       emit(`wish:${id}`, EVENTS.productUpdated, { wishId: id, product: result.product });
       // Plan the "does it exist" search in the background, so See matches goes straight to the stores.
       prepareMatches(result.product);
     }
+    // A voice turn the client may keep: remember what it did for when its transcript arrives.
+    else rememberFlags(id, text, turnFlags(product, result.product));
     if (result.lock) send({ t: "lock" });
     const ms = Date.now() - started;
     send({ t: "done", ms, brain: result.brain, timing: result.timing, rejected: result.rejected });
@@ -200,6 +201,18 @@ app.post("/api/wish/:id/turn", ...limits.turn, wrap(async (req, res) => {
   }
 }));
 
+/** What a turn did, for the store search: added parts (a feature) and/or started a new design. */
+function turnFlags(before: Product, after: Product): { adds?: true; fresh?: true } {
+  const fresh = isEmpty(before) || before.rootId !== after.rootId;
+  const adds = Object.keys(after.parts).some((pid) => !before.parts[pid]);
+  return { ...(adds ? { adds: true } : {}), ...(fresh ? { fresh: true } : {}) };
+}
+const speculativeFlags = new Map<string, { adds?: true; fresh?: true }>();
+function rememberFlags(wishId: string, text: string, flags: { adds?: true; fresh?: true }) {
+  speculativeFlags.set(`${wishId}|${text.trim()}`, flags);
+  if (speculativeFlags.size > 300) speculativeFlags.delete(speculativeFlags.keys().next().value!);
+}
+
 /** A speculative turn the client kept: record it in the conversation (its product is PUT separately). */
 app.post("/api/wish/:id/transcript", limits.editProduct, (req, res) => {
   assertFound(getWish(req.params.id), "Wish");
@@ -207,7 +220,9 @@ app.post("/api/wish/:id/transcript", limits.editProduct, (req, res) => {
   const genie = String(req.body?.genie ?? "").trim().slice(0, 600);
   if (!user || !genie) throw badRequest("user and genie text required");
   const now = Date.now();
-  appendTranscript(req.params.id, [{ role: "user", text: user, at: now - 1 }, { role: "genie", text: genie, at: now }]);
+  const flags = speculativeFlags.get(`${req.params.id}|${user}`) ?? {};
+  speculativeFlags.delete(`${req.params.id}|${user}`);
+  appendTranscript(req.params.id, [{ role: "user", text: user, at: now - 1, ...flags }, { role: "genie", text: genie, at: now }]);
   res.json({ ok: true });
 });
 
