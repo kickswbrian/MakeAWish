@@ -83,6 +83,14 @@ export function localBox(part: Part): Box | null {
       const b = g.params.bevel ?? 0;
       return { min: [Math.min(...xs) - b, Math.min(...ys) - b, -g.params.depth / 2], max: [Math.max(...xs) + b, Math.max(...ys) + b, g.params.depth / 2] };
     }
+    case "text": {
+      const lines = g.params.text.split("\n");
+      const natural = Math.max(...lines.map((l) => l.length)) * g.params.size * 0.72;
+      const k = g.params.width && natural > g.params.width ? g.params.width / natural : 1;
+      const w = (natural * k) / 2;
+      const h = (k * g.params.size * (1 + 1.4 * (lines.length - 1))) / 2;
+      return { min: [-w, -h, -g.params.depth / 2], max: [w, h, g.params.depth / 2] };
+    }
     case "tube": {
       const r = g.params.width ? Math.max(g.params.width / 2, g.params.radius) : g.params.radius;
       const min: Vec3 = [Infinity, Infinity, Infinity], max: Vec3 = [-Infinity, -Infinity, -Infinity];

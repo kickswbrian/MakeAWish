@@ -193,7 +193,8 @@ export function svgOutline(d: string, width: number): SvgOutline | null {
     const shapes: SvgShape[] = [];
     const owner = new Map<number, SvgShape>();
     order.forEach(({ c, k }, idx) => {
-      const containers = order.slice(0, idx).filter((o) => inside(c[0], o.c));
+      // Inside means all of it: a wing that starts on the body and sticks out is a piece, not a hole.
+      const containers = order.slice(0, idx).filter((o) => c.every((p) => inside(p, o.c)));
       if (containers.length % 2 === 0) {
         const shape = { outer: c, holes: [] as Pt[][] };
         shapes.push(shape);

@@ -95,8 +95,8 @@ export function IntroWords({ phase, onSkip }: { phase: IntroPhase; onSkip: () =>
   useEffect(() => {
     if (!playing) return;
     const k = (e: KeyboardEvent) => {
-      // "1"/"2"/"3" switch variants (2 and 3 replay the intro); modifiers and form fields aren't a skip.
-      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || e.key === "1" || e.key === "2" || e.key === "3") return;
+      // "1"-"4" are presenter keys (see demoKeys.ts); modifiers and form fields aren't a skip.
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || ["1", "2", "3", "4"].includes(e.key)) return;
       const t = e.target;
       if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement || (t instanceof HTMLElement && t.isContentEditable)) return;
       onSkip();

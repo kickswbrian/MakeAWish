@@ -1,6 +1,10 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { mergeVertices, toCreasedNormals } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { FontLoader, type Font } from "three/examples/jsm/loaders/FontLoader.js";
+import sansFont from "three/examples/fonts/helvetiker_bold.typeface.json";
+import serifFont from "three/examples/fonts/gentilis_bold.typeface.json";
+import roundFont from "three/examples/fonts/optimer_bold.typeface.json";
 import { svgOutline, type Geometry, type GeometryOf } from "@wishit/shared";
 import { boxProjectUVs, scaleUVs } from "./uv.ts";
 
@@ -19,6 +23,7 @@ export function buildGeometry(g: Geometry): THREE.BufferGeometry {
     case "cylinder": geo = cylinder(g.params); break;
     case "capsule": geo = capsule(g.params); break;
     case "torus": geo = torus(g.params); break;
+    case "text": geo = text(g.params); break;
     default: geo = new THREE.BoxGeometry(0.05, 0.05, 0.05);
   }
   geo.computeBoundingBox();
@@ -237,6 +242,47 @@ function extrude(p: GeometryOf<"extrude">["params"]) {
   geo = mergeVertices(geo, 1e-6);
   geo = toCreasedNormals(geo, rad(40));
   return geo;
+}
+
+const FONTS = { sans: sansFont, serif: serifFont, round: roundFont };
+const fonts = new Map<string, Font>();
+
+/** Real lettering: the words as extruded glyphs, centered on the origin, facing +Z. */
+function text(p: GeometryOf<"text">["params"]) {
+  let font = fonts.get(p.font);
+  if (!font) {
+    font = new FontLoader().parse(FONTS[p.font] as never);
+    fonts.set(p.font, font);
+  }
+  // `size` is the capital height; these fonts' capitals are about 0.72 of the em.
+  const shapes = font.generateShapes(p.text, p.size / 0.72);
+  const bevel = Math.min(p.bevel ?? p.depth * 0.15, p.depth / 2 - 1e-5, p.size * 0.04);
+  let geo: THREE.BufferGeometry = new THREE.ExtrudeGeometry(shapes, {
+    depth: Math.max(1e-5, p.depth - bevel * 2),
+    curveSegments: 6,
+    bevelEnabled: bevel > 1e-5,
+    bevelThickness: bevel,
+    bevelSize: bevel,
+    bevelOffset: -bevel,
+    bevelSegments: 2,
+  });
+  geo.computeBoundingBox();
+  const b = geo.boundingBox!;
+  geo.translate(-(b.min.x + b.max.x) / 2, -(b.min.y + b.max.y) / 2, -(b.min.z + b.max.z) / 2);
+  // Too wide for its room: shrink to fit (the letters keep their depth).
+  const wide = b.max.x - b.min.x;
+  if (p.width && wide > p.width) geo.scale(p.width / wide, p.width / wide, 1);
+  // Wrapped around a round surface: x becomes an angle around an axis p.curve behind the text.
+  if (p.curve) {
+    const pos = geo.getAttribute("position");
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), z = pos.getZ(i), r = p.curve + z, a = x / p.curve;
+      pos.setXYZ(i, r * Math.sin(a), pos.getY(i), r * Math.cos(a) - p.curve);
+    }
+  }
+  geo.deleteAttribute("normal");
+  geo = mergeVertices(geo, 1e-6);
+  return toCreasedNormals(geo, rad(40));
 }
 
 /**
