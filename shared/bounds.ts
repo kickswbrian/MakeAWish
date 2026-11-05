@@ -104,8 +104,23 @@ export function localBox(part: Part): Box | null {
   return null;
 }
 
-/** The part's own geometry, as an axis-aligned box in product space. */
+/** The part's own geometry, as an axis-aligned box in product space; an intersected part is clipped to what it keeps. */
 export function partBox(product: Product, id: string): Box | null {
+  const own = rawBox(product, id);
+  if (!own) return null;
+  for (const c of Object.values(product.parts)) {
+    if (c.csg?.op !== "intersect" || c.csg.withPartId !== id) continue;
+    const k = rawBox(product, c.id);
+    if (!k) continue;
+    for (let i = 0; i < 3; i++) {
+      own.min[i] = Math.max(own.min[i], k.min[i]);
+      own.max[i] = Math.max(own.min[i], Math.min(own.max[i], k.max[i]));
+    }
+  }
+  return own;
+}
+
+function rawBox(product: Product, id: string): Box | null {
   const part = product.parts[id];
   const local = part && localBox(part);
   if (!local) return null;

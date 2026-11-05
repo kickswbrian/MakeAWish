@@ -47,7 +47,7 @@ const partSchema = {
   properties: {
     id: { type: "string" }, name: { type: "string" }, kind: { type: "string", enum: ["primitive", "kit"] },
     geometry: { type: "object" }, kitAsset: { type: "string" }, kitParams: { type: "object" },
-    parent: { type: ["string", "null"] }, transform: { type: "object" }, material: { type: "object" }, csg: { type: "object" },
+    parent: { type: ["string", "null"] }, transform: { type: "object" }, material: { type: "object" }, csg: { type: "object" }, repeat: { type: "object" },
   },
   required: ["id", "name", "kind", "parent", "material"],
 };
