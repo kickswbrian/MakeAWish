@@ -2,6 +2,8 @@ import { z } from "zod";
 import { KIT_IDS } from "./kit.ts";
 import { MESH_MODELS } from "./meshes.ts";
 import { svgOutline, thinPoints } from "./svgpath.ts";
+import { applyMat, eulerMatrix, matrixEuler, mulMat } from "./frames.ts";
+import type { Vec3 } from "./spec.ts";
 
 /**
  * The product data model. A product is a flat map of parts with parent links; every edit is a patch.
@@ -203,7 +205,8 @@ export const PartSchema = z
     parent: PartId.nullable().default(null),
     transform: TransformSchema.default({}),
     material: MaterialSchema,
-    csg: z.object({ op: z.literal("subtract"), withPartId: PartId }).optional(),
+    /** subtract: carve this (invisible) part out of the target. intersect: keep only where the target and this overlap. */
+    csg: z.object({ op: z.enum(["subtract", "intersect"]).default("subtract"), withPartId: PartId }).optional(),
   })
   .superRefine((p, ctx) => {
     if (p.kind === "primitive" && !p.geometry) ctx.addIssue({ code: "custom", message: "primitive part needs geometry" });
@@ -227,7 +230,7 @@ export type Part = {
   parent: string | null;
   transform: Transform;
   material: PartMaterial;
-  csg?: { op: "subtract"; withPartId: string };
+  csg?: { op: "subtract" | "intersect"; withPartId: string };
 };
 
 export interface Product {
@@ -395,6 +398,38 @@ export interface ApplyResult {
 }
 
 /**
+ * An added part with "repeat" becomes `count` plain parts: copies turned around an axis (petals,
+ * spokes, teeth, bolts on a ring) and/or stepped by an offset (rungs, slats, keys), so a ring is
+ * always complete however the model would have written it out. The first copy keeps the id (and
+ * any children added to it); the others get _2, _3...
+ */
+function expandRepeat(raw: unknown): unknown[] {
+  const patch = raw as { op?: unknown; part?: Record<string, unknown> };
+  const rep = patch?.op === "add" && patch.part && typeof patch.part === "object" ? (patch.part.repeat as Record<string, unknown> | undefined) : undefined;
+  if (!rep || typeof rep !== "object") return [raw];
+  const { repeat: _drop, ...base } = patch.part!;
+  const count = Math.max(1, Math.min(48, Math.round(Number(rep.count) || 1)));
+  const vec = (v: unknown): Vec3 | null => (Array.isArray(v) && v.length === 3 && v.every((n) => Number.isFinite(Number(n))) ? (v.map(Number) as Vec3) : null);
+  const offset = vec(rep.offset);
+  const axis = rep.around === "x" || rep.around === "y" || rep.around === "z" ? rep.around : offset ? null : "y";
+  const step = Number.isFinite(Number(rep.step)) ? Number(rep.step) : axis ? 360 / count : 0;
+  const center = vec(rep.center) ?? [0, 0, 0];
+  const t = (base.transform ?? {}) as { position?: unknown; rotation?: unknown };
+  const pos = vec(t.position) ?? [0, 0, 0], rot = vec(t.rotation) ?? [0, 0, 0];
+  const id = typeof base.id === "string" ? base.id : "part";
+  const out: unknown[] = [];
+  for (let k = 0; k < count; k++) {
+    const turn: Vec3 = axis === "x" ? [k * step, 0, 0] : axis === "y" ? [0, k * step, 0] : axis === "z" ? [0, 0, k * step] : [0, 0, 0];
+    const m = eulerMatrix(turn);
+    const rel = applyMat(m, [pos[0] - center[0], pos[1] - center[1], pos[2] - center[2]]);
+    const position = rel.map((v, i) => Math.round((v + center[i] + (offset ? offset[i] * k : 0)) * 10000) / 10000) as Vec3;
+    const rotation = axis ? matrixEuler(mulMat(m, eulerMatrix(rot))) : rot;
+    out.push({ op: "add", part: { ...base, id: k ? `${id}_${k + 1}` : id, name: k && typeof base.name === "string" ? `${base.name} ${k + 1}` : base.name, transform: { ...(t as object), position, rotation } } });
+  }
+  return out;
+}
+
+/**
  * Apply patches in order. Never throws: invalid patches are rejected with a reason, the rest apply.
  * Adds that collide get a fresh id; a missing parent attaches to the root; removes take the subtree.
  */
@@ -404,7 +439,7 @@ export function applyPatches(product: Product, patches: unknown[]): ApplyResult 
   const rejected: ApplyResult["rejected"] = [];
   const reject = (patch: unknown, reason: string) => rejected.push({ patch, reason });
 
-  for (const raw of patches) {
+  for (const raw of patches.flatMap(expandRepeat)) {
     if (!raw || typeof raw !== "object") {
       reject(raw, "not an object");
       continue;

@@ -2,7 +2,8 @@ import { emptyProduct, parseProduct, type Product, type WishDTO, type WishStatus
 import { db } from "./db.ts";
 import { newId } from "./util.ts";
 
-export interface TranscriptTurn { role: "user" | "genie"; text: string; at: number }
+/** `adds`: a shopper turn that added parts (a feature like "add Sonic to it"), not a tweak. */
+export interface TranscriptTurn { role: "user" | "genie"; text: string; at: number; adds?: boolean }
 interface WishRow {
   id: string; product_json: string | null; transcript_json: string; thumb: string | null;
   status: WishStatus; created_at: number;

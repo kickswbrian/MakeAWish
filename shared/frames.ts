@@ -80,3 +80,26 @@ export function fixChildFrame(product: Product, parentId: string, position: Vec3
   if (boxDistance(position, bounds.center, bounds.size) > 0.25 * extent + 0.01) return null;
   return toPartSpace(product, parentId, position).map((v) => Math.round(v * 1000) / 1000) as Vec3;
 }
+
+/** A 3x3 rotation matrix, rows of columns (m[row][col]). */
+export type Mat3 = number[][];
+
+export const mulMat = (a: Mat3, b: Mat3): Mat3 => a.map((row) => [0, 1, 2].map((c) => row[0] * b[0][c] + row[1] * b[1][c] + row[2] * b[2][c]));
+export const transposeMat = (a: Mat3): Mat3 => [0, 1, 2].map((r) => [a[0][r], a[1][r], a[2][r]]);
+export const applyMat = (m: Mat3, v: Vec3): Vec3 => [0, 1, 2].map((r) => m[r][0] * v[0] + m[r][1] * v[1] + m[r][2] * v[2]) as Vec3;
+
+/** Euler XYZ (degrees) to a matrix, composed like the renderer: Rx * Ry * Rz. */
+export function eulerMatrix([x, y, z]: Vec3): Mat3 {
+  const [a, b, c] = [x * DEG, y * DEG, z * DEG];
+  const rx: Mat3 = [[1, 0, 0], [0, Math.cos(a), -Math.sin(a)], [0, Math.sin(a), Math.cos(a)]];
+  const ry: Mat3 = [[Math.cos(b), 0, Math.sin(b)], [0, 1, 0], [-Math.sin(b), 0, Math.cos(b)]];
+  const rz: Mat3 = [[Math.cos(c), -Math.sin(c), 0], [Math.sin(c), Math.cos(c), 0], [0, 0, 1]];
+  return mulMat(mulMat(rx, ry), rz);
+}
+
+/** A rotation matrix back to Euler XYZ degrees (three.js's decomposition), to 0.1 degree. */
+export function matrixEuler(m: Mat3): Vec3 {
+  const y = Math.asin(Math.max(-1, Math.min(1, m[0][2])));
+  const [x, z] = Math.abs(m[0][2]) < 0.9999999 ? [Math.atan2(-m[1][2], m[2][2]), Math.atan2(-m[0][1], m[0][0])] : [Math.atan2(m[2][1], m[1][1]), 0];
+  return [x, y, z].map((v) => Math.round((v / DEG) * 10) / 10) as Vec3;
+}
