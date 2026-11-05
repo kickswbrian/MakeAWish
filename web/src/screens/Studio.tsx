@@ -940,7 +940,8 @@ export default function Studio() {
   useEffect(() => {
     if (!v2Typing || phase !== "done" || typing || voice.mode === "text") return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || /[123 ]/.test(e.key)) return;
+      // 1-4 are presenter keys (see demoKeys.ts): they never also start a typed wish.
+      if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || /[1234 ]/.test(e.key)) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
       e.preventDefault();
       const p = pointer.current;

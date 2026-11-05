@@ -60,13 +60,14 @@ function toPrice(v: unknown): number | null {
  * countryCode "us" ("AED 1,147.66", "₫2,749,000", "₹9,914"), and reading those as dollars showed a
  * $99,780 couch. Dollar look-alikes (CA$, A$, R$) are foreign too.
  */
+const FOREIGN = /[€£¥₹₫₩₽₺₪฿₱₦₴₸₡₲₵]|\b[A-Z]{1,3}\$|\b(?:AED|EUR|GBP|INR|VND|IDR|JPY|CNY|RMB|KRW|CAD|AUD|NZD|MXN|BRL|SGD|HKD|PHP|THB|MYR|SAR|ZAR|TRY|RUB|PLN|SEK|NOK|DKK|CHF|CZK|HUF|ILS|EGP|PKR|BDT|NGN|KES|ARS|CLP|COP|PEN|TWD)\b/;
 function foreignCurrency(item: any): boolean {
   const code = first(item.currency, item.priceCurrency, item.currencyCode, item.price?.currency) as string | undefined;
-  if (typeof code === "string" && code.trim() && !/^(usd|\$|us\$)$/i.test(code.trim())) return true;
+  if (typeof code === "string" && FOREIGN.test(code.trim().toUpperCase().replace(/^US\$$/, "$"))) return true;
   const raw = first(item.price, item.priceValue, item.currentPrice, item.extracted_price);
   if (typeof raw !== "string") return false;
-  const lead = raw.replace(/ /g, " ").trim().split(/\d/)[0].trim();
-  return lead !== "" && !/^(\$|us\s?\$|usd)$/i.test(lead);
+  // "US$" is fine; any other currency sign or code, before or after the number, isn't.
+  return FOREIGN.test(raw.replace(/\bUS\s?\$/gi, "$"));
 }
 
 /** "4.5 out of 5 stars" / 4.5 / {rating: 4.5} -> 4.5, within 0-5. */
