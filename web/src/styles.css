@@ -1384,3 +1384,7 @@ button.mx-buy.buying { background: var(--ink-55); cursor: progress; }
 .world-title { font-size: 28px; }
 .world.world-leaving .world-plane { transition: transform .5s cubic-bezier(.6, 0, .4, 1), opacity .45s ease; transform: translate(0, 0) scale(.2) !important; opacity: 0; }
 .world-hdr.world-leaving, .world.world-leaving .world-bar { opacity: 0; transition: opacity .3s ease; }
+
+/* No blinking caret on plain text (Chrome's caret browsing, F7, puts one wherever you click): only real text fields show it. */
+body { caret-color: transparent; }
+input, textarea, [contenteditable="true"] { caret-color: auto; }
