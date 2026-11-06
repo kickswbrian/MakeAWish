@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import {
-  addOrder, applyPatches, childrenOf, emptyProduct, fashionById, fixChildFrame, localOutfit, outfitProduct, floatingParts, groundPart, hangCords, isEmpty, levelIssues, localBox, movedBy, newCollisions, partBox, stretchUp, partsInOrder, subtreeIds, toPartSpace, toProductSpace, matchTemplate, parseIntent, ProductMetaSchema, setMeta, templateById, templateProduct,
+  addOrder, applyPatches, childrenOf, emptyProduct, fashionById, fixChildFrame, localOutfit, outfitProduct, floatingParts, groundPart, hangCords, isEmpty, surfaceText, levelIssues, localBox, movedBy, newCollisions, partBox, stretchUp, partsInOrder, subtreeIds, toPartSpace, toProductSpace, matchTemplate, parseIntent, ProductMetaSchema, setMeta, templateById, templateProduct,
   type FashionState, type FashionTemplate, type LevelIssue, type OutlineEntry, type Part, type Patch, type Product, type ProductMeta, type TurnEvent, type TurnSelection, type TurnTiming, type Vec3,
 } from "@wishit/shared";
 import { env } from "./env.ts";
@@ -440,7 +440,13 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
       console.log(`[brain] re-hung ${hung.map((u) => u.id).join(", ")}`);
       applyAndEmit(hung);
     }
-    const levels = (await settleLevels()) || hung.length > 0;
+    // New lettering sits on the surface it's written on, not buried inside it.
+    const lettered = surfaceText(product, [...added].filter((id) => product.parts[id]));
+    if (lettered.length) {
+      console.log(`[brain] surfaced text ${lettered.map((u) => u.id).join(", ")}`);
+      applyAndEmit(lettered);
+    }
+    const levels = (await settleLevels()) || hung.length > 0 || lettered.length > 0;
     const fixes: Patch[] = [];
     let work = product;
     // A reshaped part can strand its children (speakers on a hood that got deeper): check them too.
@@ -896,7 +902,8 @@ export function keepWarm(): void {
 /** Warm the prompt cache at boot so the first real wish doesn't pay the cold prefill. */
 export async function prewarm(quiet = false): Promise<void> {
   if (!client) return;
-  for (const model of new Set([env.designModel, env.editModel])) {
+  // Both models at once: the first wish after a restart shouldn't wait on two round trips in a row.
+  await Promise.all([...new Set([env.designModel, env.editModel])].map(async (model) => {
     try {
       const r = await client.messages.create({
         model,
@@ -912,5 +919,5 @@ export async function prewarm(quiet = false): Promise<void> {
     } catch (err) {
       console.warn(`[brain] prewarm ${model} failed:`, (err as Error).message);
     }
-  }
+  }));
 }
