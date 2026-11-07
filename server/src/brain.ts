@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import {
-  addOrder, applyPatches, childrenOf, emptyProduct, fashionById, fixChildFrame, localOutfit, outfitProduct, floatingParts, groundPart, hangCords, isEmpty, surfaceText, levelIssues, localBox, movedBy, newCollisions, partBox, stretchUp, partsInOrder, subtreeIds, toPartSpace, toProductSpace, matchTemplate, parseIntent, ProductMetaSchema, setMeta, templateById, templateProduct,
+  addOrder, applyPatches, childrenOf, emptyProduct, fashionById, fixChildFrame, localOutfit, outfitProduct, floatingParts, groundPart, hangCords, isEmpty, surfaceText, unshear, levelIssues, localBox, movedBy, newCollisions, partBox, stretchUp, partsInOrder, subtreeIds, toPartSpace, toProductSpace, matchTemplate, parseIntent, ProductMetaSchema, setMeta, templateById, templateProduct,
   type FashionState, type FashionTemplate, type LevelIssue, type OutlineEntry, type Part, type Patch, type Product, type ProductMeta, type TurnEvent, type TurnSelection, type TurnTiming, type Vec3,
 } from "@wishit/shared";
 import { env } from "./env.ts";
@@ -440,6 +440,15 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
       console.log(`[brain] re-hung ${hung.map((u) => u.id).join(", ")}`);
       applyAndEmit(hung);
     }
+    // New parts don't inherit a parent's squash (a flattened flower center shearing its petals).
+    // Template parts were made with their squashes in mind: only what the model wrote is lifted.
+    const tpl = input.template ? templateById(input.template) : fresh ? matchTemplate(input.text) : null;
+    const tplIds = new Set(tpl?.parts.map((x) => x.id) ?? []);
+    const lifted = unshear(product, [...added].filter((id) => product.parts[id] && !tplIds.has(id)), (w, u) => applyPatches(w, [u]).product);
+    if (lifted.length) {
+      console.log(`[brain] unsquashed ${lifted.length} part(s)`);
+      applyAndEmit(lifted);
+    }
     // New lettering sits on the surface it's written on, not buried inside it.
     const lettered = surfaceText(product, [...added].filter((id) => product.parts[id]));
     if (lettered.length) {
@@ -532,7 +541,9 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, s
     return true;
   };
 
-  if (!client || forceRules) return ruleTurn(input, applyAndEmit, applyMeta, emit, timing, at, () => product, reset);
+  // A showpiece (shared/templates/demo.ts) is already the finished design: its first build is used as is.
+  const showpiece = isEmpty(input.product) || input.template ? (input.template ? templateById(input.template) : matchTemplate(input.text)) : null;
+  if (!client || forceRules || showpiece?.match) return ruleTurn(input, applyAndEmit, applyMeta, emit, timing, at, () => product, reset);
 
   try {
     // A freshly shown template is still a new design: the fast planner customizes it.
