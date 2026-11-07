@@ -100,6 +100,9 @@ test("templates: every part survives validation, keywords pick the product noun"
   for (const other of ["a phone charger", "a board game", "a wine glasses rack", "a car seat", "a watch winder box"]) assert.equal(matchTemplate(other), null, other);
   assert.equal(matchTemplate("a polar bear plush")?.id, "teddy_bear");
   for (const plain of ["a plush", "a cute plushie", "a giant stuffed animal", "a pink soft toy"]) assert.equal(matchTemplate(plain)?.id, "teddy_bear", plain);
+  // Dressed up: the wearer is the product, the clothes are details on it.
+  for (const [wish, id] of [["a teddy bear wearing a hoodie", "teddy_bear"], ["a teddy bear in a denim jacket", "teddy_bear"], ["a hoodie in sage green", "hoodie"], ["an all-in-one desk lamp", "desk_lamp"]]) assert.equal(matchTemplate(wish)?.id, id, wish);
+  assert.equal(matchTemplate("a plush bunny in a dress"), null);
   // A named character or creature is its own design, not a recolored bear.
   for (const named of ["a sonic the hedgehog plush", "a frog plushie", "a kirby plush", "a dinosaur stuffed animal"]) assert.equal(matchTemplate(named), null, named);
   assert.equal(matchTemplate("a backpack made of cork")?.id, "backpack");

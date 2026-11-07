@@ -97,8 +97,9 @@ export function matchTemplate(text: string): Template | null {
   // A shape twist ("a lamp shaped like a mushroom") is a new design, not a stock template.
   if (/\bshaped\b|\bshape of\b|\blooks? like\b|\binspired by\b|\bin the style of\b|\bthemed\b/.test(text.toLowerCase())) return null;
   // Only the product noun counts, not its accessories: "a car with a cup holder" is not a mug.
+  // The wearer is the product: "a teddy bear wearing a hoodie" is a teddy bear, the hoodie a detail on it.
   // Punctuation ends a phrase ("|"): "a backpack, red and waterproof" still names a backpack.
-  const head = text.toLowerCase().replace(/[,.;:!?]+/g, " | ").replace(/[^a-z0-9| ]+/g, " ").split(/\b(?:with|that|which|for|so|but|where|to|plus|has|having|including)\b/)[0];
+  const head = text.toLowerCase().replace(/[,.;:!?]+/g, " | ").replace(/[^a-z0-9| ]+/g, " ").split(/\b(?:with|that|which|for|so|but|where|to|plus|has|having|including|wearing|dressed|donning|outfitted|in (?:a|an|the|his|her|my|its))\b/)[0];
   const t = " " + head.replace(/\s+/g, " ") + " ";
   let best: { tpl: Template; score: number; at: number } | null = null;
   for (const tpl of TEMPLATES) {
