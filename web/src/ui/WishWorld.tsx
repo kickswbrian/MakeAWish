@@ -94,9 +94,25 @@ export function WishWorld({ wishId = "", yourTitle = "", yourThumb = null, lande
 
   useEffect(() => {
     let cancelled = false;
-    void api.world(voterId(), wishId || undefined).then((list) => !cancelled && setItems(list)).catch(() => !cancelled && setItems([]));
+    let live = false;
+    // Offline or slow (venue wifi): after 3 s, or on an error, show the bundled snapshot; live data still wins when it lands.
+    const backup = () => {
+      if (cancelled || live) return;
+      void fetch("/world-backup.json")
+        .then((r) => (r.ok ? (r.json() as Promise<WorldItem[]>) : []))
+        .then((list) => !cancelled && !live && setItems((cur) => (cur && cur.length ? cur : list)))
+        .catch(() => !cancelled && !live && setItems((cur) => cur ?? []));
+    };
+    const slow = window.setTimeout(backup, 3000);
+    void api.world(voterId(), wishId || undefined)
+      .then((list) => {
+        live = true;
+        if (!cancelled) setItems(list);
+      })
+      .catch(backup);
     return () => {
       cancelled = true;
+      window.clearTimeout(slow);
     };
   }, [wishId]);
 
