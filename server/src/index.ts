@@ -15,7 +15,7 @@ import {
   PledgeError, reconcilePledge, startCampaignTimers, vote,
 } from "./campaigns.ts";
 import { assertSafeConfig, env, isProd, logConfig, paymentMode, WEB_DIST } from "./env.ts";
-import { findMatches, getMatches, prepareMatches } from "./apify.ts";
+import { findMatches, getMatches, prepareMatches, previewImages } from "./apify.ts";
 import { resetDemo } from "./demo.ts";
 import { listWorld, voteWish } from "./world.ts";
 import { seedWorldIfEmpty } from "./worldSeed.ts";
@@ -248,6 +248,10 @@ app.post("/api/wish/:id/lock", limits.search, (req, res) => {
   setWishStatus(w.id, "locked");
   void findMatches(w.id);
   res.json({ ok: true });
+});
+
+app.get("/api/wish/:id/preview-images", limits.read, (req, res) => {
+  res.json(previewImages(req.params.id));
 });
 
 app.get("/api/wish/:id/matches", limits.read, (req, res) => {
