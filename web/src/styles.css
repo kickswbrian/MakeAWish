@@ -214,7 +214,7 @@ p { margin: 0; }
 .line.long { font-size: 19px; line-height: 26px; }
 .line.you { color: var(--ink-70); }
 .line.interim { color: var(--ink-55); font-weight: 500; }
-.w { display: inline-block; margin-right: .26em; animation: wordIn .45s var(--spring) both; animation-delay: calc(var(--i) * 110ms); }
+.w { display: inline-block; animation: wordIn .45s var(--spring) both; animation-delay: calc(var(--i) * 110ms); }
 .dock-pill { flex: none; margin-bottom: 12px; animation: fadeIn .6s cubic-bezier(.34,1.4,.64,1) both; }
 .dock { flex: none; height: 62px; margin-bottom: max(24px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; }
 .talk {

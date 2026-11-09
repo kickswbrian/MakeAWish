@@ -919,7 +919,7 @@ function ruleTurn(
     say = `Here's the closest one from my workshop, the ${d.title}. Tap any part to change it.`;
   } else {
     say = isEmpty(product)
-      ? "My magic is resting right now, but try a backpack, a lamp, a helmet or a mug."
+      ? "I can't reach my magic right now, so I can only make things I've made before: try a backpack, a lamp, a teddy bear, or a suitcase that turns into a scooter."
       : "Tap a part and tell me a color, a material, or bigger or smaller.";
   }
   emit({ t: "say", text: say });

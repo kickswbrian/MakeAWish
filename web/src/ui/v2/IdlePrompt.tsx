@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 /** True once `activity` (anything said, typed or shown) has stayed the same for `delayMs`. */
 export function useIdle(activity: string, enabled: boolean, delayMs: number): boolean {
@@ -19,7 +19,10 @@ export function IdlePrompt({ listening }: { listening: boolean }) {
     <p className="line v2-prompt" aria-live="polite">
       <span key={text}>
         {text.split(" ").map((w, i) => (
-          <span key={i} className="w" style={{ ["--i" as string]: i }}>{w}</span>
+          <Fragment key={i}>
+            {i > 0 && " "}
+            <span className="w" style={{ ["--i" as string]: i }}>{w}</span>
+          </Fragment>
         ))}
       </span>
     </p>
