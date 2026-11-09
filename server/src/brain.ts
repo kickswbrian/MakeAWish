@@ -327,6 +327,7 @@ async function streamToolOnce(model: string, tool: string, user: string, h: Call
   let toolSeen = false;
   let text = "";
   for await (const ev of stream) {
+    lastStreamEvent = Date.now(); // the watchdog's sign of life: thinking counts
     if (ev.type === "message_start") {
       const u = ev.message.usage;
       stats.input = u.input_tokens + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0);
@@ -554,11 +555,12 @@ export async function runTurn(input: TurnInput, emit: (ev: TurnEvent) => void, o
   const plainShowpiece = !!showpiece?.match && !showpieceExtras(showpiece, input.text);
   if (!client || forceRules || plainShowpiece) return ruleTurn(input, applyAndEmit, applyMeta, emit, timing, at, () => product, reset);
 
-  // No network (or a stalled API): if Claude hasn't started answering in 6 s, use the offline genie.
-  const sentAt = at();
+  // No network (or a stalled API): if Claude sends nothing at all for 8 s, use the offline genie.
+  const sentAt = Date.now();
   const stall = setInterval(() => {
     if (timing.firstToken !== undefined || signal.aborted) return clearInterval(stall);
-    if (at() - sentAt > STALL_MS) {
+    // Silence, not slowness: a model still thinking (or any other turn streaming) keeps it alive.
+    if (Date.now() - Math.max(sentAt, lastStreamEvent) > STALL_MS) {
       clearInterval(stall);
       console.warn(`[brain] no answer from Claude in ${STALL_MS / 1000}s, using the offline genie`);
       watchdog.abort();
@@ -925,7 +927,9 @@ function ruleTurn(
   return { product: current(), say, lock, brain: "rules", timing, rejected: 0 };
 }
 
-const STALL_MS = 6000;
+const STALL_MS = 8000;
+/** When Claude last sent anything on any stream (the stall watchdog's sign of life). */
+let lastStreamEvent = 0;
 let lastActivity = Date.now();
 /** Mark genie activity (keeps the prompt cache warm while people are around). */
 export const touchBrain = () => (lastActivity = Date.now());
