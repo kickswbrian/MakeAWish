@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { Link } from "react-router-dom";
 import type { Caption } from "../voice/useVoice.ts";
 import { HeartIcon, Sparkle } from "./Icons.tsx";
@@ -29,8 +30,12 @@ export function SpeechLine({ captions, interim }: { captions: Caption[]; interim
   const words = c.text.split(/\s+/).filter(Boolean);
   return (
     <p key={c.id} className={`line ${c.who} ${c.text.length > 90 ? "long" : ""}`} aria-live="polite">
+      {/* Real spaces between the animated words, so copying or reading the line keeps them. */}
       {words.map((w, i) => (
-        <span key={i} className="w" style={{ ["--i" as string]: Math.min(i, 24) }}>{w}</span>
+        <Fragment key={i}>
+          {i > 0 && " "}
+          <span className="w" style={{ ["--i" as string]: Math.min(i, 24) }}>{w}</span>
+        </Fragment>
       ))}
     </p>
   );
