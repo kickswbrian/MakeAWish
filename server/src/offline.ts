@@ -18,7 +18,7 @@ const STOP = new Set([
 const words = (s: string) =>
   [...new Set(s.toLowerCase().replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).filter((w) => w.length > 2 && !STOP.has(w)).map((w) => w.replace(/(?<=[a-z]{3})(es|s)$/, "")))];
 
-let library: { product: Product; strong: Set<string>; weak: Set<string> }[] | null = null;
+let library: { product: Product; strong: Set<string>; weak: Set<string>; nouns: Set<string> }[] | null = null;
 function load() {
   if (library) return library;
   library = [];
@@ -27,7 +27,9 @@ function load() {
     for (const s of seeds) {
       const product = parseProduct(s.product);
       if (!product) continue;
-      library.push({ product, strong: new Set(words(`${product.title} ${product.category ?? ""}`)), weak: new Set(words(product.description ?? "")) });
+      // What it is: the last word of its category and of its name (a "desk lamp" is a lamp).
+      const nouns = new Set([words(product.category ?? "").pop(), words(product.title).pop()].filter((w): w is string => !!w));
+      library.push({ product, strong: new Set(words(`${product.title} ${product.category ?? ""}`)), weak: new Set(words(product.description ?? "")), nouns });
     }
   } catch (err) {
     console.warn("[offline] no design library:", (err as Error).message);
@@ -39,6 +41,8 @@ function load() {
 export function closestDesign(text: string): Product | null {
   const want = words(text);
   if (!want.length) return null;
+  // The thing being wished for: the last word before "with/that/shaped like..." ("a wooden desk" is a desk).
+  const head = words(text.toLowerCase().split(/\b(?:with|that|which|whose|shaped|like|looks|made|for|in|on|of)\b/)[0]).pop();
   let best: { product: Product; score: number; hits: number } | null = null;
   for (const d of load()) {
     let score = 0, hits = 0;
@@ -46,6 +50,8 @@ export function closestDesign(text: string): Product | null {
       if (d.strong.has(w)) (score += 2), hits++;
       else if (d.weak.has(w)) (score += 1), hits++;
     }
+    // It has to be the same kind of thing (a desk is not a lamp that mentions desks).
+    if (!head || !d.nouns.has(head)) continue;
     if (!best || score > best.score) best = { product: d.product, score, hits };
   }
   // A real overlap: a title/category word plus something more, covering a fair share of the wish.

@@ -59,5 +59,6 @@ const FILLER = new Set([
   "would", "love", "need", "get", "give", "build", "design", "create", "some", "one", "kind", "sort", "thing", "really", "just", "cute", "cool",
   "awesome", "little", "nice", "desk", "table", "bedside",
   "lamp", "lamps", "light", "whose", "shade", "lampshade", "giant", "big", "huge", "single", "upside", "down", "suitcase", "luggage", "scooter",
-  "ride", "rideable", "carry", "kick", "electric",
+  "ride", "rideable", "carry", "kick", "electric", "had", "have", "got", "imagine", "something", "someone", "could", "should", "our",
+  "your", "kids", "gift", "maybe", "idea", "picture",
 ]);
